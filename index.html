@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Braint — 데이터로 보는 내 인생</title>
+<meta name="description" content="집, 돈, 커리어의 복잡한 계산을 데이터로 쉽게. Braint의 무료 분석 도구를 사용해보세요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0A0F;--surface:rgba(255,255,255,.04);--surface2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --white:#F5F4EF;--muted:rgba(245,244,239,.45);--dim:rgba(245,244,239,.2);
+  --pink:#FF6B9D;--green:#3FB950;--blue:#58A6FF;--gold:#F0C846;--purple:#BC8CFF;
+  --mono:'DM Mono',monospace;--radius:16px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:'Noto Sans KR',sans-serif;overflow-x:hidden;cursor:none}
+.cursor,.cursor-ring{position:fixed;border-radius:50%;pointer-events:none;z-index:9999}
+.cursor{width:10px;height:10px;background:var(--white);mix-blend-mode:difference}
+.cursor-ring{width:36px;height:36px;border:1px solid rgba(245,244,239,.3)}
+body::after{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* 헤더 */
+header{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+header.scrolled{background:rgba(10,10,15,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;text-decoration:none;color:var(--white)}
+.logo em{font-style:normal;color:var(--pink)}
+nav{display:flex;gap:28px;align-items:center}
+nav a{font-size:.78rem;font-weight:700;letter-spacing:.5px;color:var(--muted);text-decoration:none;text-transform:uppercase;transition:color .2s}
+nav a:hover{color:var(--white)}
+
+/* 히어로 */
+.hero{min-height:100vh;display:flex;align-items:center;padding:100px 40px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:radial-gradient(ellipse 70% 80% at 50% 50%,black,transparent)}
+.glow{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.glow-1{width:500px;height:500px;background:rgba(255,107,157,.12);top:10%;right:5%;animation:drift 8s ease-in-out infinite}
+.glow-2{width:400px;height:400px;background:rgba(63,185,80,.08);bottom:10%;left:5%;animation:drift 10s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-20px)}}
+.hero-inner{max-width:1100px;margin:0 auto;width:100%;position:relative;z-index:2}
+.hero-eyebrow{font-family:var(--mono);font-size:.7rem;color:var(--pink);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;opacity:0;animation:up .8s .1s forwards}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,10vw,8.5rem);line-height:.92;letter-spacing:-1px;margin-bottom:28px;opacity:0;animation:up .8s .25s forwards}
+.hero-title .stroke{-webkit-text-stroke:1.5px var(--white);color:transparent}
+.hero-title .pink{color:var(--pink)}
+.hero-desc{font-size:1rem;font-weight:300;color:var(--muted);line-height:1.7;max-width:500px;margin-bottom:40px;opacity:0;animation:up .8s .4s forwards}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;opacity:0;animation:up .8s .55s forwards}
+.btn{padding:14px 28px;border-radius:var(--radius);font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;text-decoration:none;cursor:none;display:inline-flex;align-items:center;gap:8px;transition:all .25s;letter-spacing:-.2px}
+.btn-primary{background:var(--pink);color:#fff;border:none;box-shadow:0 8px 24px rgba(255,107,157,.3)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(255,107,157,.45)}
+.btn-ghost{background:transparent;color:var(--white);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--white);transform:translateY(-2px)}
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:up .8s 1s forwards}
+.scroll-hint span{font-family:var(--mono);font-size:.6rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.scroll-line{width:1px;height:48px;background:linear-gradient(var(--pink),transparent);animation:pulse 2s ease-in-out infinite}
+
+/* 스탯 */
+.stats{border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:32px 36px;position:relative;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat::after{content:'';position:absolute;bottom:0;left:36px;right:36px;height:1px;background:linear-gradient(90deg,var(--pink),transparent);transform:scaleX(0);transform-origin:left;transition:transform .5s}
+.stat:hover::after{transform:scaleX(1)}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--white);display:block;margin-bottom:4px}
+.stat-label{font-family:var(--mono);font-size:.68rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+
+/* 섹션 */
+.section{padding:100px 40px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-tag{font-family:var(--mono);font-size:.68rem;color:var(--pink);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-tag::before{content:'';width:28px;height:1px;background:var(--pink)}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,5vw,4.5rem);line-height:1;margin-bottom:12px}
+.section-sub{font-size:.9rem;font-weight:300;color:var(--muted);max-width:380px;line-height:1.7;margin-bottom:56px}
+
+/* 서비스 그리드 */
+.services-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 28px;text-decoration:none;color:var(--white);display:flex;flex-direction:column;position:relative;overflow:hidden;transition:all .3s;cursor:none}
+.scard::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.scard:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-3px)}
+.scard:hover::before{opacity:1}
+.scard[data-color="pink"]::before{background:linear-gradient(135deg,rgba(255,107,157,.08),transparent)}
+.scard[data-color="green"]::before{background:linear-gradient(135deg,rgba(63,185,80,.08),transparent)}
+.scard[data-color="blue"]::before{background:linear-gradient(135deg,rgba(88,166,255,.08),transparent)}
+.scard[data-color="gold"]::before{background:linear-gradient(135deg,rgba(240,200,70,.08),transparent)}
+.scard[data-color="purple"]::before{background:linear-gradient(135deg,rgba(188,140,255,.08),transparent)}
+.scard-hero{grid-column:span 8}.scard-side{grid-column:span 4}.scard-third{grid-column:span 4}.scard-half{grid-column:span 6}.scard-full{grid-column:span 12}
+.scard-num{font-family:var(--mono);font-size:.65rem;color:var(--dim);letter-spacing:2px;margin-bottom:auto;padding-bottom:32px}
+.scard-emoji{font-size:2.2rem;margin-bottom:16px;display:block}
+.scard-category{font-family:var(--mono);font-size:.65rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.scard-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1.05;letter-spacing:.3px;margin-bottom:10px}
+.scard-desc{font-size:.8rem;font-weight:300;color:var(--muted);line-height:1.6;margin-bottom:24px;flex:1}
+.scard-footer{display:flex;align-items:center;justify-content:space-between}
+.scard-arrow{width:34px;height:34px;border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--white);transition:all .3s}
+.scard:hover .scard-arrow{border-color:transparent;transform:rotate(45deg)}
+.scard-soon{opacity:.4;cursor:default!important}
+.scard-soon:hover{transform:none!important;background:var(--surface)!important;border-color:var(--border)!important}
+
+/* 뱃지 */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:.6rem;letter-spacing:.5px;text-transform:uppercase;font-weight:500}
+.badge-live{background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);color:var(--green)}
+.badge-live::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+.badge-new{background:rgba(255,107,157,.12);border:1px solid rgba(255,107,157,.3);color:var(--pink)}
+.badge-soon{background:rgba(245,244,239,.05);border:1px solid var(--border);color:var(--dim)}
+.badge-beta{background:rgba(240,200,70,.1);border:1px solid rgba(240,200,70,.25);color:var(--gold)}
+
+/* 피처드 */
+.featured{margin:0 40px;padding:72px 64px;background:var(--surface);border:1px solid var(--border);border-radius:24px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;overflow:hidden}
+.featured::before{content:'NEW';position:absolute;right:-28px;top:32px;font-family:'Bebas Neue',sans-serif;font-size:6rem;color:rgba(255,107,157,.05);letter-spacing:4px;pointer-events:none}
+.featured-label{font-family:var(--mono);font-size:.65rem;color:var(--pink);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px}
+.featured-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,4vw,3.5rem);line-height:1;margin-bottom:16px}
+.featured-desc{font-size:.88rem;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:28px}
+.featured-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.ftag{padding:5px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:99px;font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.featured-visual{background:rgba(63,185,80,.04);border:1px solid rgba(63,185,80,.1);border-radius:var(--radius);padding:32px}
+.fv-label{font-family:var(--mono);font-size:.62rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.fv-chart{display:flex;align-items:flex-end;gap:5px;height:70px;margin-bottom:20px}
+.fv-bar{flex:1;border-radius:2px 2px 0 0;transition:all .5s cubic-bezier(.16,1,.3,1)}
+.fv-verdict{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--green);margin-bottom:4px}
+.fv-sublabel{font-family:var(--mono);font-size:.6rem;color:var(--dim);letter-spacing:1px}
+.fv-rows{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.fv-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.65rem;color:var(--dim);padding:5px 0;border-bottom:1px solid var(--border)}
+.fv-row:last-child{border-bottom:none}
+.fv-val{color:var(--white);font-weight:500}
+
+/* 로드맵 */
+.roadmap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.rcard-quarter{font-family:var(--mono);font-size:.62rem;color:var(--dim);letter-spacing:2px;margin-bottom:16px;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.rcard-items{display:flex;flex-direction:column;gap:10px}
+.rcard-item{display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted)}
+.rcard-item::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--border2)}
+.rcard-item.done::before{background:var(--green)}
+.rcard-item.done{color:var(--white)}
+.rcard-item.active::before{background:var(--pink);box-shadow:0 0 8px rgba(255,107,157,.5);animation:blink 1.5s ease-in-out infinite}
+.rcard-item.active{color:var(--white)}
+
+/* 푸터 */
+footer{padding:48px 40px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px}
+.footer-logo em{font-style:normal;color:var(--pink)}
+.footer-copy{font-family:var(--mono);font-size:.62rem;color:var(--dim);letter-spacing:.5px}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-family:var(--mono);font-size:.62rem;color:var(--dim);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes pulse{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.reveal{opacity:0;transform:translateY(32px);transition:all .7s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
+
+@media(max-width:960px){
+  header{padding:0 20px}nav{display:none}
+  .hero{padding:90px 20px 60px}
+  .stats-inner{grid-template-columns:1fr 1fr}
+  .stat{border-right:none;border-bottom:1px solid var(--border)}
+  .stat:nth-child(2n){border-right:none}.stat:nth-child(2n-1){border-right:1px solid var(--border)}
+  .section{padding:70px 20px}
+  .services-grid{grid-template-columns:1fr 1fr}
+  .scard-hero,.scard-full{grid-column:span 2}
+  .scard-side,.scard-third,.scard-half{grid-column:span 1}
+  .featured{margin:0 20px;padding:36px 24px;grid-template-columns:1fr;gap:28px}
+  .featured::before{display:none}
+  .roadmap-grid{grid-template-columns:1fr 1fr}
+  footer{padding:36px 20px;flex-direction:column;gap:16px}
+}
+@media(max-width:520px){
+  .stats-inner,.roadmap-grid{grid-template-columns:1fr}
+  .services-grid{grid-template-columns:1fr}
+  .scard-hero,.scard-side,.scard-third,.scard-half,.scard-full{grid-column:span 1}
+  .stat:nth-child(2n-1){border-right:none}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<header id="hdr">
+  <a href="/" class="logo">Brain<em>t</em></a>
+  <nav>
+    <a href="#services">서비스</a>
+    <a href="#roadmap">로드맵</a>
+    <a href="mailto:hello@braint.net">문의</a>
+  </nav>
+</header>
+
+<!-- 히어로 -->
+<section class="hero">
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  <div class="hero-inner">
+    <p class="hero-eyebrow">// data-driven life tools · braint.net</p>
+    <h1 class="hero-title">
+      복잡한 인생<br>
+      <span class="stroke">데이터로</span><br>
+      <span class="pink">쉽게</span>
+    </h1>
+    <p class="hero-desc">
+      집 살 수 있을까? 이직하면 얼마? 은퇴는 언제?<br>
+      Braint의 무료 분석 도구로 직접 계산해보세요.
+    </p>
+    <div class="hero-actions">
+      <a href="#services" class="btn btn-primary">서비스 둘러보기 →</a>
+      <a href="/bf-home/" class="btn btn-ghost">🏠 남친 재력 분석</a>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- 스탯 -->
+<div class="stats reveal">
+  <div class="stats-inner">
+    <div class="stat"><span class="stat-num" id="cnt-analysis">—</span><span class="stat-label">누적 분석 횟수</span></div>
+    <div class="stat"><span class="stat-num" id="cnt-share">—</span><span class="stat-label">결과 공유 횟수</span></div>
+    <div class="stat"><span class="stat-num" id="cnt-svc">2</span><span class="stat-label">서비스 운영 중</span></div>
+    <div class="stat"><span class="stat-num">0원</span><span class="stat-label">기본 이용료</span></div>
+  </div>
+</div>
+
+<!-- 서비스 -->
+<section class="section" id="services">
+  <div class="section-inner">
+    <div class="section-tag reveal">Services</div>
+    <h2 class="section-title reveal d1">지금 사용할 수 있는<br>분석 도구</h2>
+    <p class="section-sub reveal d2">필요한 도구가 없으면 알려주세요.<br>다음 서비스로 만들어볼게요.</p>
+    <div class="services-grid" id="services-grid"></div>
+  </div>
+</section>
+
+<!-- 피처드 -->
+<div class="featured reveal">
+  <div>
+    <div class="featured-label">새로 출시 · HouseCheck PRO</div>
+    <h3 class="featured-title">내 연봉으로<br>집 살 수 있을까?</h3>
+    <p class="featured-desc">8단계 대화형 입력으로 내 집 마련 계획을 분석해드려요. 투자수익률·연봉 인상·대출·결혼·육아·차량까지 현실적으로 반영한 월별 시뮬레이션이에요.</p>
+    <div class="featured-tags">
+      <span class="ftag">월별 시뮬레이션</span>
+      <span class="ftag">투자수익률</span>
+      <span class="ftag">연봉 인상</span>
+      <span class="ftag">LTV 40% 대출</span>
+      <span class="ftag">결혼·육아·차량</span>
+      <span class="ftag">자산 흐름 차트</span>
+    </div>
+    <a href="/housecheck/" class="btn btn-primary" style="display:inline-flex">무료로 분석하기 →</a>
+  </div>
+  <div class="featured-visual">
+    <div class="fv-label">자산 흐름 시뮬레이션</div>
+    <div class="fv-chart" id="fv-chart"></div>
+    <div class="fv-verdict">7년 후 🏠</div>
+    <div class="fv-sublabel">서울 · 25~33평 · 연봉 5,000만원 기준</div>
+    <div class="fv-rows">
+      <div class="fv-row">목표 집값 <span class="fv-val">9억원</span></div>
+      <div class="fv-row">현재 자산 <span class="fv-val">5,000만원</span></div>
+      <div class="fv-row">투자수익률 <span class="fv-val">연 7%</span></div>
+      <div class="fv-row">월 순저축 <span class="fv-val">약 210만원</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 로드맵 -->
+<section class="section" id="roadmap">
+  <div class="section-inner">
+    <div class="section-tag reveal">Roadmap</div>
+    <h2 class="section-title reveal d1">앞으로 만들 도구들</h2>
+    <p class="section-sub reveal d2">요청이 많은 순서대로 만들어요.<br>원하는 도구를 알려주세요!</p>
+    <div class="roadmap-grid reveal d2">
+      <div class="rcard">
+        <div class="rcard-quarter">Q1 2025 · 완료</div>
+        <div class="rcard-items">
+          <div class="rcard-item done">남친 재력 분석기</div>
+          <div class="rcard-item done">HouseCheck PRO</div>
+          <div class="rcard-item done">결과 공유 페이지</div>
+        </div>
+      </div>
+      <div class="rcard">
+        <div class="rcard-quarter">Q2 2025 · 진행 중</div>
+        <div class="rcard-items">
+          <div class="rcard-item active">Braint.net 오픈</div>
+          <div class="rcard-item active">토스페이먼츠 연동</div>
+          <div class="rcard-item active">Supabase 연동</div>
+        </div>
+      </div>
+      <div class="rcard">
+        <div class="rcard-quarter">Q3 2025 · 예정</div>
+        <div class="rcard-items">
+          <div class="rcard-item">이직 연봉 시뮬레이터</div>
+          <div class="rcard-item">커플 합산 계산기</div>
+          <div class="rcard-item">FIRE 은퇴 계산기</div>
+        </div>
+      </div>
+      <div class="rcard">
+        <div class="rcard-quarter">Q4 2025 · 예정</div>
+        <div class="rcard-items">
+          <div class="rcard-item">육아비 시뮬레이터</div>
+          <div class="rcard-item">차량 총비용 계산기</div>
+          <div class="rcard-item">노후 자금 계산기</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px">
+      <a href="mailto:hello@braint.net?subject=서비스 요청" class="btn btn-ghost" style="display:inline-flex">💡 원하는 도구 요청하기 →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Brain<em>t</em></div>
+  <div class="footer-copy">© 2025 Braint · braint.net · 엑스분석(Xalysis)</div>
+  <div class="footer-links">
+    <a href="/bf-home/">남친분석</a>
+    <a href="/housecheck/">집계산기</a>
+    <a href="mailto:hello@braint.net">문의</a>
+  </div>
+</footer>
+
+<script>
+// ━━ 서비스 데이터 ━━
+// 새 서비스 추가 시 여기에만 추가하면 됨!
+const SERVICES = [
+  {
+    emoji:'🏠', category:'부동산 · 연애', color:'pink',
+    title:'우리 남친 연봉으로\n집 살 수 있을까?',
+    desc:'남친 연봉·자산·투자수익률로 집 구매 시점을 계산해요. 결혼·육아·차량 이벤트까지 현실 반영한 월별 시뮬레이션.',
+    status:'live', url:'/bf-home/', layout:'hero',
+  },
+  {
+    emoji:'📊', category:'부동산 · 재무', color:'green',
+    title:'HouseCheck\nPRO',
+    desc:'8단계 대화형 입력으로 내 집 마련 계획을 분석해요. 투자수익률·연봉 인상·대출까지 자산 흐름 차트로 확인.',
+    status:'new', url:'/housecheck/', layout:'side',
+  },
+  {
+    emoji:'💼', category:'커리어', color:'blue',
+    title:'이직하면\n얼마나 버나?',
+    desc:'연봉 협상 범위와 세후 실수령 변화를 계산해드려요.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'🔥', category:'투자 · 은퇴', color:'gold',
+    title:'나 언제\n경제적 자유?',
+    desc:'FIRE 달성을 위한 자산 목표와 월 저축액을 시뮬레이션해요.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'👶', category:'육아', color:'purple',
+    title:'아이 한 명\n키우는 데 얼마?',
+    desc:'연도별 육아비 시뮬레이션. 교육비·생활비·기회비용까지.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'🚗', category:'생활', color:'blue',
+    title:'이 차 진짜\n살 수 있어?',
+    desc:'구매가부터 유지비·보험·감가까지 총 보유 비용을 계산해요.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'🏥', category:'건강 · 재무', color:'pink',
+    title:'실손보험\n얼마나 돌려받나?',
+    desc:'실손보험 청구 가능 금액과 갱신 후 보험료 시뮬레이션.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'📈', category:'주식 · 투자', color:'green',
+    title:'매달 100만원\n투자하면?',
+    desc:'복리 투자 시뮬레이션. 기간·수익률별 자산 성장 곡선 확인.',
+    status:'soon', url:null, layout:'third',
+  },
+  {
+    emoji:'🎓', category:'교육 · 커리어', color:'gold',
+    title:'대학원 가면\n손해일까?',
+    desc:'기회비용 대비 학위 취득 후 연봉 상승 효과를 계산해요.',
+    status:'soon', url:null, layout:'third',
+  },
+];
+
+// ━━ 카드 렌더 ━━
+const BADGE = {
+  live:'<span class="badge badge-live">Live</span>',
+  new: '<span class="badge badge-new">New</span>',
+  beta:'<span class="badge badge-beta">Beta</span>',
+  soon:'<span class="badge badge-soon">Coming Soon</span>',
+};
+const LAYOUT = {hero:'scard-hero',side:'scard-side',third:'scard-third',half:'scard-half',full:'scard-full'};
+
+function renderServices(){
+  const grid = document.getElementById('services-grid');
+  grid.innerHTML = SERVICES.map((s, i) => {
+    const live = s.status==='live'||s.status==='new'||s.status==='beta';
+    const tag  = live&&s.url ? 'a' : 'div';
+    const href = live&&s.url ? `href="${s.url}"` : '';
+    return `
+    <${tag} ${href} class="scard ${LAYOUT[s.layout]||'scard-third'} ${!live?'scard-soon':''} reveal d${(i%4)+1}" data-color="${s.color}">
+      <span class="scard-num">0${String(i+1).padStart(1,'0')} / ${s.status.toUpperCase()}</span>
+      <span class="scard-emoji">${s.emoji}</span>
+      <div class="scard-category" style="color:var(--${s.color})">${s.category}</div>
+      <div class="scard-title">${s.title.replace(/\n/g,'<br>')}</div>
+      <p class="scard-desc">${s.desc}</p>
+      <div class="scard-footer">
+        ${BADGE[s.status]||''}
+        ${live?'<div class="scard-arrow">→</div>':''}
+      </div>
+    </${tag}>`;
+  }).join('');
+  document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+  document.getElementById('cnt-svc').textContent = SERVICES.filter(s=>s.status==='live'||s.status==='new').length+'개';
+}
+
+// ━━ 커서 ━━
+const cur=document.getElementById('cur'),ring=document.getElementById('ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.transform=`translate(${mx-5}px,${my-5}px)`});
+(function a(){rx+=(mx-rx-18)*.1;ry+=(my-ry-18)*.1;ring.style.transform=`translate(${rx}px,${ry}px)`;requestAnimationFrame(a)})();
+
+// ━━ 헤더 스크롤 ━━
+window.addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>50));
+
+// ━━ Reveal ━━
+const revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.08});
+
+// ━━ 스탯 카운터 ━━
+const statObs=new IntersectionObserver(es=>{
+  if(!es[0].isIntersecting)return;
+  // TODO: Supabase에서 실제 수치 받아오기
+  anim('cnt-analysis',1284,'회'); anim('cnt-share',412,'회');
+  statObs.disconnect();
+},{threshold:.5});
+function anim(id,target,suf=''){
+  const el=document.getElementById(id);if(!el)return;
+  let c=0;const s=Math.ceil(target/50),t=setInterval(()=>{c=Math.min(c+s,target);el.textContent=c.toLocaleString()+suf;if(c>=target)clearInterval(t)},28);
+}
+
+// ━━ 피처드 차트 ━━
+function initChart(){
+  const heights=[8,14,20,27,35,43,52,62,74,87,100];
+  const chart=document.getElementById('fv-chart');
+  chart.innerHTML=heights.map((h,i)=>`
+    <div class="fv-bar" style="height:${h}%;background:${h>=80?'var(--green)':'rgba(63,185,80,.25)'};opacity:0;transform:scaleY(0);transform-origin:bottom;transition:all .5s cubic-bezier(.16,1,.3,1) ${i*.05}s"></div>
+  `).join('');
+  const obs=new IntersectionObserver(es=>{
+    if(!es[0].isIntersecting)return;
+    chart.querySelectorAll('.fv-bar').forEach(b=>{b.style.opacity='1';b.style.transform='scaleY(1)'});
+    obs.disconnect();
+  },{threshold:.4});
+  obs.observe(chart.closest('.featured'));
+}
+
+// ━━ 초기화 ━━
+document.addEventListener('DOMContentLoaded',()=>{
+  renderServices();
+  document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+  statObs.observe(document.querySelector('.stats'));
+  initChart();
+});
+</script>
+</body>
+</html>
