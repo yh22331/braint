@@ -1,1 +1,2162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 남친 연봉으로 집 살 수 있을까? 🏠💕</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --pink: #FF6B9D;
+    --pink-light: #FFB3CC;
+    --pink-pale: #FFF0F5;
+    --peach: #FFAA80;
+    --cream: #FFF8F0;
+    --lilac: #C8A8E9;
+    --mint: #A8DDD5;
+    --text: #3D2C35;
+    --text-soft: #9B7B8A;
+    --white: #FFFFFF;
+    --shadow: 0 8px 32px rgba(255,107,157,0.15);
+    --shadow-lg: 0 16px 48px rgba(255,107,157,0.25);
+    --gold: #F5A623;
+    --gold-light: #FFF3DC;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Noto Sans KR',sans-serif;
+    background:linear-gradient(135deg,#FFE4EF 0%,#FFF0FA 40%,#EEF0FF 100%);
+    min-height:100vh; color:var(--text); position:relative; overflow-x:hidden;
+  }
+  .deco { position:fixed; pointer-events:none; z-index:0; font-size:2rem; opacity:0.12; animation:floaty 6s ease-in-out infinite; }
+  .deco:nth-child(1){top:5%;left:3%;animation-delay:0s}
+  .deco:nth-child(2){top:15%;right:5%;animation-delay:1s;font-size:1.5rem}
+  .deco:nth-child(3){top:45%;left:1%;animation-delay:2s;font-size:1.2rem}
+  .deco:nth-child(4){top:70%;right:3%;animation-delay:0.5s}
+  .deco:nth-child(5){bottom:10%;left:8%;animation-delay:1.5s;font-size:1.8rem}
+  .deco:nth-child(6){top:30%;right:8%;animation-delay:3s;font-size:1rem}
+  @keyframes floaty{0%,100%{transform:translateY(0)rotate(0)}33%{transform:translateY(-12px)rotate(5deg)}66%{transform:translateY(6px)rotate(-3deg)}}
+  .container { max-width:520px; margin:0 auto; padding:24px 20px 60px; position:relative; z-index:1; }
 
+  /* ── 헤더 ── */
+  .header{text-align:center;margin-bottom:28px;animation:slideDown 0.6s ease}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  .header .emoji-big{font-size:3.5rem;display:block;margin-bottom:8px}
+  .header h1{font-size:1.35rem;font-weight:900;color:var(--pink);line-height:1.4;letter-spacing:-0.5px}
+  .header p{font-size:0.82rem;color:var(--text-soft);margin-top:6px;font-family:'Gowun Dodum',sans-serif}
+
+  /* ── 카드 ── */
+  .card{background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);border-radius:28px;padding:28px 24px;box-shadow:var(--shadow);margin-bottom:16px;border:1.5px solid rgba(255,179,204,0.3);animation:fadeUp 0.5s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .card-title{font-size:0.78rem;font-weight:700;color:var(--pink);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+
+  /* ── 인풋 ── */
+  .input-group{margin-bottom:18px}
+  .input-group:last-child{margin-bottom:0}
+  label{display:flex;font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:8px;align-items:center;gap:6px}
+  .input-wrap{position:relative;display:flex;align-items:center}
+  .input-wrap input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:99px;background:linear-gradient(to right,var(--pink) 0%,var(--pink) var(--pct,50%),#F0D0DC var(--pct,50%),#F0D0DC 100%);outline:none;cursor:pointer}
+  .input-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--white);border:3px solid var(--pink);box-shadow:0 2px 8px rgba(255,107,157,0.3);cursor:pointer;transition:transform 0.15s}
+  .input-wrap input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+  .range-val{position:absolute;right:0;top:-28px;background:var(--pink);color:white;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none}
+  .range-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:0.72rem;color:var(--text-soft)}
+
+  /* ── 토글 ── */
+  .toggle-group{display:flex;gap:8px;flex-wrap:wrap}
+  .toggle-btn{flex:1;min-width:80px;padding:10px 12px;border:2px solid #F0D0DC;border-radius:16px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text-soft);cursor:pointer;transition:all 0.2s;text-align:center}
+  .toggle-btn.active{border-color:var(--pink);background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink);box-shadow:0 4px 12px rgba(255,107,157,0.2);transform:translateY(-1px)}
+  .toggle-btn:hover:not(.active){border-color:var(--pink-light);color:var(--pink)}
+
+  /* ── CTA ── */
+  .btn-cta{width:100%;padding:18px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:20px;color:white;font-family:'Noto Sans KR',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:-0.3px;box-shadow:0 8px 24px rgba(255,107,157,0.4);transition:all 0.25s;position:relative;overflow:hidden}
+  .btn-cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,107,157,0.5)}
+  .btn-cta:active{transform:translateY(0)}
+
+  /* ── 무료 결과 ── */
+  #result-section{display:none}
+  .result-card{background:linear-gradient(135deg,#FF6B9D 0%,#C850C0 50%,#4158D0 100%);border-radius:28px;padding:32px 24px;text-align:center;color:white;box-shadow:0 16px 48px rgba(255,107,157,0.4);position:relative;overflow:hidden;margin-bottom:16px}
+  .result-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.15) 0%,transparent 60%)}
+  .result-emoji{font-size:3rem;margin-bottom:12px;display:block}
+  .result-verdict{font-size:1.5rem;font-weight:900;margin-bottom:8px;letter-spacing:-0.5px;position:relative}
+  .result-sub{font-size:0.85rem;opacity:0.88;line-height:1.6;position:relative;font-family:'Gowun Dodum',sans-serif}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .stat-item{background:rgba(255,255,255,0.88);border-radius:20px;padding:18px 14px;text-align:center;border:1.5px solid rgba(255,179,204,0.25);box-shadow:var(--shadow)}
+  .stat-label{font-size:0.72rem;color:var(--text-soft);font-weight:600;margin-bottom:6px}
+  .stat-value{font-size:1.15rem;font-weight:900;color:var(--pink);letter-spacing:-0.5px}
+  .stat-value.good{color:#3DB88A}
+  .stat-value.bad{color:#FF6B6B}
+  .progress-wrap{background:rgba(255,255,255,0.88);border-radius:20px;padding:20px;border:1.5px solid rgba(255,179,204,0.25);box-shadow:var(--shadow);margin-bottom:16px}
+  .progress-label{display:flex;justify-content:space-between;font-size:0.8rem;font-weight:700;color:var(--text-soft);margin-bottom:10px}
+  .progress-bar{height:14px;background:#F5DCE8;border-radius:99px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+  .push-section{background:rgba(255,255,255,0.88);border-radius:28px;padding:24px;border:1.5px solid rgba(255,179,204,0.3);box-shadow:var(--shadow);margin-bottom:16px}
+  .push-title{font-size:0.95rem;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .push-sub{font-size:0.78rem;color:var(--text-soft);margin-bottom:16px;font-family:'Gowun Dodum',sans-serif;line-height:1.5}
+  .push-message{background:linear-gradient(135deg,#FFF0F8,#F8F0FF);border-radius:16px;padding:16px;border:1.5px dashed var(--pink-light);font-size:0.85rem;line-height:1.7;color:var(--text);margin-bottom:14px;font-family:'Gowun Dodum',sans-serif;white-space:pre-wrap}
+  .share-buttons{display:flex;flex-direction:column;gap:10px}
+  .btn-share{padding:14px 20px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
+  .btn-insta{background:linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);color:white;box-shadow:0 6px 20px rgba(220,39,67,0.35)}
+  .btn-kakao{background:#FEE500;color:#3C1E1E;box-shadow:0 6px 20px rgba(254,229,0,0.4)}
+  .btn-copy{background:linear-gradient(135deg,#667eea,#764ba2);color:white;box-shadow:0 6px 20px rgba(102,126,234,0.35)}
+  .btn-share:hover{transform:translateY(-2px)}
+  .tooltip{font-size:0.72rem;color:var(--text-soft);text-align:center;margin-top:8px;font-family:'Gowun Dodum',sans-serif}
+
+  /* ── 유료 전환 구간 ── */
+  .premium-divider{display:flex;align-items:center;gap:12px;margin:24px 0 20px}
+  .premium-divider::before,.premium-divider::after{content:'';flex:1;height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,107,157,0.3),transparent)}
+  .premium-divider-text{font-size:0.75rem;font-weight:700;color:var(--text-soft);white-space:nowrap;letter-spacing:0.5px}
+  .premium-header{background:linear-gradient(135deg,#3D2C35 0%,#5A3A4A 100%);border-radius:28px 28px 0 0;padding:22px 24px 18px;text-align:center;position:relative;overflow:hidden}
+  .premium-header::before{content:'';position:absolute;top:-40%;left:-20%;width:140%;height:180%;background:radial-gradient(circle at 60% 30%,rgba(255,107,157,0.18) 0%,transparent 60%)}
+  .premium-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--gold),#FFD166);color:#3D2C35;font-size:0.68rem;font-weight:900;padding:4px 12px;border-radius:99px;margin-bottom:10px;letter-spacing:0.5px;position:relative}
+  .premium-header-title{font-size:1.05rem;font-weight:900;color:white;margin-bottom:4px;position:relative;letter-spacing:-0.3px}
+  .premium-header-sub{font-size:0.78rem;color:rgba(255,255,255,0.6);font-family:'Gowun Dodum',sans-serif;position:relative}
+  .premium-cards{background:rgba(255,255,255,0.92);border-radius:0 0 28px 28px;border:1.5px solid rgba(255,179,204,0.25);border-top:none;overflow:hidden;box-shadow:var(--shadow-lg)}
+  .premium-card-item{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,179,204,0.15);cursor:pointer;transition:background 0.2s}
+  .premium-card-item:last-child{border-bottom:none}
+  .premium-card-item:hover{background:rgba(255,240,248,0.6)}
+  .premium-icon-wrap{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+  .icon-pink{background:linear-gradient(135deg,#FFE4EF,#FFD0E6)}
+  .icon-purple{background:linear-gradient(135deg,#F0E8FF,#E4D4FF)}
+  .icon-mint{background:linear-gradient(135deg,#E4FFF8,#D0FFF0)}
+  .icon-peach{background:linear-gradient(135deg,#FFF4E4,#FFE8CC)}
+  .premium-card-content{flex:1;min-width:0}
+  .premium-card-title{font-size:0.9rem;font-weight:900;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .premium-card-desc{font-size:0.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.5}
+  .premium-preview{text-align:right;flex-shrink:0}
+  .premium-preview-num{font-size:1rem;font-weight:900;color:var(--pink);filter:blur(5px);user-select:none}
+  .premium-preview-label{font-size:0.65rem;color:var(--text-soft);margin-top:2px}
+  .lock-badge{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#F5F0F8,#EDE6F5);border:1px solid rgba(200,168,233,0.4);color:var(--lilac);font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .premium-cta-wrap{background:rgba(255,255,255,0.92);border-radius:28px;padding:24px;border:1.5px solid rgba(245,166,35,0.3);box-shadow:0 8px 32px rgba(245,166,35,0.12);margin-bottom:16px;text-align:center}
+  .price-main{font-size:2rem;font-weight:900;color:var(--text);letter-spacing:-1px}
+  .price-main span{font-size:1rem;font-weight:500;color:var(--text-soft)}
+  .price-sub{font-size:0.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:4px}
+  .price-tag{display:inline-flex;align-items:center;gap:6px;background:var(--gold-light);border:1px solid rgba(245,166,35,0.3);color:#B5720A;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:99px;margin-bottom:12px}
+  .btn-premium{width:100%;padding:18px;background:linear-gradient(135deg,#3D2C35,#5A3A4A);border:none;border-radius:20px;color:white;font-family:'Noto Sans KR',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(61,44,53,0.35);transition:all 0.25s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-premium:hover{transform:translateY(-2px)}
+  .btn-premium-gold{background:linear-gradient(135deg,var(--gold),#FFD166);color:#3D2C35;box-shadow:0 8px 24px rgba(245,166,35,0.4)}
+  .btn-premium-gold:hover{box-shadow:0 12px 32px rgba(245,166,35,0.5)}
+  .premium-guarantee{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px;font-size:0.7rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 8px 24px rgba(245,166,35,0.4)}50%{box-shadow:0 8px 36px rgba(245,166,35,0.7),0 0 0 6px rgba(245,166,35,0.1)}}
+  .btn-pulse{animation:pulse-glow 2.5s ease-in-out infinite}
+
+  /* ── 유료 기능 실제 콘텐츠 ── */
+  #premium-content{display:none}
+
+  /* 공통 */
+  .section-title{font-size:.95rem;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .section-wrap{background:rgba(255,255,255,.92);border-radius:24px;padding:22px 20px;border:1.5px solid rgba(255,179,204,.25);box-shadow:var(--shadow);margin-bottom:16px}
+  .num-input{width:100%;padding:12px 46px 12px 16px;border:2px solid #F0D0DC;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);background:#fff;outline:none;transition:border-color .2s}
+  .num-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,107,157,.1)}
+  .num-input-suffix{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text-soft);font-weight:600;pointer-events:none}
+  /* 투자 탭 */
+  .invest-tabs{display:flex;gap:6px;margin-bottom:12px}
+  .invest-tab{flex:1;padding:9px;border:2px solid #F0D0DC;border-radius:12px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;color:var(--text-soft);cursor:pointer;transition:all .2s;text-align:center}
+  .invest-tab.active{border-color:var(--pink);background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink)}
+  .invest-custom-wrap{display:none}
+  .invest-custom-wrap.show{display:block}
+  /* 시나리오 */
+  .scenario-grid{display:flex;flex-direction:column;gap:10px}
+  .scenario-row{border-radius:16px;padding:14px 16px;border:2px solid transparent;transition:all .2s}
+  .s-base{background:linear-gradient(135deg,#F5F0FF,#EDE6FF);border-color:rgba(200,168,233,.4)}
+  .s-raise{background:linear-gradient(135deg,#FFF0F5,#FFE4EF);border-color:rgba(255,179,204,.5)}
+  .s-highlight{box-shadow:0 4px 16px rgba(255,107,157,.2);transform:translateY(-1px)}
+  .scenario-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .scenario-label{font-size:.82rem;font-weight:900;color:var(--text)}
+  .scenario-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px}
+  .badge-purple{background:#E8D4FF;color:#7B4FBE}.badge-pink{background:#FFD4E8;color:#C8456A}
+  .scenario-years{font-size:1.4rem;font-weight:900;letter-spacing:-.5px}
+  .scenario-detail{font-size:.72rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:2px}
+  .scenario-bar-wrap{margin-top:8px;height:6px;background:rgba(0,0,0,.06);border-radius:99px;overflow:hidden}
+  .scenario-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.34,1.56,.64,1)}
+  /* 커플 */
+  .couple-status{border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+  .couple-status.waiting{background:linear-gradient(135deg,#FFF8DC,#FFF0C8);border:1.5px dashed rgba(245,166,35,.4)}
+  .couple-status.ready{background:linear-gradient(135deg,#E8FFE8,#D0FFD0);border:1.5px solid rgba(61,184,138,.4)}
+  .couple-share-btn{width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:10px}
+  .couple-share-btn:hover{transform:translateY(-2px)}
+  .couple-result-box{background:linear-gradient(135deg,#FFE4EF,#F0E8FF);border-radius:16px;padding:18px;text-align:center;border:1.5px solid rgba(255,179,204,.3)}
+  /* 이벤트 */
+  .event-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .event-item{border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#FFF8FC,#F8F0FF);border:1.5px solid rgba(255,179,204,.2)}
+  .event-item-header{display:flex;align-items:center;gap:10px}
+  .event-icon{font-size:1.3rem;width:32px;text-align:center;flex-shrink:0}
+  .event-info{flex:1}
+  .event-name{font-size:.85rem;font-weight:700;color:var(--text)}
+  .event-cost-note{font-size:.7rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:2px}
+  .event-toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+  .event-toggle input{opacity:0;width:0;height:0}
+  .event-slider{position:absolute;inset:0;background:#F0D0DC;border-radius:99px;cursor:pointer;transition:.3s}
+  .event-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+  .event-toggle input:checked+.event-slider{background:var(--pink)}
+  .event-toggle input:checked+.event-slider::before{transform:translateX(20px)}
+  .event-detail{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,179,204,.3);display:none}
+  .event-detail.show{display:block}
+  .event-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .event-field{display:flex;flex-direction:column;gap:4px}
+  .event-field>label{font-size:.72rem;font-weight:700;color:var(--text-soft);margin-bottom:0}
+  .ev-input{width:100%;padding:8px 46px 8px 10px;border:1.5px solid #F0D0DC;border-radius:10px;font-family:'Noto Sans KR',sans-serif;font-size:.85rem;font-weight:700;color:var(--text);background:#fff;outline:none}
+  .ev-input:focus{border-color:var(--pink)}
+  .car-options{display:flex;gap:6px;margin-bottom:8px}
+  .car-opt{flex:1;padding:8px 4px;border:2px solid #F0D0DC;border-radius:12px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.75rem;font-weight:700;color:var(--text-soft);cursor:pointer;text-align:center;transition:all .2s}
+  .car-opt.active{border-color:var(--pink);background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink)}
+  .raise-options{display:flex;gap:6px}
+  .raise-opt{flex:1;padding:10px 4px;border:2px solid #F0D0DC;border-radius:14px;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:.75rem;font-weight:700;color:var(--text-soft);cursor:pointer;text-align:center;transition:all .2s;line-height:1.4}
+  .raise-opt.active{border-color:var(--pink);background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink)}
+  .event-result{background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:14px;padding:14px 16px;border:1.5px solid rgba(255,179,204,.3)}
+  .event-result-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.82rem}
+  .event-result-label{color:var(--text-soft)}
+  .event-result-val{font-weight:700;color:var(--text)}
+  .event-result-val.diff{color:var(--pink)}
+  /* PDF */
+  .pdf-preview{background:#fff;border-radius:16px;padding:20px;border:2px solid rgba(255,179,204,.3);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+  .pdf-preview-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #F0E0E8}
+  .pdf-preview-logo{font-size:1.4rem}
+  .pdf-preview-title{font-size:.9rem;font-weight:900;color:var(--text)}
+  .pdf-preview-date{font-size:.7rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif}
+  .pdf-row{display:flex;justify-content:space-between;font-size:.8rem;padding:5px 0;border-bottom:1px dashed #F5E0EC}
+  .pdf-row:last-child{border-bottom:none}
+  .pdf-row-label{color:var(--text-soft)}
+  .pdf-row-val{font-weight:700;color:var(--text)}
+  .btn-pdf{width:100%;padding:16px;background:linear-gradient(135deg,#3D2C35,#5A3A4A);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:8px}
+  .btn-pdf:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(61,44,53,.35)}
+
+  /* ── 모달 (바텀시트) ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;backdrop-filter:blur(8px);align-items:flex-end;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:white;border-radius:32px 32px 0 0;padding:28px 24px 40px;max-width:520px;width:100%;animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 -8px 48px rgba(0,0,0,0.15)}
+  @keyframes slideUp{from{opacity:0;transform:translateY(100px)}to{opacity:1;transform:translateY(0)}}
+  .modal-handle{width:40px;height:4px;background:#E8D8E0;border-radius:2px;margin:0 auto 20px}
+  .modal h3{font-size:1.1rem;font-weight:900;color:var(--text);margin-bottom:6px}
+  .modal p{font-size:0.82rem;color:var(--text-soft);margin-bottom:20px;line-height:1.6}
+  .pay-features{background:linear-gradient(135deg,#FFF8FC,#F8F0FF);border-radius:16px;padding:16px;margin-bottom:20px}
+  .pay-feature-item{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:0.83rem;font-weight:600;color:var(--text)}
+  .pay-feature-item::before{content:'✓';width:20px;height:20px;background:linear-gradient(135deg,var(--pink),#FF9EC4);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:900;flex-shrink:0}
+  .modal-btn{flex:1;padding:13px;border-radius:14px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+  .modal-btn-primary{background:linear-gradient(135deg,var(--pink),#FF9EC4);color:white;box-shadow:0 4px 12px rgba(255,107,157,0.35)}
+  .modal-btn-secondary{background:#F5F0F8;color:var(--text-soft);width:100%;margin-top:10px;padding:13px;border-radius:14px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer}
+
+  /* 인스타 모달 (팝업형) */
+  #insta-modal{align-items:center;padding:20px}
+  #insta-modal .modal{border-radius:28px;padding-bottom:28px;animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+  @keyframes popIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+  #share-canvas-wrap{border-radius:20px;overflow:hidden;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+  #share-canvas{width:100%;display:block}
+  .modal-btns{display:flex;gap:10px}
+
+  /* 커플 링크 공유 모달 */
+  .link-box{background:#F5F0F8;border-radius:12px;padding:12px 14px;font-size:0.78rem;color:var(--text-soft);word-break:break-all;font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;border:1.5px solid rgba(255,179,204,0.3);line-height:1.6}
+  .link-copy-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:white;font-family:'Noto Sans KR',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;margin-bottom:8px}
+
+  /* 파트너 입력 배너 (링크로 들어왔을 때) */
+  .partner-banner{background:linear-gradient(135deg,#FFE4EF,#F0E8FF);border-radius:20px;padding:18px 20px;border:1.5px solid rgba(255,179,204,0.4);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  .partner-banner-icon{font-size:1.8rem;flex-shrink:0}
+  .partner-banner-text{font-size:0.88rem;font-weight:700;color:var(--text);line-height:1.4}
+  .partner-banner-sub{font-size:0.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:3px}
+
+  .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiDrop linear forwards}
+  @keyframes confettiDrop{0%{transform:translateY(-20px)rotate(0);opacity:1}100%{transform:translateY(100vh)rotate(720deg);opacity:0}}
+  .disclaimer{text-align:center;font-size:0.7rem;color:var(--text-soft);margin-top:20px;font-family:'Gowun Dodum',sans-serif;line-height:1.6;opacity:0.7}
+  /* ── 플로팅 버튼 (3분할 탭) ── */
+  .floating-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 16px 20px;z-index:200;pointer-events:none;background:linear-gradient(to top,rgba(255,240,248,0.97) 70%,transparent)}
+  .floating-tab-bar{display:flex;gap:8px;pointer-events:all}
+  .floating-tab{flex:1;padding:13px 4px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .2s;letter-spacing:-.2px;line-height:1.2}
+  .floating-tab-icon{font-size:1.1rem}
+  .floating-tab-basic{background:#fff;color:var(--text-soft);border:2px solid #F0D0DC}
+  .floating-tab-basic.active,.floating-tab-basic:hover{background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink);border-color:var(--pink)}
+  .floating-tab-premium{background:#fff;color:var(--text-soft);border:2px solid #E0D0F0}
+  .floating-tab-premium.active,.floating-tab-premium:hover{background:linear-gradient(135deg,#F0E4FF,#E4D0FF);color:#9B4FD8;border-color:#C8A8E9}
+  .floating-tab-analyze{background:linear-gradient(135deg,#FF6B9D,#FF9EC4);color:#fff;border:2px solid transparent;box-shadow:0 6px 20px rgba(255,107,157,.45);flex:1.3}
+  .floating-tab-analyze:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,157,.55)}
+  .floating-tab-analyze.dirty{background:linear-gradient(135deg,#C850C0,#FF6B9D);animation:float-pulse 1.8s ease-in-out infinite}
+  @keyframes float-pulse{0%,100%{box-shadow:0 6px 20px rgba(200,80,192,.45)}50%{box-shadow:0 8px 32px rgba(200,80,192,.7),0 0 0 5px rgba(200,80,192,.15)}}
+</style>
+</head>
+<body>
+
+<div class="deco">🌸</div>
+<div class="deco">💕</div>
+<div class="deco">✨</div>
+<div class="deco">🌷</div>
+<div class="deco">💎</div>
+<div class="deco">🎀</div>
+
+<div class="container">
+
+  <!-- 파트너 링크로 진입했을 때 배너 -->
+  <div class="partner-banner" id="partner-banner" style="display:none">
+    <div class="partner-banner-icon">💌</div>
+    <div>
+      <div class="partner-banner-text" id="partner-banner-text">파트너가 집 계산기를 공유했어요!</div>
+      <div class="partner-banner-sub">연봉·자산을 입력하면 합산 결과를 같이 볼 수 있어요 💑</div>
+    </div>
+  </div>
+
+  <!-- 헤더 -->
+  <div class="header">
+    <span class="emoji-big">🏠💕</span>
+    <h1>우리 남친 연봉으로<br>집 살 수 있을까?</h1>
+    <p>남친의 재정 상태, 솔직하게 알아보자 🔍</p>
+  </div>
+
+  <!-- 입력 카드 -->
+  <div class="card">
+    <div class="card-title">📋 기본 정보 입력</div>
+
+    <div class="input-group">
+      <label>🎂 남친 현재 나이</label>
+      <div style="position:relative">
+        <input type="number" id="age" min="20" max="70" value="30" placeholder="30"
+          oninput="onAgeInput(this)"
+          style="width:100%;padding:12px 46px 12px 16px;border:2px solid #F0D0DC;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);background:#fff;outline:none;transition:border-color .2s">
+        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text-soft);font-weight:600;pointer-events:none">세</span>
+      </div>
+      <div id="age-warning" style="display:none;background:linear-gradient(135deg,#FFF8DC,#FFF0C8);border:1.5px solid rgba(245,166,35,.4);border-radius:12px;padding:10px 14px;font-size:.75rem;color:#8B6914;font-family:'Gowun Dodum',sans-serif;margin-top:6px"></div>
+    </div>
+
+    <div class="input-group">
+      <label>💰 남친 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
+      <div class="input-wrap" style="padding-top:30px">
+        <span class="range-val" id="salary-val">5,000만원</span>
+        <input type="range" id="salary" min="2000" max="20000" step="100" value="5000"
+          oninput="updateSalary(this)"
+          style="--pct:16.7%">
+      </div>
+      <div class="range-labels"><span>2,000만</span><span>1억+</span><span>2억</span></div>
+      <div id="salary-takehome" style="margin-top:8px;font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;background:rgba(255,179,204,.1);border-radius:10px;padding:6px 12px;display:inline-block">
+        세후 월 실수령 약 <strong id="takehome-val" style="color:var(--pink)">334만원</strong>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>📍 원하는 지역</label>
+      <div class="toggle-group" id="region-group">
+        <button class="toggle-btn" onclick="selectToggle('region-group',this,'gangnam')">🏙️ 강남권</button>
+        <button class="toggle-btn active" onclick="selectToggle('region-group',this,'seoul')">🗼 서울기타</button>
+        <button class="toggle-btn" onclick="selectToggle('region-group',this,'gyeonggi')">🌿 수도권</button>
+        <button class="toggle-btn" onclick="selectToggle('region-group',this,'local')">🌾 지방</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>🛏️ 원하는 평수</label>
+      <div class="toggle-group" id="size-group">
+        <button class="toggle-btn" onclick="selectToggle('size-group',this,'small')">🐣 20평 이하</button>
+        <button class="toggle-btn active" onclick="selectToggle('size-group',this,'mid')">🏡 25~33평</button>
+        <button class="toggle-btn" onclick="selectToggle('size-group',this,'big')">🏰 40평+</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>💳 남친 자산 (현재 모은 돈)</label>
+      <div class="input-wrap" style="padding-top:30px">
+        <span class="range-val" id="asset-val">5,000만원</span>
+        <input type="range" id="asset" min="0" max="100000" step="1000" value="5000"
+          oninput="updateRange(this,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음':v.toLocaleString()+'만'))+'원'.replace('없음원','없음 😅'))"
+          style="--pct:5%">
+      </div>
+      <div class="range-labels"><span>없음</span><span>5억</span><span>10억</span></div>
+    </div>
+    <div class="input-group">
+      <label>💑 나의 기여 (내 자산)</label>
+      <div class="toggle-group" id="my-group">
+        <button class="toggle-btn active" onclick="selectToggle('my-group',this,'none')">🙈 난 쪽박</button>
+        <button class="toggle-btn" onclick="selectToggle('my-group',this,'small')">💵 1억 이하</button>
+        <button class="toggle-btn" onclick="selectToggle('my-group',this,'mid')">💰 2~3억</button>
+        <button class="toggle-btn" onclick="selectToggle('my-group',this,'big')">🤑 3억+</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:90px"></div><!-- 플로팅 탭바 여백 -->
+
+  <!-- ══ 무료 결과 ══ -->
+  <div id="result-section">
+    <div class="result-card" id="result-hero">
+      <span class="result-emoji" id="result-emoji">🏠</span>
+      <div class="result-verdict" id="result-verdict">계산 중...</div>
+      <div class="result-sub" id="result-sub"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-label">🏠 목표 집값</div><div class="stat-value" id="stat-price">-</div></div>
+      <div class="stat-item"><div class="stat-label">💰 현재 가능 금액</div><div class="stat-value" id="stat-avail">-</div></div>
+      <div class="stat-item"><div class="stat-label">📅 모아야 할 기간</div><div class="stat-value" id="stat-years">-</div></div>
+      <div class="stat-item"><div class="stat-label">📈 연봉 대비 집값</div><div class="stat-value" id="stat-ratio">-</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>💸 현재 보유</span><span id="progress-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="range-labels" style="margin-top:8px"><span id="prog-left">보유액</span><span id="prog-right">목표액</span></div>
+    </div>
+    <div class="push-section">
+      <div class="push-title">📣 남친한테 전달할 메시지</div>
+      <div class="push-sub">이 결과를 남친에게 공유해서<br>열심히 벌어달라고 응원(압박)해보세요 💪</div>
+      <div class="push-message" id="push-msg"></div>
+      <div class="share-buttons">
+        <button class="btn-share btn-insta" onclick="openInstaModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          인스타 스토리로 공유
+        </button>
+        <button class="btn-share btn-kakao" onclick="shareKakao()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+          카카오톡으로 공유
+        </button>
+        <button class="btn-share btn-copy" onclick="copyMessage()">📋 메시지 복사하기</button>
+      </div>
+      <div class="tooltip">* 인스타: 이미지 저장 후 스토리에 직접 올려주세요 📸</div>
+    </div>
+
+    <!-- 유료 잠금 CTA (결제 전) -->
+    <div id="premium-locked">
+      <div class="premium-divider"><span class="premium-divider-text">✨ 더 궁금하다면?</span></div>
+      <div class="premium-section" style="margin-bottom:16px">
+        <div class="premium-header">
+          <div class="premium-badge">💎 PREMIUM</div>
+          <div class="premium-header-title">남친 재력 정밀 분석 4종</div>
+          <div class="premium-header-sub">연봉 올리면? 둘이 합치면? 실제로 얼마나 달라질까 👀</div>
+        </div>
+        <div class="premium-cards">
+          <div class="premium-card-item" onclick="openPayModal()">
+            <div class="premium-icon-wrap icon-pink">📈</div>
+            <div class="premium-card-content">
+              <div class="premium-card-title">연봉 인상률 시뮬레이션 <span class="lock-badge">🔒 잠금</span></div>
+              <div class="premium-card-desc">연봉 3%·5%·8% 올랐을 때 몇 년 단축되는지 비교</div>
+            </div>
+            <div class="premium-preview"><div class="premium-preview-num" id="preview-years">-3년</div><div class="premium-preview-label">단축 기간</div></div>
+          </div>
+          <div class="premium-card-item" style="opacity:.6;cursor:default">
+            <div class="premium-icon-wrap icon-purple">❤️</div>
+            <div class="premium-card-content">
+              <div class="premium-card-title">커플/부부 합산 계산 <span class="lock-badge" style="background:linear-gradient(135deg,#C8A8E9,#9B7BCC);color:#fff;border:none">🔒 오픈 예정</span></div>
+              <div class="premium-card-desc">파트너와 합산 소득으로 목표 달성 기간 계산</div>
+            </div>
+            <div class="premium-preview"><div class="premium-preview-num" style="font-size:1rem">준비중</div><div class="premium-preview-label">곧 오픈</div></div>
+          </div>
+          <div class="premium-card-item" onclick="openPayModal()">
+            <div class="premium-icon-wrap icon-mint">🎉</div>
+            <div class="premium-card-content">
+              <div class="premium-card-title">결혼·출산·차량 이벤트 반영 <span class="lock-badge">🔒 잠금</span></div>
+              <div class="premium-card-desc">현실적인 지출 반영 후 재계산</div>
+            </div>
+            <div class="premium-preview"><div class="premium-preview-num" style="filter:blur(5px)">현실판</div><div class="premium-preview-label">시나리오</div></div>
+          </div>
+          <div class="premium-card-item" onclick="openPayModal()">
+            <div class="premium-icon-wrap icon-peach">📄</div>
+            <div class="premium-card-content">
+              <div class="premium-card-title">PDF 리포트 다운로드 <span class="lock-badge">🔒 잠금</span></div>
+              <div class="premium-card-desc">분석 결과를 PDF로 저장·공유</div>
+            </div>
+            <div class="premium-preview"><div class="premium-preview-num" style="filter:none;font-size:1.4rem">📎</div><div class="premium-preview-label">저장 가능</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="premium-cta-wrap">
+        <div class="price-tag">⚡ 990원으로 평생 이용</div>
+        <div style="margin-bottom:16px">
+          <div class="price-main">990<span>원</span></div>
+          <div class="price-sub">평생 이용 · 기기 무관 · 14일 환불 보장</div>
+        </div>
+        <button class="btn-premium btn-premium-gold btn-pulse" onclick="openPayModal()">🔓 990원으로 남친 완전 분석하기</button>
+        <div class="premium-guarantee">
+          <span>🔒 안전 결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 유료 기능 실제 콘텐츠 (결제 후 공개) ══ -->
+    <div id="premium-content">
+      <div class="premium-divider"><span class="premium-divider-text">💎 프리미엄 분석 설정</span></div>
+
+      <!-- ① 생활비 설정 -->
+      <div class="section-wrap">
+        <div class="section-title">🛒 월 평균 생활비</div>
+        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">생활비는 자산 성장에 직접 영향을 줘요 → 차트에 바로 반영돼요</div>
+        <div class="raise-options" id="living-options">
+          <button class="raise-opt" onclick="selectLiving(this,100)">💸 절약형<br><span style="font-size:.63rem;font-weight:400">월 100만원</span></button>
+          <button class="raise-opt active" onclick="selectLiving(this,200)">🏙️ 직장인 평균<br><span style="font-size:.63rem;font-weight:400">월 200만원</span></button>
+          <button class="raise-opt" onclick="selectLiving(this,300)">✨ 여유로운<br><span style="font-size:.63rem;font-weight:400">월 300만원+</span></button>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <div style="position:relative;flex:1">
+            <input type="number" class="num-input" id="custom-living" min="50" max="1000" value="200"
+              placeholder="200" style="padding-right:52px">
+            <span class="num-input-suffix">만/월</span>
+          </div>
+          <button onclick="applyLiving()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+        </div>
+        <div id="living-selected-badge" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+          ✓ 월 200만원 적용 중
+        </div>
+      </div>
+
+      <!-- ② 투자수익률 설정 -->
+        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">저축액을 어떻게 굴리는지 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
+        <div class="invest-tabs">
+          <button class="invest-tab active" onclick="selectInvest('deposit',this)">🏦 예적금 3%</button>
+          <button class="invest-tab" onclick="selectInvest('custom',this)">📊 내 주식 수익률</button>
+        </div>
+        <div class="invest-custom-wrap" id="invest-custom-wrap">
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+              <input type="number" class="num-input" id="custom-rate" min="0" max="200" value="7"
+                placeholder="7" style="padding-right:52px">
+              <span class="num-input-suffix">% / 년</span>
+            </div>
+            <button onclick="applyCustomRate()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+          </div>
+          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">※ 0% 이상 입력 후 적용 버튼을 눌러주세요</div>
+        </div>
+        <div id="invest-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+          ✓ 예적금 3% 적용 중
+        </div>
+      </div>
+
+      <!-- ② 연봉 인상률 -->
+      <div class="section-wrap">
+        <div class="section-title">📈 연봉 인상 설정</div>
+        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">연봉 상승 방식을 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
+        <div class="raise-options">
+          <button class="raise-opt" onclick="selectRaise(this,'fixed3',3,false)">📊 연 3% 인상<br><span style="font-size:.63rem;font-weight:400">물가상승 수준</span></button>
+          <button class="raise-opt active" onclick="selectRaise(this,'promo5',3,true)">🎖️ 연 3% + 진급<br><span style="font-size:.63rem;font-weight:400">5년마다 +10%</span></button>
+          <button class="raise-opt" onclick="selectRaise(this,'high7',7,false)">🚀 연 7% 이상<br><span style="font-size:.63rem;font-weight:400">고성장 커리어</span></button>
+        </div>
+        <!-- MAX 연봉 상한 -->
+        <div style="margin-top:14px">
+          <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:8px">🔝 연봉 상한선 (MAX)</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+              <input type="number" class="num-input" id="max-salary" min="3000" max="200000" value="15000"
+                placeholder="15000" oninput="updateMaxSalaryBadge()" style="padding-right:52px">
+              <span class="num-input-suffix">만원</span>
+            </div>
+            <button onclick="applyMaxSalary()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+          </div>
+          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">
+            이 금액 이상으로는 연봉이 오르지 않아요 · 현실적인 커리어 상한선을 설정해주세요
+          </div>
+        </div>
+        <div id="raise-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+          ✓ 5년마다 진급 +10% · MAX 1.5억 적용 중
+        </div>
+      </div>
+
+      <!-- ③ 현실 시나리오 -->
+      <div class="section-wrap">
+        <div class="section-title">🎯 현실 시나리오 반영</div>
+
+        <!-- 주식담보대출 -->
+        <div style="background:linear-gradient(135deg,#FFF8DC,#FFF3CC);border-radius:16px;padding:16px;border:1.5px solid rgba(245,166,35,.3);margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.88rem;font-weight:900;color:var(--text)">📊 주식담보대출 활용</span>
+            <label class="event-toggle"><input type="checkbox" id="loan-toggle" onchange="markDirty()" checked><span class="event-slider"></span></label>
+          </div>
+          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:8px">LTV 40% 기준 · 금리 연 4% 고정<br>보유 자산의 40%를 대출 → 집값에서 차감, 이자 연 4% 반영</div>
+          <!-- 대출 계산 표시 박스 -->
+          <div id="loan-calc-box" style="display:none;background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(245,166,35,.3)">
+            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+              <span style="color:var(--text-soft)">목표 집값</span>
+              <span style="font-weight:700;color:var(--text)" id="loan-house-price">-</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+              <span style="color:var(--text-soft)">주식담보대출 (LTV 40%)</span>
+              <span style="font-weight:700;color:#3DB88A" id="loan-amount-display">-</span>
+            </div>
+            <div style="height:1px;background:rgba(245,166,35,.3);margin:6px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:.88rem">
+              <span style="font-weight:700;color:var(--text)">실제 필요 현금</span>
+              <span style="font-weight:900;color:var(--gold);font-size:1rem" id="loan-net-display">-</span>
+            </div>
+            <div style="font-size:.68rem;color:var(--text-soft);margin-top:6px;font-family:'Gowun Dodum',sans-serif" id="loan-interest-note"></div>
+          </div>
+        </div>
+
+        <!-- 이벤트 -->
+        <div class="event-list">
+          <!-- 결혼 -->
+          <div class="event-item">
+            <div class="event-item-header">
+              <div class="event-icon">💍</div>
+              <div class="event-info">
+                <div class="event-name">결혼 비용</div>
+                <div class="event-cost-note">예식장·혼수·스드메 평균 약 5,000만원 · 통계청 평균 33세</div>
+              </div>
+              <label class="event-toggle"><input type="checkbox" id="ev-wedding" onchange="toggleEventDetail('wedding',this);markDirty()" checked><span class="event-slider"></span></label>
+            </div>
+            <div class="event-detail show" id="detail-wedding">
+              <div class="event-detail-grid">
+                <div class="event-field">
+                  <label>결혼 비용</label>
+                  <div style="position:relative"><input type="number" id="cost-wedding" value="5000" oninput="markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.7rem">만원</span></div>
+                </div>
+                <div class="event-field">
+                  <label>예정 나이</label>
+                  <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="wedding-status">결혼 예정: <strong id="age-wedding">33세</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 출산 -->
+          <div class="event-item">
+            <div class="event-item-header">
+              <div class="event-icon">👶</div>
+              <div class="event-info">
+                <div class="event-name">출산·육아 비용</div>
+                <div class="event-cost-note">출생~26세까지 · 매년 3% 증가 · MAX 연 2,000만원</div>
+              </div>
+              <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this);markDirty()" checked><span class="event-slider"></span></label>
+            </div>
+            <div class="event-detail show" id="detail-baby">
+              <div class="event-detail-grid">
+                <div class="event-field">
+                  <label>초기 연 육아비 (0세)</label>
+                  <div style="position:relative"><input type="number" id="cost-baby-yr" value="500" oninput="updateBabyTotal();markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.65rem">만/년</span></div>
+                  <div style="font-size:.65rem;color:var(--text-soft);margin-top:3px">매년 3% 상승 · MAX 2,000만원 · 총 <span id="baby-total-cost">-</span></div>
+                </div>
+                <div class="event-field">
+                  <label>예정 나이</label>
+                  <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="baby-status">출산 예정: <strong id="age-baby">35세</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 차량 -->
+          <div class="event-item">
+            <div class="event-item-header">
+              <div class="event-icon">🚗</div>
+              <div class="event-info">
+                <div class="event-name">차량 구매 + 유지비</div>
+                <div class="event-cost-note" id="car-cost-note">국산차 기준 약 3,500만원 · 평균 30세</div>
+              </div>
+              <label class="event-toggle"><input type="checkbox" id="ev-car" onchange="toggleEventDetail('car',this);markDirty()" checked><span class="event-slider"></span></label>
+            </div>
+            <div class="event-detail show" id="detail-car">
+              <div class="car-options">
+                <button class="car-opt active" onclick="selectCar(this,'domestic',3500)">🇰🇷 국산차<br><span style="font-size:.65rem;font-weight:400">~3,500만</span></button>
+                <button class="car-opt" onclick="selectCar(this,'foreign',8000)">🌍 외제차<br><span style="font-size:.65rem;font-weight:400">~8,000만</span></button>
+                <button class="car-opt" onclick="selectCar(this,'super',30000)">🏎️ 슈퍼카<br><span style="font-size:.65rem;font-weight:400">3억+</span></button>
+              </div>
+              <div style="margin-top:10px;position:relative">
+                <input type="number" id="cost-car" value="3500" oninput="updateCarMaintenance();markDirty()" class="ev-input" placeholder="직접 입력">
+                <span class="num-input-suffix" style="font-size:.7rem">만원</span>
+              </div>
+              <div style="font-size:.65rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:4px">구매 예정 나이: <strong id="age-car">30세</strong></div>
+
+              <!-- 유지비 표기 -->
+              <div id="car-maintenance-box" style="margin-top:12px;background:linear-gradient(135deg,#FFF8F0,#FFF0E8);border-radius:12px;padding:12px;border:1px solid rgba(255,153,102,.3)">
+                <div style="font-size:.72rem;font-weight:900;color:#CC6600;margin-bottom:8px">🔧 월 유지비 (차량 보유 시 매월 발생)</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.7rem;font-family:'Gowun Dodum',sans-serif">
+                  <div style="color:var(--text-soft)">연료비</div>        <div id="car-fuel" style="font-weight:700;color:var(--text);text-align:right">월 15만원</div>
+                  <div style="color:var(--text-soft)">보험료</div>        <div id="car-insure" style="font-weight:700;color:var(--text);text-align:right">월 10만원</div>
+                  <div style="color:var(--text-soft)">정비·기타</div>     <div id="car-repair" style="font-weight:700;color:var(--text);text-align:right">월 5만원</div>
+                  <div style="color:var(--text-soft);border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">감가상각</div>
+                  <div id="car-depreciation" style="font-weight:700;color:#CC6600;text-align:right;border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">월 약 26만원</div>
+                </div>
+                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,153,102,.2);display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:.72rem;font-weight:900;color:#CC6600">총 월 유지비</span>
+                  <span id="car-total-monthly" style="font-size:.9rem;font-weight:900;color:#CC6600">월 약 56만원</span>
+                </div>
+                <div id="car-depreciation-note" style="font-size:.62rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:6px;line-height:1.5">
+                  감가: 연 10% · 잔존가치 하한 10% · 약 22년 후 수렴
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이벤트 합산 결과 -->
+        <div class="event-result" id="event-result">
+          <div class="event-result-row"><span class="event-result-label">기본 목표 집값</span><span class="event-result-val" id="er-base">-</span></div>
+          <div class="event-result-row"><span class="event-result-label">주식담보대출 차감</span><span class="event-result-val" style="color:#3DB88A" id="er-loan">-</span></div>
+          <div class="event-result-row"><span class="event-result-label">이벤트 추가 비용</span><span class="event-result-val diff" id="er-extra">+0원</span></div>
+          <div class="event-result-row" style="border-top:1px solid rgba(255,107,157,.2);margin-top:6px;padding-top:10px">
+            <span class="event-result-label" style="font-weight:700;color:var(--text)">실제 필요 금액</span>
+            <span class="event-result-val" style="font-size:1rem;color:var(--pink)" id="er-total">-</span>
+          </div>
+          <div class="event-result-row"><span class="event-result-label">현실 반영 후 기간</span><span class="event-result-val diff" id="er-years">-</span></div>
+        </div>
+      </div>
+
+      <!-- ④ 자산 흐름 차트 + PDF -->
+      <div class="section-wrap">
+        <div class="section-title">📊 나이별 자산 흐름 차트</div>
+        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:12px">수입(급여+투자수익) - 지출(생활비+이벤트) = 순자산 변화 · 이벤트 발생 연도에 자산 감소 반영</div>
+        <div style="background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:.82rem;font-weight:900;color:var(--text)">💰 자산 성장 시뮬레이션</span>
+            <div style="display:flex;gap:10px;font-size:.65rem;color:var(--text-soft)">
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;background:#FF6B9D;display:inline-block;border-radius:1px"></span>자산</span>
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;background:#3DB88A;display:inline-block;border-radius:1px"></span>목표</span>
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;background:#FF9966;display:inline-block;border-radius:1px;border-top:2px dashed #FF9966"></span>월지출</span>
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;background:#6CB4E4;display:inline-block;border-radius:1px;border-top:2px dashed #6CB4E4"></span>월수익</span>
+            </div>
+          </div>
+          <canvas id="asset-chart" height="240"></canvas>
+        </div>
+        <div class="pdf-preview" id="pdf-preview">
+          <div class="pdf-preview-header">
+            <div class="pdf-preview-logo">🏠</div>
+            <div>
+              <div class="pdf-preview-title">남친 재력 분석 리포트</div>
+              <div class="pdf-preview-date" id="pdf-date">-</div>
+            </div>
+          </div>
+          <div id="pdf-rows"></div>
+        </div>
+        <button class="btn-pdf" onclick="downloadPDF()">📥 PDF 저장하기</button>
+        <button class="btn-share btn-copy" style="width:100%" onclick="shareResultUrl()">🔗 결과 링크 공유하기</button>
+      </div>
+
+      <!-- ⑤ 커플 합산 (오픈 예정) -->
+      <div class="section-wrap" style="opacity:.7;pointer-events:none;user-select:none">
+        <div class="section-title">❤️ 커플/부부 합산 계산
+          <span style="margin-left:8px;font-size:.68rem;font-weight:700;background:linear-gradient(135deg,#C8A8E9,#9B7BCC);color:#fff;padding:3px 10px;border-radius:99px;letter-spacing:.3px">🔒 오픈 예정</span>
+        </div>
+        <div style="text-align:center;padding:32px 20px;background:linear-gradient(135deg,#F8F0FF,#EDE6FF);border-radius:20px;border:2px dashed rgba(200,168,233,.4)">
+          <div style="font-size:2rem;margin-bottom:10px">💑</div>
+          <div style="font-size:.9rem;font-weight:900;color:#7B4FBE;margin-bottom:6px">커플 합산 계산</div>
+          <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6">파트너와 합산 소득으로 집 살 수 있는지<br>계산하는 기능이 곧 오픈돼요! 💜<br><br>업데이트를 기다려주세요 🙏</div>
+        </div>
+      </div>
+
+      <!-- 커플 합산, 플로팅 버튼으로 대체됨 -->
+
+    <p class="disclaimer">
+      ※ 이 계산기는 재미 목적으로 제작되었으며<br>
+      실제 부동산 시세는 지역·시기마다 다를 수 있어요 🏠<br>
+      진짜 집 살 땐 전문가와 상담하세요!
+    </p>
+    <div style="height:100px"></div><!-- 플로팅 버튼 여백 -->
+  </div>
+</div>
+
+<!-- 플로팅 탭 버튼 -->
+<div class="floating-wrap" id="floating-wrap">
+  <div class="floating-tab-bar">
+    <button class="floating-tab floating-tab-basic" id="ftab-basic"
+      onclick="floatGoBasic()">
+      <span class="floating-tab-icon">📋</span>기본설정
+    </button>
+    <button class="floating-tab floating-tab-premium" id="ftab-premium"
+      onclick="floatGoPremium()">
+      <span class="floating-tab-icon" id="ftab-premium-icon">💎</span>
+      <span id="ftab-premium-label">프리미엄설정</span>
+    </button>
+    <button class="floating-tab floating-tab-analyze" id="ftab-analyze"
+      onclick="floatAnalyze()">
+      <span class="floating-tab-icon">🔮</span>분석하기
+    </button>
+  </div>
+</div>
+
+<!-- 인스타 모달 -->
+<div class="modal-overlay" id="insta-modal" onclick="closeModalByBg(event,'insta-modal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📸 인스타 스토리 공유</h3>
+    <p>이미지를 저장한 후 인스타그램 스토리에 올려보세요! ✨</p>
+    <div id="share-canvas-wrap"><canvas id="share-canvas" width="540" height="960"></canvas></div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-primary" onclick="downloadShareImage()">💾 이미지 저장</button>
+      <button class="modal-btn" style="background:#F5F0F8;color:var(--text-soft)" onclick="closeModalById('insta-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 결제 모달 -->
+<div class="modal-overlay" id="pay-modal" onclick="closeModalByBg(event,'pay-modal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:4px">💎 프리미엄 잠금 해제</h3>
+    <p style="margin-bottom:16px">990원 한 번으로 평생 사용! 기기 바꿔도 유지돼요.</p>
+    <div class="pay-features">
+      <div class="pay-feature-item">🛒 생활비 설정 + 월별 CF 시뮬레이션</div>
+      <div class="pay-feature-item">📈 연봉 진급 + 투자수익률 시나리오</div>
+      <div class="pay-feature-item">🎯 결혼·출산·차량·대출 현실 반영</div>
+      <div class="pay-feature-item">📊 나이별 자산 차트 + PDF 리포트</div>
+      <div class="pay-feature-item" style="opacity:.6">❤️ 커플 합산 계산 <span style="font-size:.68rem;color:#9B7BCC;font-weight:700">— 오픈 예정</span></div>
+    </div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:8px">☕ 커피 한 잔보다 저렴한 평생 이용권</div>
+      <div class="price-main">990<span>원</span></div>
+      <div class="price-sub">평생 이용 · 14일 전액 환불 보장</div>
+    </div>
+    <button class="btn-premium btn-premium-gold" style="margin-bottom:0" onclick="unlockPremium()">🔓 990원으로 바로 시작하기</button>
+    <button class="modal-btn-secondary" onclick="closeModalById('pay-modal')">나중에 할게요</button>
+    <div class="premium-guarantee" style="margin-top:16px">
+      <span>🔒 토스페이먼츠 안전결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
+    </div>
+  </div>
+</div>
+
+<!-- 커플 링크 공유 모달 -->
+<div class="modal-overlay" id="couple-modal" onclick="closeModalByBg(event,'couple-modal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>💑 파트너에게 링크 공유하기</h3>
+    <p>아래 링크를 복사해서 파트너에게 보내세요.<br>파트너가 입력하면 자동으로 합산 결과가 업데이트돼요!</p>
+    <div class="link-box" id="couple-link-box">링크 생성 중...</div>
+    <button class="link-copy-btn" onclick="copyCoupleLink()">📋 링크 복사하기</button>
+    <button class="btn-share btn-kakao" style="width:100%;border-radius:14px" onclick="shareCoupleKakao()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+      카카오로 보내기
+    </button>
+    <button class="modal-btn-secondary" onclick="closeModalById('couple-modal')" style="margin-top:10px">닫기</button>
+  </div>
+</div>
+
+<canvas id="hidden-canvas" width="540" height="960" style="display:none"></canvas>
+
+<script>
+// roundRect 폴리필 (구형 브라우저 대응)
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);
+    this.quadraticCurveTo(x+w,y,x+w,y+r);this.lineTo(x+w,y+h-r);
+    this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);this.lineTo(x+r,y+h);
+    this.quadraticCurveTo(x,y+h,x,y+h-r);this.lineTo(x,y+r);
+    this.quadraticCurveTo(x,y,x+r,y);this.closePath();
+  };
+}
+// ━━ 상수 & 상태 ━━
+const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
+const MY_ASSETS={none:0,small:8000,mid:25000,big:40000};
+const EVENT_AGES={wedding:33,baby:35,car:30};
+const LS_MY='bfhc_my_data',LS_PARTNER='bfhc_partner_data',LS_PREMIUM='bfhc_premium';
+const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
+let calcResult={},isPremium=localStorage.getItem(LS_PREMIUM)==='true',chartInstance=null;
+let _premiumDirty=false;
+let _floatingObserver=null;
+let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
+// 연봉 인상 상태 (init() 전에 선언)
+const raiseState={mode:'promo5',rate:3,promo:true,maxSalary:15000};
+// 생활비 (init() 전에 선언)
+const LIVING_RATIO=0.50;
+let monthlyLivingCost=200;
+// 차량 유지비 상수 (만원/월) — init() 전에 선언해야 TDZ 에러 없음
+const CAR_MAINTENANCE={
+  domestic:{fuel:15,insure:10,repair:5},
+  foreign: {fuel:25,insure:20,repair:15},
+  super:   {fuel:50,insure:50,repair:50},
+};
+let carType='domestic';
+const fmt=v=>{
+  if(v==null||isNaN(v))return'-';
+  return v>=10000?(v/10000).toFixed(1)+'억원':Math.round(v).toLocaleString()+'만원';
+};
+
+// ━━ 초기화 ━━
+(function init(){
+  const params=new URLSearchParams(location.search),encoded=params.get('p');
+  if(encoded){try{localStorage.setItem(LS_PARTNER,JSON.stringify(JSON.parse(atob(encoded))));document.getElementById('partner-banner').style.display='flex';window.history.replaceState({},'',location.pathname)}catch(e){}}
+  const raw=localStorage.getItem(LS_MY);
+  if(raw){try{const my=JSON.parse(raw);
+    if(my.salary){const s=document.getElementById('salary');s.value=my.salary;updateSalary(s)}
+    if(my.asset!=null){const a=document.getElementById('asset');a.value=my.asset;updateRange(a,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'))}
+    if(my.region)restoreToggle('region-group',my.region);if(my.size)restoreToggle('size-group',my.size);if(my.myAsset)restoreToggle('my-group',my.myAsset);
+    if(my.age){document.getElementById('age').value=my.age;onAgeInput(document.getElementById('age'));}
+  }catch(e){}}
+  updateEventAgeLabels();
+  updateBabyTotal();
+  updateCarMaintenance();
+  if(isPremium) showPremiumContent();
+  updatePremiumTabLabel();
+  restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
+})();
+
+function restoreToggle(groupId,key){document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(b=>{b.classList.remove('active');if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${key}'`)){b.classList.add('active');if(groupId==='region-group')state.region=key;else if(groupId==='size-group')state.size=key;else if(groupId==='my-group')state.myAsset=key}})}
+
+// ━━ 나이 처리 ━━
+function onAgeInput(el){
+  const age=parseInt(el.value)||0,warn=document.getElementById('age-warning');
+  if(age<20){warn.style.display='block';warn.textContent='⚠️ 20세 미만은 입력이 어려워요! 20세 이상으로 입력해주세요 😊'}
+  else if(age>55){warn.style.display='block';warn.textContent='ℹ️ 55세 이상은 개인 상황이 매우 달라요. 계산은 그대로 진행하지만 전문가 상담을 권장해요!'}
+  else warn.style.display='none';
+  updateEventAgeLabels();
+  markDirty();
+}
+function getAge(){return Math.max(20,Math.min(70,parseInt(document.getElementById('age').value)||30))}
+function updateEventAgeLabels(){
+  const age=getAge();
+  const wA=age>=EVENT_AGES.wedding?age+1:EVENT_AGES.wedding;
+  const bA=age>=EVENT_AGES.baby?age+1:EVENT_AGES.baby;
+  const cA=age>=EVENT_AGES.car?age:EVENT_AGES.car;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('age-wedding',wA+'세');set('age-baby',bA+'세');set('age-car',cA+'세');
+  const ws=document.getElementById('wedding-status');
+  if(ws)ws.innerHTML=age>=EVENT_AGES.wedding?'이미 지난 이벤트 — 비용만 즉시 반영':'결혼 예정: <strong id="age-wedding">'+wA+'세</strong>';
+  const bs=document.getElementById('baby-status');
+  if(bs)bs.innerHTML=age>=EVENT_AGES.baby?'이미 지난 이벤트 — 비용만 즉시 반영':'출산 예정: <strong id="age-baby">'+bA+'세</strong>';
+  updateBabyTotal();
+}
+function calcBabyByYear(startCost){
+  // 초기 연 육아비에서 매년 3% 상승, MAX 2000만원, 26년 지속
+  const BABY_YEARS = 26;
+  const BABY_GROW  = 0.03;
+  const BABY_MAX   = 2000; // 만원/년
+  const result = {};
+  let cost = startCost;
+  let total = 0;
+  for(let i = 0; i < BABY_YEARS; i++){
+    const c = Math.min(Math.round(cost), BABY_MAX);
+    result[i] = c;
+    total += c;
+    cost *= (1 + BABY_GROW);
+  }
+  return { byOffset: result, total };
+}
+function updateBabyTotal(){
+  const startCost = parseInt(document.getElementById('cost-baby-yr')?.value)||500;
+  const { total } = calcBabyByYear(startCost);
+  const el = document.getElementById('baby-total-cost');
+  if(el) el.textContent = fmt(total);
+}
+
+// ━━ UI ━━
+function updateRange(input,labelId,formatter){
+  const v=Number(input.value),pct=((v-Number(input.min))/(Number(input.max)-Number(input.min))*100).toFixed(1)+'%';
+  input.style.setProperty('--pct',pct);document.getElementById(labelId).textContent=formatter(v);
+}
+function selectToggle(groupId,el,key){
+  _analyzeNeedsRefresh = true;
+  document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(groupId==='region-group')state.region=key;else if(groupId==='size-group')state.size=key;else if(groupId==='my-group')state.myAsset=key;
+}
+function selectInvest(mode,el){
+  document.querySelectorAll('.invest-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  state.investMode=mode;document.getElementById('invest-custom-wrap').classList.toggle('show',mode==='custom');
+  // 뱃지 업데이트
+  const badge=document.getElementById('invest-selected-badge');
+  if(badge){
+    const rate=getInvestRate();
+    badge.textContent=`✓ ${mode==='deposit'?'예적금 3%':'주식 '+rate+'%'} 적용 중`;
+  }
+  markDirty();
+}
+// calcCarMonthly: CAR_MAINTENANCE는 상단에 이미 선언됨
+function calcCarMonthly(carPrice){
+  // 유지비 기준: 차량가액 대비 비례 (기준 대비 선형 보간)
+  const basePrice = { domestic:3500, foreign:8000, super:30000 };
+  const base = CAR_MAINTENANCE[carType];
+  const ratio = Math.max(0.5, Math.min(3, carPrice / basePrice[carType]));
+  const fuel   = Math.round(base.fuel   * Math.sqrt(ratio)); // 연료는 sqrt 증가 (비선형)
+  const insure = Math.round(base.insure * ratio);
+  const repair = Math.round(base.repair * Math.sqrt(ratio));
+
+  // 감가상각: 연 10%, 잔존가치 하한 차량가액의 10%
+  // 1년차 감가 = carPrice * 10% / 12 (월)
+  const annualDeprec = carPrice * 0.10;
+  const floorValue   = carPrice * 0.10; // 잔존가치 하한
+  // 평균 감가 (단순 1차년도 기준으로 표기)
+  const deprecMonth = Math.round(annualDeprec / 12);
+
+  const total = fuel + insure + repair + deprecMonth;
+  return { fuel, insure, repair, deprecMonth, total };
+}
+
+function updateCarMaintenance(){
+  const carPrice = parseInt(document.getElementById('cost-car')?.value) || 3500;
+  const { fuel, insure, repair, deprecMonth, total } = calcCarMonthly(carPrice);
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('car-fuel',   `월 ${fuel}만원`);
+  set('car-insure', `월 ${insure}만원`);
+  set('car-repair', `월 ${repair}만원`);
+  set('car-depreciation', `월 약 ${deprecMonth}만원`);
+  set('car-total-monthly', `월 약 ${total}만원`);
+  const floorPrice = Math.round(carPrice * 0.10);
+  const yearsToFloor = Math.ceil(Math.log(0.1) / Math.log(0.9));
+  const noteEl = document.getElementById('car-depreciation-note');
+  if(noteEl) noteEl.textContent = `감가: 연 10% · 잔존가치 하한 ${(carPrice/10000).toFixed(1) === '0.0' ? carPrice : (carPrice>=10000?(carPrice/10000).toFixed(1)+'억':carPrice+'만')}원의 10%=${floorPrice>=10000?(floorPrice/10000).toFixed(1)+'억':floorPrice+'만'}원 · 약 ${yearsToFloor}년 후 수렴`;
+}
+
+function getCarMonthlyMaintenance(){
+  if(!document.getElementById('ev-car')?.checked) return 0;
+  const carPrice = parseInt(document.getElementById('cost-car')?.value) || 3500;
+  return calcCarMonthly(carPrice).total; // 구매 후 매월 발생
+}
+
+function selectCar(el, type, cost){
+  document.querySelectorAll('.car-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  carType = type;
+  document.getElementById('cost-car').value = cost;
+  const notes = {
+    domestic:`국산차 기준 약 ${(cost/10000).toFixed(1)}억 · 평균 30세`,
+    foreign: `외제차 기준 약 ${(cost/10000).toFixed(1)}억 · 평균 30세`,
+    super:   `슈퍼카 ${cost>=10000?(cost/10000).toFixed(0)+'억+':'3억+'} · 평균 30세`
+  };
+  document.getElementById('car-cost-note').textContent = notes[type];
+  updateCarMaintenance();
+  markDirty();
+}
+function toggleEventDetail(name,cb){const d=document.getElementById('detail-'+name);if(d)d.classList.toggle('show',cb.checked)}
+function getInvestRate(){return state.investMode==='deposit'?3:Math.max(0,parseFloat(document.getElementById('custom-rate')?.value)||7)}
+function applyCustomRate(){
+  const rate=Math.max(0,parseFloat(document.getElementById('custom-rate')?.value)||7);
+  document.getElementById('custom-rate').value=rate;
+  const badge=document.getElementById('invest-selected-badge');
+  if(badge)badge.textContent=`✓ 주식 ${rate}% 적용 중`;
+  markDirty();
+}
+// 연봉 인상 모드 상태
+
+function getMaxNetSalary(){
+  // 세전 MAX → 세후 연 실수령 환산
+  const gross = raiseState.maxSalary;
+  return calcTakehome(gross) * 12;
+}
+
+function updateMaxSalaryBadge(){
+  const v = parseInt(document.getElementById('max-salary')?.value)||15000;
+  const badge = document.getElementById('raise-selected-badge');
+  if(badge){
+    const labels={fixed3:'연 3% 인상',promo5:'연 3% + 5년마다 진급',high7:'연 7% 이상 고성장'};
+    const maxLabel = v >= 10000 ? (v/10000).toFixed(1)+'억' : v.toLocaleString()+'만';
+    badge.textContent=`✓ ${labels[raiseState.mode]||''} · MAX ${maxLabel}원`;
+  }
+}
+
+function applyMaxSalary(){
+  const v = Math.max(3000, parseInt(document.getElementById('max-salary')?.value)||15000);
+  document.getElementById('max-salary').value = v;
+  raiseState.maxSalary = v;
+  updateMaxSalaryBadge();
+  markDirty();
+}
+
+function selectRaise(el,mode,rate,promo){
+  document.querySelectorAll('.raise-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  raiseState.mode=mode;raiseState.rate=rate;raiseState.promo=promo;
+  updateMaxSalaryBadge();
+  markDirty();
+}
+// 세전→실수령 계산
+function calcTakehome(gross){
+  let rate;
+  if(gross<=3000)rate=0.88;else if(gross<=4000)rate=0.855;else if(gross<=5000)rate=0.835;
+  else if(gross<=6000)rate=0.82;else if(gross<=7000)rate=0.805;else if(gross<=8000)rate=0.79;
+  else if(gross<=10000)rate=0.775;else if(gross<=12000)rate=0.755;else if(gross<=15000)rate=0.73;else rate=0.70;
+  return Math.round(gross*rate/12);
+}
+function updateSalary(input){
+  _analyzeNeedsRefresh = true;
+  updateRange(input,'salary-val',v=>(v/10000>=1?(v/10000).toFixed(1)+'억':''+v.toLocaleString()+'만')+'원');
+  const el=document.getElementById('takehome-val');
+  if(el)el.textContent=calcTakehome(Number(input.value)).toLocaleString()+'만원';
+}
+
+// ━━ 시뮬레이션 엔진 (5년 진급 +10%, 복리 투자) ━━
+// ━━ CF 시뮬레이션 엔진 (엑셀 인생CF분석 로직 기반) ━━
+// 공통: 연도별 현금흐름 계산
+// income  = 세후 연봉 (netSalary)
+// expense = 생활비 비율 적용 (엑셀: 급여의 50%, 여기선 netSalary * livingRatio)
+// cashflow = income - expense - 이자비용 - 이벤트비용
+// asset   = 전년자산 * (1+r) + cashflow
+
+
+function selectLiving(el, cost){
+  document.querySelectorAll('#living-options .raise-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  monthlyLivingCost = cost;
+  document.getElementById('custom-living').value = cost;
+  updateLivingBadge();
+  markDirty();
+}
+function applyLiving(){
+  const v = Math.max(50, parseInt(document.getElementById('custom-living')?.value)||200);
+  monthlyLivingCost = v;
+  document.getElementById('custom-living').value = v;
+  // 버튼 active 해제
+  document.querySelectorAll('#living-options .raise-opt').forEach(o=>o.classList.remove('active'));
+  updateLivingBadge();
+  markDirty();
+}
+function updateLivingBadge(){
+  const b = document.getElementById('living-selected-badge');
+  if(b) b.textContent = `✓ 월 ${monthlyLivingCost.toLocaleString()}만원 적용 중`;
+}
+
+// ━━ 월별 CF 시뮬레이션 ━━
+// 월 단위로 계산, 이벤트는 해당 연도 1월(month=0)에 발생
+// extraByYear: { yr: 만원 } 형태
+// 반환: [{month, asset, label?}] — label은 이벤트 발생월에 설정
+
+function simulateMonthly({
+  netSalary,
+  initAsset,
+  targetPrice,
+  investRate = 0,
+  extraByYear = {},       // 일시금 이벤트 (자산 차감)
+  monthlyBabyByYr = {},   // 육아비 월 균등 (netCashflow 차감)
+  loanAmt = 0,
+  loanRate = 0,
+  annualRaisePct = 0,
+  promoRaise = false,
+  promoBasePct = 0,
+  maxNetSalary = Infinity,
+  carStartYr = Infinity,
+  carMonthlyMaint = 0,
+  maxMonths = 360,
+}){
+  const monthlyR       = Math.pow(1 + investRate / 100, 1/12) - 1;
+  // 원리금균등상환 월납부액 (이자+원금)
+  const r30 = loanAmt > 0 ? (loanRate/100/12) : 0;
+  const n30 = 30 * 12;
+  const monthlyLoanPayment = (loanAmt > 0 && r30 > 0)
+    ? Math.round(loanAmt * r30 * Math.pow(1+r30,n30) / (Math.pow(1+r30,n30)-1))
+    : 0;
+  // targetPrice = effectiveTarget (loanAmt 이미 차감됨, 여기서 다시 차감하지 않음)
+  const effectiveTarget = targetPrice;
+
+  let asset            = initAsset;
+  let currentNetSalary = netSalary;
+  let reachedMonth     = -1;
+  let maxSalaryMonth   = -1; // 최고연봉 달성 월
+  const results        = [];
+
+  // 시작 시점 달성 체크
+  if(asset >= effectiveTarget) reachedMonth = 0;
+
+  for(let m = 0; m < maxMonths; m++){
+    const yr  = Math.floor(m / 12);
+    const mon = m % 12;
+
+    // 연봉 인상: 매년 1월(m>0)에 적용
+    if(mon === 0 && m > 0){
+      if(promoRaise){
+        currentNetSalary *= (1 + promoBasePct / 100);
+        if(yr % 5 === 0) currentNetSalary *= 1.10;
+      } else {
+        currentNetSalary *= (1 + annualRaisePct / 100);
+      }
+      // MAX 상한 적용 + 달성 시점 기록
+      if(currentNetSalary > maxNetSalary){
+        if(maxSalaryMonth < 0) maxSalaryMonth = m; // 최초 달성 월 기록
+        currentNetSalary = maxNetSalary;
+      }
+    }
+
+    // 월 수입 / 지출 계산
+    const monthlyIncome  = currentNetSalary / 12;
+    const livingExpense  = monthlyLivingCost;
+    const carMaint       = yr >= carStartYr ? carMonthlyMaint : 0;
+    const babyMonthly    = monthlyBabyByYr[yr] || 0; // 육아비 월 균등
+    const netCashflow    = monthlyIncome - livingExpense - monthlyLoanPayment - carMaint - babyMonthly;
+
+    // 일시금 이벤트: 해당 연도 1월에 자산 차감 (netCashflow와 별도)
+    const eventCost = (mon === 0 && extraByYear[yr]) ? extraByYear[yr] : 0;
+
+    // 자산 갱신
+    asset = asset * (1 + monthlyR) + netCashflow - eventCost;
+
+    const evLabels = [];
+    if(eventCost > 0 && extraByYear._labels && extraByYear._labels[yr]){
+      evLabels.push(...extraByYear._labels[yr].filter(Boolean));
+    }
+
+    results.push({ month: m, year: yr, asset: Math.round(asset), salary: Math.round(currentNetSalary), label: evLabels.length > 0 ? evLabels : null });
+
+    // 목표 달성 체크 (최초 1회만) → 집 구매! 자산을 0으로 리셋
+    if(reachedMonth < 0 && asset >= effectiveTarget){
+      reachedMonth = m + 1;
+      asset = 0; // 집 구매 = 자산 전액 사용 (집값 지출)
+      results.push({ month: m, year: yr, asset: 0, label: ['🏠집구매'], housePurchase: true });
+      if(m >= 240) break;
+      continue; // 이미 push했으므로 아래 push 스킵
+    }
+  }
+
+  return { results, reachedMonth, effectiveTarget, maxSalaryMonth };
+}
+
+// calcAll이 extraByYear에 _labels 메타를 추가하도록 getEventData 래핑
+// oneTimeByYear: 결혼/차량 일시금 (자산 차감만)
+// monthlyBabyByYr: 육아비 연간→월 균등 분할 (매월 지출에 반영)
+function getEventDataWithLabels(){
+  const age = getAge();
+  const extraByYear   = {}; // 일시금 이벤트 (자산 차감)
+  const monthlyBabyByYr = {}; // 육아비 월 균등 (yr => 만원/월)
+  const labels = {};
+
+  const addAt = (yr, cost, label) => {
+    extraByYear[yr] = (extraByYear[yr] || 0) + cost;
+    if(!labels[yr]) labels[yr] = [];
+    if(label) labels[yr].push(label);
+  };
+
+  // 결혼 — 일시금 (자산 차감)
+  if(document.getElementById('ev-wedding')?.checked){
+    const c  = parseInt(document.getElementById('cost-wedding')?.value) || 5000;
+    const ea = age >= EVENT_AGES.wedding ? 0 : EVENT_AGES.wedding - age;
+    addAt(ea, c, '💍결혼');
+  }
+
+  // 출산·육아 — 월 균등 분할 (netCashflow 차감)
+  if(document.getElementById('ev-baby')?.checked){
+    const startCost = parseInt(document.getElementById('cost-baby-yr')?.value) || 500;
+    const startYr   = age >= EVENT_AGES.baby ? 0 : EVENT_AGES.baby - age;
+    const { byOffset } = calcBabyByYear(startCost);
+    Object.entries(byOffset).forEach(([offset, annualCost]) => {
+      const yr = startYr + Number(offset);
+      const monthly = Math.round(annualCost / 12); // 연간→월 균등
+      monthlyBabyByYr[yr] = (monthlyBabyByYr[yr] || 0) + monthly;
+    });
+    // 출산 라벨은 시작 연도에 (자산 차감 없이 라벨만)
+    if(!labels[startYr]) labels[startYr] = [];
+    labels[startYr].push('👶출산');
+  }
+
+  // 차량 구매 — 일시금 (자산 차감)
+  if(document.getElementById('ev-car')?.checked){
+    const c  = parseInt(document.getElementById('cost-car')?.value) || 3500;
+    const ea = EVENT_AGES.car <= age ? 0 : EVENT_AGES.car - age;
+    addAt(ea, c, '🚗차량');
+  }
+
+  extraByYear._labels = labels;
+  const totalExtra = Object.entries(extraByYear)
+    .filter(([k]) => k !== '_labels')
+    .reduce((s, [,v]) => s + v, 0);
+
+  // 육아 총액도 포함한 전체 이벤트 비용 (리포트용)
+  const babyTotal26 = document.getElementById('ev-baby')?.checked
+    ? Object.values(monthlyBabyByYr).reduce((s,v) => s + v*12, 0) : 0;
+
+  return { extraByYear, monthlyBabyByYr, totalExtra, totalEventCost: totalExtra + babyTotal26 };
+}
+
+// 기존 getEventData는 하위 호환으로 유지
+function getEventData(){
+  const { extraByYear, totalExtra } = getEventDataWithLabels();
+  const clean = {...extraByYear};
+  delete clean._labels;
+  return { extraByYear: clean, totalExtra };
+}
+
+// 연 단위 yearsToTarget (블러 프리뷰 숫자용)
+function simulateYearly(netSalary, initAsset, targetPrice, investRate, extraByYear, loanAmt, loanRate){
+  const ar = (raiseState.rate || 0) / 100;
+  const {results, reachedMonth} = simulateMonthly({
+    netSalary, initAsset, targetPrice, investRate,
+    extraByYear, loanAmt, loanRate,
+    annualRaisePct: ar,
+    promoRaise: raiseState.promo,
+    promoBasePct: ar,
+  });
+  return results.filter(r => r.month % 12 === 0); // 연도별 샘플만 반환
+}
+
+function simulateYearlyBase(netSalary, initAsset, targetPrice){
+  const {results} = simulateMonthly({
+    netSalary, initAsset, targetPrice,
+    investRate: 0, annualRaisePct: 0, promoRaise: false,
+  });
+  return results.filter(r => r.month % 12 === 0);
+}
+
+function yearsToTarget(salary, initAsset, targetPrice, investRate, withRaise){
+  return yearsToTargetFull(salary, initAsset, targetPrice, investRate, withRaise, 0);
+}
+function yearsToTargetFull(salary, initAsset, targetPrice, investRate, withRaise, annualRatePct){
+  const {reachedMonth} = simulateMonthly({
+    netSalary: salary, initAsset, targetPrice, investRate,
+    annualRaisePct: annualRatePct, promoRaise: withRaise,
+    promoBasePct: annualRatePct,
+  });
+  return reachedMonth >= 0 ? Math.ceil(reachedMonth / 12) : 61;
+}
+
+// ━━ 메인 계산 ━━
+function calculate(){
+  const age=getAge(),grossSalary=Number(document.getElementById('salary').value),asset=Number(document.getElementById('asset').value);
+  const myAsset=MY_ASSETS[state.myAsset],targetPrice=PRICES[state.region][state.size];
+  const totalAsset=asset+myAsset;
+  // 세후 연 실수령 = 월 실수령 × 12
+  const monthlyTakehome=calcTakehome(grossSalary);
+  const netSalary=monthlyTakehome*12; // 세후 연 실수령
+  const annualSavings = netSalary - monthlyLivingCost * 12; // 연 실수령 - 연 생활비
+  const needed=targetPrice-totalAsset,yearsNeeded=needed>0?Math.ceil(needed/annualSavings):0;
+  const ratio=(targetPrice/grossSalary).toFixed(1),pct=Math.min(Math.round(totalAsset/targetPrice*100),100);
+  const salary=netSalary; // 이하 계산은 세후 기준
+  let emoji,verdict,sub,color;
+  if(yearsNeeded<=0){emoji='🎉';verdict='이미 살 수 있어요!';sub='현재 자산으로 바로 구매 가능! 남친 완벽해 💍\n근데 진짜야...? 한번 더 확인해봐 🤔';color=['#43e97b','#38f9d7']}
+  else if(yearsNeeded<=3){emoji='🥰';verdict=`${yearsNeeded}년이면 OK!`;sub='조금만 더 열심히 하면 돼요!\n남친한테 응원의 메시지를 보내줘요 💌';color=['#f093fb','#f5576c']}
+  else if(yearsNeeded<=7){emoji='😬';verdict=`${yearsNeeded}년 걸려요...`;sub='꽤 오래 걸리네요. 남친 연봉 올려야겠는데?\n같이 투자 공부도 해보면 어떨까요 📈';color=['#4facfe','#00f2fe']}
+  else if(yearsNeeded<=15){emoji='😰';verdict=`${yearsNeeded}년...? 😱`;sub='현실이 좀 차갑네요 🧊\n남친한테 긴급 연봉 협상 요청을 보낼 시간이에요!';color=['#fa709a','#fee140']}
+  else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n부동산보다 남친 업그레이드가 빠를 수도...? 농담이에요 💕';color=['#a18cd1','#fbc2eb']}
+  calcResult={emoji,verdict,sub,targetPrice,totalAsset,yearsNeeded,ratio,pct,color,salary,annualSavings,asset,myAsset,region:state.region,size:state.size,myAssetKey:state.myAsset,age,grossSalary,netSalary,monthlyTakehome};
+  localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age}));
+  // 무료 결과
+  document.getElementById('result-hero').style.background=`linear-gradient(135deg,${color[0]} 0%,${color[1]} 100%)`;
+  document.getElementById('result-emoji').textContent=emoji;document.getElementById('result-verdict').textContent=verdict;document.getElementById('result-sub').textContent=sub;
+  document.getElementById('stat-price').textContent=fmt(targetPrice);
+  document.getElementById('stat-avail').textContent=fmt(totalAsset);document.getElementById('stat-avail').className='stat-value '+(totalAsset>=targetPrice?'good':'bad');
+  document.getElementById('stat-years').textContent=yearsNeeded<=0?'지금 당장! 🎉':`${yearsNeeded}년`;document.getElementById('stat-years').className='stat-value '+(yearsNeeded<=5?'good':yearsNeeded<=10?'':'bad');
+  document.getElementById('stat-ratio').textContent=`${ratio}배`;document.getElementById('stat-ratio').className='stat-value '+(ratio<=10?'good':ratio<=20?'':'bad');
+  document.getElementById('progress-pct').textContent=pct+'%';document.getElementById('prog-left').textContent=fmt(totalAsset);document.getElementById('prog-right').textContent=fmt(targetPrice);
+  setTimeout(()=>{const f=document.getElementById('progress-fill');f.style.width=pct+'%';f.style.background=pct>=80?'linear-gradient(90deg,#43e97b,#38f9d7)':pct>=40?'linear-gradient(90deg,#f093fb,#f5576c)':'linear-gradient(90deg,#fa709a,#fee140)'},100);
+  // 블러 프리뷰
+  const simYrs=yearsToTarget(salary,totalAsset,targetPrice,getInvestRate(),true);
+  const py=document.getElementById('preview-years');const pc=document.getElementById('preview-couple');
+  if(py)py.textContent=`-${Math.max(yearsNeeded-simYrs,1)}년`;
+  if(pc)pc.textContent=`-${Math.max(yearsNeeded-Math.ceil(needed/(salary*1.8*0.25)),2)}년`;
+  // 푸시메시지
+  const rN={gangnam:'강남권',seoul:'서울',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  const pushMsg=genPushMsg(yearsNeeded,fmt(targetPrice),salary,rN[state.region],sN[state.size]);
+  document.getElementById('push-msg').textContent=pushMsg;calcResult.pushMsg=pushMsg;
+  document.getElementById('result-section').style.display='block';
+  setTimeout(()=>document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  if(yearsNeeded<=3)launchConfetti();
+  // 결제한 경우 프리미엄 컨텐츠 표시만 (calcAll은 버튼 클릭 시)
+  if(isPremium) showPremiumContent();
+  checkPartnerData();
+}
+
+function genPushMsg(years,price,salary,region,size){
+  if(years<=0)return`자기야 💕\n계산해봤는데 우리 지금 바로 집 살 수 있대!\n자기 덕분이야 최고야 🏠✨\n\n#우리집마련 #자기짱`;
+  if(years<=5)return`자기야 💕\n우리 ${region} ${size} 집 사려면 ${years}년 남았대.\n${price}짜리야! 조금만 더 힘내줘 💪\n자기 응원해! 사랑해 🥰\n\n#내집마련 #같이이루자`;
+  if(years<=10)return`자기야... 😅\n우리 ${region} 집 사려면 ${years}년 걸린대.\n연봉 한 번 더 올려달라고 해볼 수 있어? 🙏\n자기라면 할 수 있어! 믿어! 💕\n\n#연봉협상각 #내집마련`;
+  return`자기야 🥺\n솔직히 말할게...\n우리 집 사려면 ${years}년 걸린대 🏚️\n이직 생각해봐.. 자기 능력 있잖아!\n자기 믿어 파이팅!! 💪💕\n\n#현실직시 #파이팅자기야`;
+}
+
+// ━━ ① 투자수익률 시나리오 ━━
+function renderInvestScenario(){
+  if(!calcResult.salary)return;
+  const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  const investRate=getInvestRate();
+  // 저축만(0%) vs 선택한 투자수익률 비교
+  const scenarios=[
+    {label:'저축만 (투자 없음)',investR:0,raise:false,cls:'s-base',bc:'badge-purple',bt:'기본'},
+    {label:`투자수익률 ${investRate}%/년`,investR:investRate,raise:false,cls:'s-raise',bc:'badge-pink',bt:'✨ 투자 반영'},
+  ];
+  renderScenarioGrid('scenario-invest', scenarios, yearsNeeded, salary, totalAsset, targetPrice);
+}
+// ━━ ② 연봉 인상 시나리오 ━━
+function renderRaiseScenario(){
+  if(!calcResult.salary)return;
+  const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  // 연봉 고정 vs 선택한 인상 방식
+  const r=raiseState.rate, promo=raiseState.promo;
+  const label=promo?'5년마다 진급 +10%':`연 ${r}% 인상`;
+  const scenarios=[
+    {label:'연봉 고정',investR:0,raise:false,rateAnnual:0,cls:'s-base',bc:'badge-purple',bt:'기본'},
+    {label,investR:0,raise:promo,rateAnnual:promo?0:r,cls:'s-raise',bc:'badge-pink',bt:'✨ 선택 반영'},
+  ];
+  renderScenarioGrid('scenario-raise', scenarios, yearsNeeded, salary, totalAsset, targetPrice);
+}
+function renderScenarioGrid(gridId, scenarios, yearsNeeded, salary, totalAsset, targetPrice){
+  const barColors=['#C8A8E9','#FF6B9D'],textColors=['#9B7B8A','#FF6B9D'];
+  const grid=document.getElementById(gridId);if(!grid)return;grid.innerHTML='';
+  scenarios.forEach((s,i)=>{
+    // yearsToTarget에 연간 인상률 추가 지원
+    const yrs=yearsToTargetFull(salary,totalAsset,targetPrice,s.investR,s.raise,s.rateAnnual||0);
+    const saved=Math.max(yearsNeeded-yrs,0);
+    const barPct=Math.max(100-(yrs/Math.max(yearsNeeded,1)*80),8);
+    const row=document.createElement('div');
+    row.className=`scenario-row ${s.cls}${i===1?' s-highlight':''}`;
+    row.innerHTML=`<div class="scenario-top"><span class="scenario-label">${s.label}</span><span class="scenario-badge ${s.bc}">${s.bt}</span></div>
+<div class="scenario-years" style="color:${textColors[i]}">${yrs<=0?'지금 바로! 🎉':yrs+'년'}${saved>0?` <span style="font-size:.78rem;font-weight:600;color:var(--text-soft)">(-${saved}년)</span>`:''}</div>
+<div class="scenario-detail">연 저축 ${fmt(Math.round(salary*0.25))}${s.investR>0?` · 투자 ${s.investR}%`:''}</div>
+<div class="scenario-bar-wrap"><div class="scenario-bar-fill" style="width:0%;background:${barColors[i]}" data-target="${barPct}"></div></div>`;
+    grid.appendChild(row);
+  });
+  setTimeout(()=>document.querySelectorAll(`#${gridId} .scenario-bar-fill`).forEach(el=>{el.style.transition='width 1s cubic-bezier(.34,1.56,.64,1)';el.style.width=el.dataset.target+'%'}),100);
+}
+
+// ━━ ② 커플 ━━
+function checkPartnerData(){const raw=localStorage.getItem(LS_PARTNER);if(!raw||!calcResult.salary)return;try{renderCoupleResult(JSON.parse(raw))}catch(e){}}
+function renderCoupleResult(partner){
+  const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  const pS=partner.salary||0,pA=partner.asset||0;
+  const cS=salary+pS,cA=totalAsset+pA,cY=Math.max(Math.ceil((targetPrice-cA)/(cS*0.25)),0);
+  const saved=Math.max(yearsNeeded-cY,0);
+  document.getElementById('couple-status').className='couple-status ready';
+  document.getElementById('couple-status-text').textContent='파트너 데이터 연결됨! 💑';
+  document.getElementById('couple-status-sub').textContent=`파트너 연봉 ${fmt(pS)} 반영 완료`;
+  document.getElementById('couple-result-content').innerHTML=`<div style="font-size:1.3rem;font-weight:900;color:var(--text);margin-bottom:4px">둘이 합치면</div><span style="color:var(--pink);font-size:1.6rem;font-weight:900;display:block;margin:6px 0">${cY<=0?'지금 바로! 🎉':cY+'년'}</span><div style="font-size:.78rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.5">합산 연봉 ${fmt(cS)} · 합산 자산 ${fmt(cA)}<br>혼자보다 <strong style="color:var(--pink)">${saved}년 단축</strong>! ${saved>=5?'💥':saved>=3?'🥰':'👍'}</div>`;
+}
+function generateCoupleLink(){const{salary,asset,region,size,myAssetKey}=calcResult;return`${location.origin+location.pathname}?p=${btoa(JSON.stringify({salary,asset,region,size,myAsset:myAssetKey}))}`}
+function openCoupleModal(){if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return}document.getElementById('couple-link-box').textContent=generateCoupleLink();document.getElementById('couple-modal').classList.add('show')}
+function copyCoupleLink(){navigator.clipboard?.writeText(generateCoupleLink()).then(()=>showToast('🔗 링크 복사 완료!'))}
+function shareCoupleKakao(){window.open(`https://story.kakao.com/share?url=${encodeURIComponent(generateCoupleLink())}&text=${encodeURIComponent('💌 집 계산기 같이 해봐! 둘이 합치면 얼마나 빨리 살 수 있는지 나와 🏠')}`,'_blank','width=600,height=500')}
+
+// ━━ ③ 이벤트 + 주식담보대출 ━━
+function getLoanData(){
+  if(!document.getElementById('loan-toggle')?.checked||!calcResult.targetPrice)return{loanAmt:0,loanRate:0};
+  return{loanAmt:Math.round(calcResult.targetPrice*0.40),loanRate:4};
+}
+function updateLoanBox(){
+  const{loanAmt,loanRate}=getLoanData();
+  const calcBox=document.getElementById('loan-calc-box');
+  if(!calcBox)return;
+  if(loanAmt>0&&calcResult.targetPrice){
+    calcBox.style.display='block';
+    const hp=calcResult.targetPrice;
+    document.getElementById('loan-house-price').textContent=fmt(hp);
+    document.getElementById('loan-amount-display').textContent=`-${fmt(loanAmt)}`;
+    document.getElementById('loan-net-display').textContent=fmt(hp-loanAmt);
+    document.getElementById('loan-interest-note').textContent=`연 이자 ${fmt(Math.round(loanAmt*loanRate/100))} (금리 ${loanRate}%, 고정)`;
+  } else {
+    calcBox.style.display='none';
+  }
+}
+function calcAll(){
+  if(!calcResult.salary)return;
+  const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  const investRate=getInvestRate();
+  const{extraByYear,monthlyBabyByYr,totalExtra}=getEventDataWithLabels();
+  const{loanAmt,loanRate}=getLoanData();
+  const loanInterest=loanAmt*loanRate/100;
+  const effectiveTarget=targetPrice-loanAmt;
+  const realTarget=effectiveTarget+totalExtra;
+
+  // 이벤트 합산 결과 UI
+  updateLoanBox();
+  document.getElementById('er-base').textContent=fmt(targetPrice);
+  document.getElementById('er-loan').textContent=loanAmt>0?`-${fmt(loanAmt)}`:'미사용';
+  const cleanExtra=totalExtra;
+  document.getElementById('er-extra').textContent=cleanExtra>0?`+${fmt(cleanExtra)}`:'+0원';
+  document.getElementById('er-extra').style.color=cleanExtra>0?'#FF6B6B':'#3DB88A';
+  document.getElementById('er-total').textContent=fmt(realTarget);
+
+  // 월별 시뮬 (이벤트 라인)
+  const ar = (raiseState.rate||0);
+  const age = getAge();
+  const carOn = document.getElementById('ev-car')?.checked;
+  const carStartYr = carOn ? Math.max(0, EVENT_AGES.car - age) : Infinity;
+  const carMonthlyMaint = carOn ? getCarMonthlyMaintenance() : 0;
+
+  const monthlySimResult = simulateMonthly({
+    netSalary:salary, initAsset:totalAsset, targetPrice:effectiveTarget,
+    investRate, extraByYear, monthlyBabyByYr, loanAmt, loanRate,
+    annualRaisePct:ar, promoRaise:raiseState.promo, promoBasePct:ar,
+    maxNetSalary: getMaxNetSalary(),
+    carStartYr, carMonthlyMaint,
+  });
+
+  // 기간 계산 (연 단위)
+  const reachedYr = monthlySimResult.reachedMonth >= 0
+    ? Math.ceil(monthlySimResult.reachedMonth / 12) : 61;
+  const addedYears=reachedYr-yearsNeeded;
+  document.getElementById('er-years').textContent=reachedYr<=0?'지금 바로 가능!':`${reachedYr}년${addedYears>0?' (+'+addedYears+'년)':addedYears<0?' ('+addedYears+'년)':''}`;
+  document.getElementById('er-years').style.color=addedYears>0?'#FF6B6B':addedYears<0?'#3DB88A':'var(--text)';
+
+  // 시뮬 결과 공유용으로 저장
+  window._lastSimResult = monthlySimResult;
+  window._lastEffectiveTarget = effectiveTarget;
+
+  try {
+    renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, investRate);
+  } catch(e) {
+    console.error('차트 렌더 오류:', e);
+  }
+  renderPDFPreview(reachedYr, cleanExtra, loanAmt);
+}
+
+// ━━ ④ 차트 (월별 시뮬레이션 기반) ━━
+function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, investRate){
+  const age = getAge();
+  const { results: evResults, reachedMonth, maxSalaryMonth } = monthlySimResult;
+
+  // 표시 범위: 최소 20년(240), 최대 30년(360)
+  const simMax = Math.max(evResults.length, 240);
+  const maxM   = Math.min(Math.max(simMax, 240), 360);
+
+  // ── 이벤트 마커 월 수집
+  const eventAnnotations = {};
+  const evDefs = [
+    { id:'ev-wedding', label:'💍결혼', defAge:EVENT_AGES.wedding },
+    { id:'ev-baby',    label:'👶출산', defAge:EVENT_AGES.baby    },
+    { id:'ev-car',     label:'🚗차량',  defAge:EVENT_AGES.car     },
+  ];
+  evDefs.forEach(ev => {
+    if(!document.getElementById(ev.id)?.checked) return;
+    const evAge = Math.max(ev.defAge, age >= ev.defAge ? age : ev.defAge);
+    const m = (evAge - age) * 12;
+    if(m >= 0 && m <= maxM){
+      if(!eventAnnotations[m]) eventAnnotations[m] = [];
+      eventAnnotations[m].push(ev.label);
+    }
+  });
+
+  // 집구매 달성 월
+  const homeMonth = reachedMonth >= 0 && reachedMonth <= maxM ? reachedMonth : -1;
+
+  // ── X축: 시작/끝 + 이벤트 + 집구매 + 최고연봉 나이만 표시
+  const labelAges = new Set();
+  labelAges.add(age);
+  labelAges.add(age + Math.floor(maxM / 12));
+  if(homeMonth >= 0)      labelAges.add(age + Math.floor(homeMonth / 12));
+  if(maxSalaryMonth >= 0) labelAges.add(age + Math.floor(maxSalaryMonth / 12));
+  Object.keys(eventAnnotations).forEach(m => labelAges.add(age + Math.floor(Number(m) / 12)));
+
+  // ── 월 지출 계산 준비
+  const { monthlyBabyByYr: chartBabyByYr } = getEventDataWithLabels();
+  const { loanAmt: chartLoan, loanRate: chartLoanRate } = getLoanData();
+  const r30 = chartLoan > 0 ? chartLoanRate/100/12 : 0;
+  const n30 = 30*12;
+  const monthlyLoanPay = (chartLoan>0 && r30>0)
+    ? Math.round(chartLoan*r30*Math.pow(1+r30,n30)/(Math.pow(1+r30,n30)-1)) : 0;
+
+  // ── 데이터 배열 구성
+  const labels     = [];
+  const evArr      = []; // 자산 (억원, 좌축 y)
+  const costArr    = []; // 월 지출 (만원, 우측 yFlow)
+  const incomeArr  = []; // 월 수익 (만원, 우측 yFlow)
+
+  const lastEv = evResults.length > 0 ? evResults[evResults.length-1].asset : totalAsset;
+
+  // 차량 관련 사전 계산
+  const carOnChart    = document.getElementById('ev-car')?.checked;
+  const carStartChart = carOnChart ? Math.max(0, EVENT_AGES.car - age) : Infinity;
+  const carMaintChart = carOnChart ? getCarMonthlyMaintenance() : 0;
+
+  for(let m = 0; m <= maxM; m++){
+    const yr     = Math.floor(m / 12);
+    const curAge = age + yr;
+    const mon    = m % 12;
+
+    labels.push((mon === 0 && labelAges.has(curAge)) ? `${curAge}세` : '');
+
+    const e = evResults.find(d => d.month === m);
+    evArr.push(+(((e ? e.asset : lastEv) / 10000).toFixed(2)));
+
+    // 월 수익 = 세후 월급
+    const eSalary = (e && e.salary) ? e.salary : (evResults.length > 0 ? evResults[evResults.length-1].salary || 0 : salary);
+    const monthlyIncome = Math.round(eSalary / 12);
+    incomeArr.push(monthlyIncome); // 만원
+
+    // 월 지출 = 생활비 + 대출상환 + 육아비(월균등) + 차량유지비
+    // ※ 결혼/차량 일시금은 자산에서만 차감 → 월지출 그래프 제외
+    const babyMonthChart = chartBabyByYr[yr] || 0;
+    const carMaintMonth  = yr >= carStartChart ? carMaintChart : 0;
+    const monthCostMan   = monthlyLivingCost + monthlyLoanPay + babyMonthChart + carMaintMonth;
+    costArr.push(monthCostMan); // 만원
+
+    // 자산 라인은 억원 단위이므로 costArr/incomeArr은 yFlow축(만원)으로 분리
+  }
+
+  const targetLine = Array(maxM + 1).fill(+(effectiveTarget / 10000).toFixed(2));
+
+  // ── 커스텀 플러그인: 이벤트 마커 + 집구매 플래그
+  const markerPlugin = {
+    id: 'markerPlugin',
+    afterDraw(chart){
+      const { ctx: c, scales: { x, y } } = chart;
+
+      // 이벤트 수직선 + 라벨
+      Object.entries(eventAnnotations).forEach(([m, evLabels]) => {
+        const xPos    = x.getPixelForValue(Number(m));
+        const yBottom = y.bottom;
+        c.save();
+        c.strokeStyle = 'rgba(255,107,157,0.5)';
+        c.lineWidth = 1.5; c.setLineDash([3,3]);
+        c.beginPath(); c.moveTo(xPos, y.top); c.lineTo(xPos, yBottom); c.stroke();
+        c.restore();
+        c.save();
+        c.fillStyle = '#FF6B9D';
+        c.beginPath(); c.arc(xPos, yBottom, 4, 0, Math.PI*2); c.fill();
+        c.font = 'bold 9px sans-serif';
+        c.textAlign = 'center';
+        c.fillText(evLabels.join(' '), xPos, yBottom + 15);
+        c.restore();
+      });
+
+      // 최고연봉 달성 플래그
+      if(maxSalaryMonth >= 0 && maxSalaryMonth <= maxM){
+        const maxAge = age + Math.floor(maxSalaryMonth / 12);
+        const xPos   = x.getPixelForValue(maxSalaryMonth);
+        const yPos   = y.top + 8;
+
+        c.save();
+        const bw = 80, bh = 22;
+        const bx = Math.min(Math.max(xPos - bw/2, x.left+2), x.right - bw - 2);
+        c.fillStyle = '#C8A8E9';
+        c.beginPath(); c.roundRect(bx, yPos, bw, bh, 5); c.fill();
+        c.fillStyle = 'white';
+        c.font = 'bold 9px sans-serif';
+        c.textAlign = 'center';
+        c.fillText(`👑 최고연봉 ${maxAge}세`, bx + bw/2, yPos + 14);
+        c.restore();
+
+        // 세로 점선
+        c.save();
+        c.strokeStyle = 'rgba(200,168,233,0.5)';
+        c.lineWidth = 1; c.setLineDash([3,3]);
+        c.beginPath(); c.moveTo(xPos, yPos + bh); c.lineTo(xPos, y.bottom); c.stroke();
+        c.restore();
+      }
+      if(homeMonth >= 0){
+        const xPos  = x.getPixelForValue(homeMonth);
+        const homeY = y.getPixelForValue(+(effectiveTarget / 10000).toFixed(2));
+        // 수직선 (초록)
+        c.save();
+        c.strokeStyle = 'rgba(61,184,138,0.8)';
+        c.lineWidth = 2; c.setLineDash([]);
+        c.beginPath(); c.moveTo(xPos, homeY); c.lineTo(xPos, y.bottom); c.stroke();
+        c.restore();
+        // 플래그 박스
+        c.save();
+        const boxW = 74, boxH = 26;
+        const bx = Math.min(Math.max(xPos - boxW/2, x.left + 2), x.right - boxW - 2);
+        const by = Math.max(homeY - boxH - 8, y.top + 2);
+        c.fillStyle = '#3DB88A';
+        c.beginPath(); c.roundRect(bx, by, boxW, boxH, 6); c.fill();
+        c.fillStyle = 'white';
+        c.font = 'bold 10px sans-serif';
+        c.textAlign = 'center';
+        c.fillText('🏠 집구매 가능!', bx + boxW/2, by + 16);
+        c.restore();
+        // 교차점 점
+        c.save();
+        c.fillStyle = '#3DB88A';
+        c.beginPath(); c.arc(xPos, homeY, 5, 0, Math.PI*2); c.fill();
+        c.strokeStyle = 'white'; c.lineWidth = 2; c.stroke();
+        c.restore();
+      }
+    }
+  };
+
+  if(chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('asset-chart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+
+      {
+        label: '자산 (투자+인상)',
+        data: evArr,
+        borderColor: '#FF6B9D',
+        backgroundColor: 'rgba(255,107,157,.1)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        yAxisID: 'y',
+      },
+      {
+        label: '목표 집값',
+        data: targetLine,
+        borderColor: '#3DB88A',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        borderDash: [6,3],
+        fill: false,
+        yAxisID: 'y',
+      },
+      {
+        label: '월 지출',
+        data: costArr,
+        borderColor: '#FF9966',
+        backgroundColor: 'rgba(255,153,102,.08)',
+        borderWidth: 1.8,
+        pointRadius: 0,
+        tension: 0.1,
+        fill: false,
+        borderDash: [3,2],
+        yAxisID: 'yFlow',
+        order: 2,
+      },
+      {
+        label: '월 수익',
+        data: incomeArr,
+        borderColor: '#6CB4E4',
+        backgroundColor: 'rgba(108,180,228,.08)',
+        borderWidth: 1.8,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+        borderDash: [5,2],
+        yAxisID: 'yFlow',
+        order: 3,
+      },
+    ]},
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: 600 },
+      layout: { padding: { bottom: 24 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => {
+              const m   = items[0].dataIndex;
+              const yr  = Math.floor(m / 12);
+              const mo  = m % 12 + 1;
+              const base = `${age + yr}세 ${mo}월`;
+              const evs  = eventAnnotations[m];
+              const home = (m === homeMonth) ? '🏠 집구매 가능!' : '';
+              return [base, evs ? evs.join(' ') : '', home].filter(Boolean).join('  ');
+            },
+            label: c => {
+              if(c.dataset.label === '월 지출'){
+                return `월 지출: ${c.parsed.y.toLocaleString()}만원`;
+              }
+              if(c.dataset.label === '월 수익'){
+                return `월 수익(세후월급): ${c.parsed.y.toLocaleString()}만원`;
+              }
+              return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`;
+            },
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { size: 10 },
+            color: '#9B7B8A',
+            maxRotation: 0,
+            autoSkip: false,
+            callback(val, idx){ return labels[idx] || ''; }
+          },
+          grid: { display: false }
+        },
+        y: {
+          position: 'left',
+          ticks: { font: { size: 10 }, color: '#9B7B8A', callback: v => `${v}억` },
+          grid: { color: 'rgba(0,0,0,.04)' }
+        },
+        yFlow: {
+          position: 'right',
+          ticks: {
+            font: { size: 9 },
+            color: '#9B7B8A',
+            callback: v => v >= 10000
+              ? `${(v/10000).toFixed(1)}억`
+              : `${v.toLocaleString()}만`,
+            maxTicksLimit: 5,
+          },
+          grid: { display: false },
+          title: { display: true, text: '월 수익·지출', color: '#9B7B8A', font: { size: 8 } }
+        }
+      }
+    },
+    plugins: [markerPlugin]
+  });
+}
+
+// ━━ 원리금균등상환 계산 ━━
+function calcMortgage(loanAmt, annualRate, years){
+  if(!loanAmt||loanAmt<=0) return{monthly:0,totalInterest:0,totalPayment:0};
+  const r=annualRate/100/12, n=years*12;
+  const monthly=Math.round(loanAmt*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1));
+  const totalPayment=monthly*n;
+  return{monthly, totalInterest:totalPayment-loanAmt, totalPayment};
+}
+
+function renderPDFPreview(newYears,totalExtra,loanAmt){
+  if(!calcResult.salary)return;
+  const{targetPrice,totalAsset,grossSalary,netSalary,monthlyTakehome,region,size,yearsNeeded}=calcResult;
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  const now=new Date();
+  document.getElementById('pdf-date').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`;
+  const investRate=getInvestRate();
+  const mortgage=calcMortgage(loanAmt,4,30);
+  const babyOn=document.getElementById('ev-baby')?.checked;
+  const babyStart=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
+  const{total:babyTotal}=calcBabyByYear(babyStart);
+  const babyMonthly=babyOn?Math.round(babyTotal/26/12):0;
+
+  // 수익 / 지출 계산
+  const monthlyNet    = monthlyTakehome || 0;                          // 월 실수령
+  const monthlyInvest = Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1)); // 월 투자수익
+  const totalIncome   = monthlyNet + monthlyInvest;                    // 월 수익 합계
+
+  const carMonthly   = document.getElementById('ev-car')?.checked ? getCarMonthlyMaintenance() : 0;
+  const totalExpense = monthlyLivingCost
+    + (babyOn ? babyMonthly : 0)
+    + carMonthly
+    + (loanAmt > 0 ? mortgage.monthly : 0);                            // 월 지출 합계
+
+  const sections=[
+    {title:'🏠 목표 영역',rows:[
+      ['지역',rN[region]],['평수',sN[size]],['목표 집값',fmt(targetPrice)],
+      ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
+      ['실제 필요 현금',fmt(targetPrice-loanAmt)],
+    ]},
+    {title:'💰 수익 영역',rows:[
+      ['현재 자산',fmt(totalAsset)],
+      ['연봉 (세전)',fmt(grossSalary)],
+      ['월 실수령',`약 ${monthlyNet.toLocaleString()}만원`],
+      [`월 투자수익 (${investRate}%/년)`,`약 ${monthlyInvest.toLocaleString()}만원`],
+      ['연봉 인상 방식',raiseState.promo?`연 ${raiseState.rate}% + 5년마다 진급`:`연 ${raiseState.rate}% 인상`],
+      ['📥 월 수익 합계',`약 ${totalIncome.toLocaleString()}만원`],
+    ]},
+    {title:'💸 지출 영역',rows:[
+      ['월 생활비',`${monthlyLivingCost.toLocaleString()}만원`],
+      ['월 육아비',babyOn?`약 ${babyMonthly.toLocaleString()}만원 (월평균·26년)`:'미반영'],
+      ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원 (구매 후 매월)`:'미반영'],
+      ['월 대출 상환액',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (원리금균등, 30년)`:'없음'],
+      ['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`],
+    ]},
+    {title:'📊 결과 영역',rows:[
+      ['집 구매 가능 기간',newYears<=0?'지금 바로 가능! 🎉':`약 ${newYears}년 후`],
+      ['월 순수익',`약 ${(totalIncome-totalExpense).toLocaleString()}만원`],
+      ['대출 상환 기간',loanAmt>0?'30년 (원리금균등상환)':'해당없음'],
+      ['총 이자 비용',loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
+      ['총 상환 금액',loanAmt>0?fmt(mortgage.totalPayment):'해당없음'],
+    ]},
+  ];
+  document.getElementById('pdf-rows').innerHTML=sections.map(sec=>`
+    <div style="margin-bottom:2px">
+      <div style="font-size:.7rem;font-weight:900;color:var(--pink);margin:8px 0 4px;padding-top:6px;border-top:1px solid #F0E0E8">${sec.title}</div>
+      ${sec.rows.map(([l,v])=>`<div class="pdf-row"><span class="pdf-row-label">${l}</span><span class="pdf-row-val">${v}</span></div>`).join('')}
+    </div>`).join('');
+  if(loanAmt>0){
+    const note=document.createElement('div');
+    note.style.cssText='font-size:.65rem;color:var(--text-soft);font-family:Gowun Dodum,sans-serif;margin-top:8px;line-height:1.5';
+    note.textContent='※ 원리금균등상환: 매월 원금+이자 동일 금액 납부. 국내 주담대 표준 방식.';
+    document.getElementById('pdf-rows').appendChild(note);
+  }
+}
+
+function downloadPDF(){
+  if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return}
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const{targetPrice,totalAsset,grossSalary,monthlyTakehome,region,size,yearsNeeded}=calcResult;
+  const{loanAmt,loanRate}=getLoanData();
+  const mortgage=calcMortgage(loanAmt,4,30);
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  const now=new Date();
+  const investRate=getInvestRate();
+  const babyOn=document.getElementById('ev-baby')?.checked;
+  const babyStart=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
+  const{total:babyTotal}=calcBabyByYear(babyStart);
+  const babyMonthly=babyOn?Math.round(babyTotal/26/12):0;
+  const carMonthlyDL = document.getElementById('ev-car')?.checked ? getCarMonthlyMaintenance() : 0;
+  const totalIncomeDL = (monthlyTakehome||0) + Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
+  const totalExpenseDL = monthlyLivingCost + (babyOn?babyMonthly:0) + carMonthlyDL + (loanAmt>0?mortgage.monthly:0);
+  doc.setFillColor(255,228,239);doc.rect(0,0,210,297,'F');
+  doc.setFillColor(255,255,255);doc.roundedRect(15,15,180,267,8,8,'F');
+  doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(255,107,157);
+  doc.text('Boyfriend Home Report',105,30,{align:'center'});
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(155,123,138);
+  doc.text('남친 재력 분석 리포트 · by Xalysis',105,37,{align:'center'});
+  doc.text(`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`,105,43,{align:'center'});
+  doc.setDrawColor(255,179,204);doc.setLineWidth(.5);doc.line(25,47,185,47);
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(61,44,53);
+  doc.text(yearsNeeded<=0?'지금 바로 구매 가능!':'약 '+yearsNeeded+'년 후 집 구매 가능',105,56,{align:'center'});
+  const sections=[
+    {title:'🏠 목표 영역',bg:[255,240,245],rows:[
+      ['지역',rN[region]],['평수',sN[size]],['목표 집값',fmt(targetPrice)],
+      ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
+      ['실제 필요 현금',fmt(targetPrice-loanAmt)],
+    ]},
+    {title:'💰 수익 영역',bg:[245,255,245],rows:[
+      ['현재 자산',fmt(totalAsset)],
+      ['연봉 세전/실수령',`${fmt(grossSalary)} / 월 ${monthlyTakehome}만원`],
+      ['월 투자수익',`약 ${Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1))}만원 (${investRate}%)`],
+      ['연봉 인상',raiseState.promo?`연${raiseState.rate}%+5년진급`:`연${raiseState.rate}%`],
+      ['📥 월 수익 합계',`약 ${totalIncomeDL}만원`],
+    ]},
+    {title:'💸 지출 영역',bg:[255,250,235],rows:[
+      ['월 생활비',`${monthlyLivingCost}만원`],
+      ['월 육아비',babyOn?`약 ${babyMonthly}만원 (월평균·26년)`:'미반영'],
+      ['월 차량 유지비',carMonthlyDL>0?`약 ${carMonthlyDL}만원`:'미반영'],
+      ['월 대출 상환',loanAmt>0?`${mortgage.monthly}만원 (원리금균등)`:'없음'],
+      ['📤 월 지출 합계',`약 ${totalExpenseDL}만원`],
+    ]},
+    {title:'📊 결과 영역',bg:[240,248,255],rows:[
+      ['집 구매 가능',yearsNeeded<=0?'지금!':yearsNeeded+'년'],
+      ['월 순수익',`약 ${totalIncomeDL-totalExpenseDL}만원`],
+      ['대출 상환 기간',loanAmt>0?'30년':'해당없음'],
+      ['총 이자 비용',loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
+      ['총 상환 금액',loanAmt>0?fmt(mortgage.totalPayment):'해당없음'],
+    ]},
+  ];
+  let y=63;
+  sections.forEach(sec=>{
+    doc.setFillColor(...sec.bg);doc.rect(20,y-3,170,8,'F');
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(255,107,157);
+    doc.text(sec.title,23,y+2);y+=9;
+    sec.rows.forEach(([l,v])=>{
+      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(155,123,138);doc.text(l,25,y);
+      doc.setFont('helvetica','bold');doc.setTextColor(61,44,53);doc.text(String(v),185,y,{align:'right'});y+=7;
+    });y+=3;
+  });
+  try{const cc=document.getElementById('asset-chart');if(cc&&y<235){doc.addImage(cc.toDataURL('image/png'),'PNG',20,y,170,50);y+=53;}}catch(e){}
+  if(loanAmt>0){doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(180,140,160);doc.text('※ 원리금균등상환 기준, 연 4% 고정금리, 30년 상환 (국내 주담대 표준)',105,272,{align:'center'});}
+  doc.setFontSize(7);doc.setTextColor(200,168,233);doc.text('Powered by Xalysis | 재미 목적 제작, 투자 조언 아님',105,278,{align:'center'});
+  doc.save(`남친재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`);
+  showToast('📥 PDF 저장 완료!');
+}
+
+function copyReportText(){
+  if(!calcResult.salary)return;
+  const{targetPrice,totalAsset,grossSalary,monthlyTakehome,yearsNeeded,region,size}=calcResult;
+  const{loanAmt}=getLoanData();
+  const mortgage=calcMortgage(loanAmt,4,30);
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  const lines=[
+    '🏠 남친 재력 분석 리포트','─'.repeat(22),
+    `[목표] ${rN[region]} ${sN[size]} ${fmt(targetPrice)}`,
+    `[현재자산] ${fmt(totalAsset)}`,
+    `[연봉] 세전 ${fmt(grossSalary)} / 월 실수령 약 ${monthlyTakehome}만원`,
+    `[생활비] 월 ${monthlyLivingCost}만원`,
+    loanAmt>0?`[대출] ${fmt(loanAmt)} / 월 상환 ${mortgage.monthly}만원 (30년 원리금균등)`:'',
+    `[투자수익률] ${getInvestRate()}%/년`,
+    '─'.repeat(22),
+    `👉 집 구매 가능: ${yearsNeeded<=0?'지금 바로!':yearsNeeded+'년'}`,
+    loanAmt>0?`👉 총 이자: ${fmt(mortgage.totalInterest)}`:'',
+    '─'.repeat(22),'Powered by Xalysis',
+  ].filter(Boolean).join('\n');
+  navigator.clipboard?.writeText(lines).then(()=>showToast('📋 복사 완료!'));
+}
+
+function unlockPremium(){
+  // TODO: 토스페이먼츠 실제 연동 자리 (990원 평생 이용권)
+  isPremium=true;localStorage.setItem(LS_PREMIUM,'true');
+  closeModalById('pay-modal');showPremiumContent();
+  if(calcResult.salary){ calcAll(); scrollToPremium(); }
+  showToast('🎉 990원 프리미엄 잠금 해제 완료!');launchConfetti();
+}
+// ━━ 플로팅 탭 버튼 ━━
+function floatGoBasic(){
+  // 기본설정: 최상단으로
+  window.scrollTo({top:0, behavior:'smooth'});
+  setActiveTab('basic');
+}
+function floatGoPremium(){
+  // 프리미엄설정: 프리미엄 영역으로
+  if(!isPremium){
+    if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
+    openPayModal();
+    return;
+  }
+  const el = document.getElementById('premium-content');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  setActiveTab('premium');
+}
+function floatAnalyze(){
+  // 분석하기: 무료/유료 분기
+  if(!calcResult.salary || _analyzeNeedsRefresh){
+    // 기본 분석 실행
+    calculate();
+    _analyzeNeedsRefresh = false;
+  }
+  if(isPremium){
+    runPremiumAnalysis();
+  } else {
+    scrollToResult();
+  }
+  setActiveTab('analyze');
+}
+function setActiveTab(tab){
+  ['basic','premium','analyze'].forEach(t=>{
+    const el = document.getElementById(`ftab-${t}`);
+    if(el){ el.classList.remove('active'); }
+  });
+  const active = document.getElementById(`ftab-${tab}`);
+  if(active) active.classList.add('active');
+  setTimeout(()=>{ if(active) active.classList.remove('active'); }, 600);
+}
+function updatePremiumTabLabel(){
+  const icon  = document.getElementById('ftab-premium-icon');
+  const label = document.getElementById('ftab-premium-label');
+  if(!icon || !label) return;
+  if(!isPremium){
+    icon.textContent  = '🔒';
+    label.textContent = '프리미엄설정';
+  } else if(_premiumDirty){
+    icon.textContent  = '⚡';
+    label.textContent = '업데이트필요';
+    document.getElementById('ftab-analyze')?.classList.add('dirty');
+  } else {
+    icon.textContent  = '🔓';
+    label.textContent = '프리미엄설정';
+    document.getElementById('ftab-analyze')?.classList.remove('dirty');
+  }
+}
+// ━━ dirty 상태 관리 ━━
+function markDirty(){
+  if(!isPremium) return;
+  _premiumDirty = true;
+  updatePremiumTabLabel();
+}
+function scrollToResult(){
+  const el = document.getElementById('result-section');
+  if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function showPremiumContent(){
+  document.getElementById('premium-locked').style.display='none';
+  document.getElementById('premium-content').style.display='block';
+  updatePremiumTabLabel();
+}
+function updateFloatingBtn(){ updatePremiumTabLabel(); } // 하위 호환
+
+// URL 결과 공유 → result.html로 이동
+function shareResultUrl(){
+  if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
+  const url = buildResultUrl();
+  if(!url){ showToast('먼저 프리미엄 분석을 실행해주세요!'); return; }
+  navigator.clipboard?.writeText(url).then(()=>{
+    showToast('🔗 결과 링크 복사 완료! 친구에게 보내보세요');
+  }).catch(()=>prompt('아래 링크를 복사하세요:', url));
+}
+
+function buildResultUrl(){
+  if(!calcResult.salary) return null;
+  const { emoji, verdict, sub, targetPrice, totalAsset, grossSalary,
+          netSalary, monthlyTakehome, region, size, yearsNeeded, age } = calcResult;
+
+  // 시뮬 데이터 (차트용) — _lastSimResult에 저장된 것 사용
+  const sim = window._lastSimResult;
+
+  // 리포트 데이터
+  const report = buildReportData();
+
+  const payload = {
+    emoji, verdict, sub, targetPrice, totalAsset, grossSalary,
+    netSalary, monthlyTakehome, region, size, yearsNeeded, age,
+    effectiveTarget: window._lastEffectiveTarget || targetPrice,
+    homeMonth: sim?.reachedMonth ?? -1,
+    simMonthly: sim ? sim.results.slice(0,361).map(r=>({
+      month:r.month, asset:r.asset, salary:r.salary||0,
+      monthlyCost: r.monthlyCost||0
+    })) : [],
+    report,
+  };
+
+  try{
+    const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+    return `${location.origin}${location.pathname.replace('index.html','')}result.html?d=${encoded}`;
+  }catch(e){ return null; }
+}
+
+function buildReportData(){
+  if(!calcResult.salary) return [];
+  const { targetPrice, totalAsset, grossSalary, monthlyTakehome, region, size, yearsNeeded } = calcResult;
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  const { loanAmt } = getLoanData();
+  const mortgage = calcMortgage(loanAmt, 4, 30);
+  const investRate = getInvestRate();
+  const babyOn = document.getElementById('ev-baby')?.checked;
+  const babyStart = parseInt(document.getElementById('cost-baby-yr')?.value)||500;
+  const {total:babyTotal} = calcBabyByYear(babyStart);
+  const babyMonthly = babyOn ? Math.round(babyTotal/26/12) : 0;
+  const carMonthly = document.getElementById('ev-car')?.checked ? getCarMonthlyMaintenance() : 0;
+  const monthlyNet = monthlyTakehome||0;
+  const monthlyInvest = Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
+  const totalIncome = monthlyNet + monthlyInvest;
+  const totalExpense = monthlyLivingCost+(babyOn?babyMonthly:0)+carMonthly+(loanAmt>0?mortgage.monthly:0);
+
+  return [
+    {title:'🏠 목표 영역', rows:[
+      ['지역', rN[region]], ['평수', sN[size]], ['목표 집값', fmt(targetPrice)],
+      ['대출 활용', loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
+      ['실제 필요 현금', fmt(targetPrice-loanAmt)],
+    ]},
+    {title:'💰 수익 영역', rows:[
+      ['현재 자산', fmt(totalAsset)],
+      ['연봉 (세전)', fmt(grossSalary)],
+      ['월 실수령', `약 ${monthlyNet}만원`],
+      [`월 투자수익 (${investRate}%/년)`, `약 ${monthlyInvest}만원`],
+      ['📥 월 수익 합계', `약 ${totalIncome}만원`],
+    ]},
+    {title:'💸 지출 영역', rows:[
+      ['월 생활비', `${monthlyLivingCost}만원`],
+      ['월 육아비', babyOn?`약 ${babyMonthly}만원 (월평균)`:'미반영'],
+      ['월 차량 유지비', carMonthly>0?`약 ${carMonthly}만원`:'미반영'],
+      ['월 대출 상환', loanAmt>0?`${mortgage.monthly}만원`:'없음'],
+      ['📤 월 지출 합계', `약 ${totalExpense}만원`],
+    ]},
+    {title:'📊 결과 영역', rows:[
+      ['집 구매 가능 기간', yearsNeeded<=0?'지금 바로! 🎉':`약 ${yearsNeeded}년 후`],
+      ['월 순수익', `약 ${totalIncome-totalExpense}만원`],
+      ['대출 상환', loanAmt>0?`30년 (원리금균등)`:'해당없음'],
+      ['총 이자', loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
+    ]},
+  ];
+}
+
+// 공유 링크로 접속 시 설정 복원
+function restoreFromShareUrl(){
+  const params = new URLSearchParams(location.search);
+  const encoded = params.get('share');
+  if(!encoded) return;
+  try{
+    const data = JSON.parse(decodeURIComponent(atob(encoded)));
+    if(data.s){ const s=document.getElementById('salary'); s.value=data.s; updateSalary(s); }
+    if(data.a!=null){ const a=document.getElementById('asset'); a.value=data.a;
+      updateRange(a,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅')); }
+    if(data.r) restoreToggle('region-group',data.r);
+    if(data.z) restoreToggle('size-group',data.z);
+    if(data.m) restoreToggle('my-group',data.m);
+    if(data.g){ document.getElementById('age').value=data.g; onAgeInput(document.getElementById('age')); }
+    if(data.ll) { monthlyLivingCost=data.ll; document.getElementById('custom-living').value=data.ll; updateLivingBadge(); }
+    if(data.ms) { raiseState.maxSalary=data.ms; document.getElementById('max-salary').value=data.ms; }
+    window.history.replaceState({},'',location.pathname);
+    showToast('📊 공유된 분석 설정이 복원됐어요!');
+    // 자동으로 분석 실행
+    setTimeout(()=>calculate(), 300);
+  }catch(e){}
+}
+// 프리미엄 설정 완료 후 결과 보기 버튼
+function runPremiumAnalysis(){
+  _premiumDirty = false;
+  updatePremiumTabLabel();
+  if(!calcResult.salary){
+    calculate();
+    setTimeout(()=>{ if(calcResult.salary){ calcAll(); scrollToPremium(); } }, 100);
+  } else {
+    calcAll();
+    scrollToPremium();
+  }
+  showToast('🔮 분석 결과를 업데이트했어요!');
+}
+function scrollToPremium(){
+  // 차트 섹션으로 스크롤
+  const chartEl = document.getElementById('asset-chart');
+  if(chartEl) setTimeout(()=>chartEl.scrollIntoView({behavior:'smooth',block:'center'}),300);
+}
+
+// ━━ 모달 & 공유 ━━
+function openPayModal(){document.getElementById('pay-modal').classList.add('show')}
+function closeModalById(id){document.getElementById(id).classList.remove('show')}
+function closeModalByBg(e,id){if(e.target===document.getElementById(id))closeModalById(id)}
+function openInstaModal(){drawShareCard();document.getElementById('insta-modal').classList.add('show')}
+
+function drawShareCard(){
+  const canvas=document.getElementById('share-canvas'),ctx=canvas.getContext('2d'),W=540,H=960;
+  const{emoji,verdict,targetPrice,totalAsset,yearsNeeded,ratio,pct,color}=calcResult;
+  const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#FFE4EF');grad.addColorStop(.5,'#FFF0FA');grad.addColorStop(1,'#EEF0FF');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=.08;ctx.fillStyle='#FF6B9D';ctx.beginPath();ctx.arc(480,120,120,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(60,800,90,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(255,255,255,.88)';roundRect(ctx,40,80,W-80,H-160,48);ctx.fill();
+  ctx.font='80px serif';ctx.textAlign='center';ctx.fillText(emoji,W/2,220);
+  ctx.font='bold 44px sans-serif';ctx.fillStyle='#FF6B9D';ctx.fillText(verdict,W/2,295);
+  ctx.strokeStyle='#FFD0E6';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(100,325);ctx.lineTo(W-100,325);ctx.stroke();
+  [['목표 집값',fmt(targetPrice)],['현재 보유',fmt(totalAsset)],['필요 기간',yearsNeeded<=0?'지금!':yearsNeeded+'년'],['연봉대비',ratio+'배']].forEach(([l,v],i)=>{
+    const x=i%2===0?90:W/2+20,y=390+Math.floor(i/2)*100;
+    ctx.font='22px sans-serif';ctx.fillStyle='#9B7B8A';ctx.textAlign='left';ctx.fillText(l,x,y);
+    ctx.font='bold 30px sans-serif';ctx.fillStyle='#FF6B9D';ctx.fillText(v,x,y+38);
+  });
+  const barY=620,fw=Math.max((W-160)*pct/100,0);
+  ctx.fillStyle='#F5DCE8';roundRect(ctx,80,barY,W-160,24,12);ctx.fill();
+  if(fw>0){const bg=ctx.createLinearGradient(80,0,80+fw,0);bg.addColorStop(0,color[0]);bg.addColorStop(1,color[1]);ctx.fillStyle=bg;roundRect(ctx,80,barY,fw,24,12);ctx.fill()}
+  ctx.font='bold 22px sans-serif';ctx.fillStyle='#FF6B9D';ctx.textAlign='center';ctx.fillText(`현재 ${pct}% 달성!`,W/2,barY+55);
+  ctx.fillStyle='rgba(255,240,248,.9)';roundRect(ctx,70,720,W-140,120,24);ctx.fill();
+  ctx.strokeStyle='#FFB3CC';ctx.lineWidth=2;roundRect(ctx,70,720,W-140,120,24);ctx.stroke();
+  ctx.font='20px sans-serif';ctx.fillStyle='#3D2C35';ctx.textAlign='center';
+  ['💌 남친한테 이 결과 공유해봐요!','열심히 벌어달라고 슬쩍 압박해보세요 😉'].forEach((l,i)=>ctx.fillText(l,W/2,775+i*34));
+  ctx.font='18px sans-serif';ctx.fillStyle='rgba(155,123,138,.5)';ctx.fillText('🏠 남친 연봉 집계산기 · Xalysis',W/2,H-95);
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
+function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='남친연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
+function shareKakao(){const{verdict,pushMsg}=calcResult;window.open(`https://story.kakao.com/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent('🏠 '+verdict+'\n\n'+pushMsg)}`,'_blank','width=600,height=500')}
+function copyMessage(){const msg=calcResult.pushMsg||'';navigator.clipboard?.writeText(msg).then(()=>showToast('📋 복사 완료!'))}
+
+function launchConfetti(){const colors=['#FF6B9D','#FFB3CC','#C8A8E9','#FFAA80','#A8DDD5','#FFF069'];for(let i=0;i<60;i++){setTimeout(()=>{const el=document.createElement('div');el.className='confetti-piece';el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${2+Math.random()*2}s`;document.body.appendChild(el);setTimeout(()=>el.remove(),4000)},i*50)}}
+function showToast(msg){const t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#3D2C35;color:white;padding:12px 24px;border-radius:99px;font-size:.9rem;font-weight:700;z-index:9999;font-family:Noto Sans KR,sans-serif';document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+
+// 초기화
+updateSalary(document.getElementById('salary'));
+updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));
+</script>
+</body>
+</html>

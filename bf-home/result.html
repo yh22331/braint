@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>남친 재력 분석 결과 🏠</title>
+
+<!-- OG / SNS 메타 (동적으로 교체됨) -->
+<meta property="og:title"       id="og-title"       content="우리 남친 집 살 수 있을까? 🏠">
+<meta property="og:description" id="og-desc"        content="남친 재력 분석 결과를 확인해보세요!">
+<meta property="og:image"       id="og-image"       content="https://xalysis.com/og-default.png">
+<meta property="og:type"        content="website">
+<meta name="twitter:card"       content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --pink:#FF6B9D;--pink-light:#FFB3CC;--gold:#F5A623;
+  --text:#3D2C35;--text-soft:#9B7B8A;
+  --bg:#FFF5FA;--card:#fff;
+  --shadow:0 4px 20px rgba(255,107,157,.12);
+  --radius:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);min-height:100vh;padding-bottom:120px}
+
+/* 헤더 */
+.header{
+  background:linear-gradient(135deg,#FF6B9D 0%,#C850C0 100%);
+  padding:24px 20px 32px;text-align:center;position:relative;overflow:hidden
+}
+.header::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 70% 30%,rgba(255,255,255,.15),transparent 60%)}
+.header-badge{display:inline-block;background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.4);border-radius:99px;
+  padding:4px 14px;font-size:.72rem;font-weight:700;color:#fff;
+  letter-spacing:.5px;margin-bottom:12px}
+.header-emoji{font-size:3rem;display:block;margin-bottom:8px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.header-verdict{font-size:1.5rem;font-weight:900;color:#fff;
+  letter-spacing:-.5px;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.15)}
+.header-sub{font-size:.82rem;color:rgba(255,255,255,.85);
+  font-family:'Gowun Dodum',sans-serif;line-height:1.6}
+
+/* 컨테이너 */
+.container{max-width:480px;margin:0 auto;padding:0 16px}
+
+/* 카드 */
+.card{background:var(--card);border-radius:var(--radius);
+  padding:20px;margin-top:16px;box-shadow:var(--shadow);
+  border:1.5px solid rgba(255,179,204,.2)}
+
+/* 핵심 수치 그리드 */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.stat-item{background:linear-gradient(135deg,#FFF0F5,#FFE8EF);
+  border-radius:16px;padding:14px;text-align:center;
+  border:1px solid rgba(255,179,204,.3)}
+.stat-label{font-size:.68rem;color:var(--text-soft);
+  font-family:'Gowun Dodum',sans-serif;margin-bottom:4px}
+.stat-value{font-size:1.15rem;font-weight:900;color:var(--text);letter-spacing:-.3px}
+.stat-value.good{color:#3DB88A}
+.stat-value.warn{color:var(--gold)}
+.stat-value.bad{color:var(--pink)}
+.stat-value.highlight{font-size:1.4rem;color:var(--pink)}
+
+/* 섹션 타이틀 */
+.section-title{font-size:.88rem;font-weight:900;color:var(--text);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* 차트 */
+.chart-wrap{background:#fff;border-radius:16px;padding:14px;
+  border:1.5px solid rgba(255,179,204,.2);margin-top:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.chart-legend{display:flex;gap:12px;font-size:.65rem;
+  color:var(--text-soft);margin-bottom:10px;flex-wrap:wrap}
+.chart-legend span{display:flex;align-items:center;gap:4px}
+.legend-dot{width:8px;height:2px;border-radius:1px;display:inline-block}
+
+/* 리포트 행 */
+.report-section-title{font-size:.7rem;font-weight:900;color:var(--pink);
+  margin:10px 0 6px;padding-top:8px;border-top:1px solid #F0E0E8}
+.report-row{display:flex;justify-content:space-between;
+  font-size:.8rem;padding:5px 0;border-bottom:1px dashed #F5E0EC}
+.report-row:last-child{border-bottom:none}
+.report-label{color:var(--text-soft)}
+.report-val{font-weight:700;color:var(--text)}
+
+/* 공유 버튼 */
+.share-section{margin-top:20px}
+.share-title{text-align:center;font-size:.78rem;color:var(--text-soft);
+  font-family:'Gowun Dodum',sans-serif;margin-bottom:12px}
+.share-btns{display:flex;gap:10px}
+.share-btn{flex:1;padding:14px 8px;border:none;border-radius:16px;
+  font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:6px;transition:all .2s}
+.share-btn-kakao{background:#FEE500;color:#3C1E1E}
+.share-btn-kakao:hover{background:#F5DB00}
+.share-btn-insta{background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF);color:#fff}
+.share-btn-link{background:#fff;color:var(--text);
+  border:2px solid #F0D0DC}
+
+/* CTA (바이럴 핵심) */
+.cta-wrap{
+  margin-top:24px;
+  background:linear-gradient(135deg,#FF6B9D,#C850C0);
+  border-radius:24px;padding:24px 20px;text-align:center;
+  box-shadow:0 8px 32px rgba(255,107,157,.4)
+}
+.cta-title{font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:6px}
+.cta-sub{font-size:.78rem;color:rgba(255,255,255,.85);
+  font-family:'Gowun Dodum',sans-serif;line-height:1.5;margin-bottom:18px}
+.cta-btn{
+  display:block;width:100%;padding:16px;
+  background:#fff;color:var(--pink);
+  border:none;border-radius:16px;
+  font-family:'Noto Sans KR',sans-serif;font-size:1rem;font-weight:900;
+  cursor:pointer;letter-spacing:-.3px;
+  box-shadow:0 4px 16px rgba(0,0,0,.1);
+  transition:all .2s
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.cta-badge{display:inline-block;background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.4);border-radius:99px;
+  padding:4px 12px;font-size:.68rem;font-weight:700;color:#fff;
+  margin-bottom:14px;letter-spacing:.3px}
+
+/* 로딩 */
+.loading{text-align:center;padding:60px 20px;color:var(--text-soft);
+  font-family:'Gowun Dodum',sans-serif}
+.loading-spinner{font-size:2rem;animation:spin 1s linear infinite;display:block;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 에러 */
+.error-wrap{text-align:center;padding:60px 20px}
+.error-emoji{font-size:3rem;display:block;margin-bottom:12px}
+
+/* 캔버스 (공유 이미지용) */
+#share-canvas{display:none}
+
+/* 하단 서명 */
+.footer{text-align:center;padding:24px 20px;
+  font-size:.68rem;color:var(--text-soft);
+  font-family:'Gowun Dodum',sans-serif;opacity:.7}
+</style>
+</head>
+<body>
+
+<div id="loading-state" class="loading">
+  <span class="loading-spinner">🏠</span>
+  분석 결과를 불러오는 중...
+</div>
+
+<div id="main-content" style="display:none">
+  <!-- 헤더: 판정 결과 -->
+  <div class="header">
+    <div class="header-badge">📊 남친 재력 분석 결과</div>
+    <span class="header-emoji" id="res-emoji">🏠</span>
+    <div class="header-verdict" id="res-verdict">계산 중...</div>
+    <div class="header-sub" id="res-sub"></div>
+  </div>
+
+  <div class="container">
+
+    <!-- 핵심 수치 -->
+    <div class="card">
+      <div class="section-title">📌 핵심 수치</div>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-label">목표 집값</div>
+          <div class="stat-value" id="s-price">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">현재 자산</div>
+          <div class="stat-value" id="s-asset">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">연봉 (세전)</div>
+          <div class="stat-value" id="s-salary">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">월 실수령</div>
+          <div class="stat-value" id="s-monthly">-</div>
+        </div>
+        <div class="stat-item" style="grid-column:1/-1">
+          <div class="stat-label">집 구매까지</div>
+          <div class="stat-value highlight" id="s-years">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 자산 흐름 차트 -->
+    <div class="card" id="chart-card" style="display:none">
+      <div class="section-title">📈 자산 흐름 시뮬레이션</div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:#FF6B9D"></span>자산</span>
+        <span><span class="legend-dot" style="background:#3DB88A"></span>목표</span>
+        <span><span class="legend-dot" style="background:#FF9966;border-top:2px dashed #FF9966"></span>월지출</span>
+        <span><span class="legend-dot" style="background:#6CB4E4;border-top:2px dashed #6CB4E4"></span>월수익</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="result-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- 분석 리포트 -->
+    <div class="card" id="report-card" style="display:none">
+      <div class="section-title">📄 분석 리포트</div>
+      <div id="report-rows"></div>
+    </div>
+
+    <!-- 공유 버튼 -->
+    <div class="card share-section">
+      <div class="share-title">이 결과를 친구에게 공유해요 💌</div>
+      <div class="share-btns">
+        <button class="share-btn share-btn-kakao" onclick="shareKakao()">
+          💬 카카오
+        </button>
+        <button class="share-btn share-btn-insta" onclick="saveInstaImage()">
+          📸 인스타
+        </button>
+        <button class="share-btn share-btn-link" onclick="copyLink()">
+          🔗 링크
+        </button>
+      </div>
+    </div>
+
+    <!-- CTA: 바이럴 핵심 -->
+    <div class="cta-wrap">
+      <div class="cta-badge">🔮 무료 분석</div>
+      <div class="cta-title">우리 남친도 분석해볼까?</div>
+      <div class="cta-sub">
+        남친 연봉 입력하면 집 살 수 있는지<br>
+        바로 계산해줘요! 투자수익률·육아비·차량까지 📊
+      </div>
+      <button class="cta-btn" onclick="goAnalyze()">
+        🏠 나도 남친 재력 분석하기 →
+      </button>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /main-content -->
+
+<!-- 에러 -->
+<div id="error-state" style="display:none" class="container">
+  <div class="error-wrap">
+    <span class="error-emoji">😕</span>
+    <div style="font-size:1rem;font-weight:900;margin-bottom:8px">결과를 불러올 수 없어요</div>
+    <div style="font-size:.82rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:20px;line-height:1.6">
+      링크가 만료됐거나 올바르지 않아요.<br>직접 분석을 시작해보세요!
+    </div>
+    <button class="cta-btn" style="background:var(--pink);color:#fff;max-width:280px;margin:0 auto"
+      onclick="goAnalyze()">🏠 남친 재력 분석하기</button>
+  </div>
+</div>
+
+<div class="footer" id="footer" style="display:none">
+  Powered by Xalysis · 재미 목적으로 제작, 투자 조언 아님
+</div>
+
+<canvas id="share-canvas" width="1080" height="1920"></canvas>
+
+<script>
+// ━━ 유틸 ━━
+const fmt = v => {
+  if(v==null||isNaN(v)) return '-';
+  return v>=10000?(v/10000).toFixed(1)+'억원':Math.round(v).toLocaleString()+'만원';
+};
+const fmtMan = v => v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';
+
+// 분석 페이지 URL (실제 배포 시 변경)
+const ANALYZE_URL = './index.html';
+
+// ━━ URL 파라미터 파싱 ━━
+function parseData(){
+  const params = new URLSearchParams(location.search);
+  const d = params.get('d');
+  if(!d) return null;
+  try{
+    return JSON.parse(decodeURIComponent(atob(d)));
+  }catch(e){ return null; }
+}
+
+// ━━ 집값 계산 ━━
+const PRICES={
+  gangnam:{small:90000,mid:140000,big:220000},
+  seoul:{small:55000,mid:90000,big:150000},
+  gyeonggi:{small:30000,mid:55000,big:90000},
+  local:{small:15000,mid:25000,big:45000}
+};
+const RN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+const SN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+
+// ━━ 렌더링 ━━
+function render(d){
+  // 헤더
+  document.getElementById('res-emoji').textContent   = d.emoji || '🏠';
+  document.getElementById('res-verdict').textContent = d.verdict || '-';
+  document.getElementById('res-sub').textContent     = (d.sub||'').replace(/\\n/g,'\n');
+
+  // 핵심 수치
+  const targetPrice = d.targetPrice || PRICES[d.region]?.[d.size] || 0;
+  const years = d.yearsNeeded ?? '-';
+  document.getElementById('s-price').textContent   = fmt(targetPrice);
+  document.getElementById('s-asset').textContent   = fmt(d.totalAsset);
+  document.getElementById('s-salary').textContent  = fmt(d.grossSalary);
+  document.getElementById('s-monthly').textContent = d.monthlyTakehome ? `월 ${d.monthlyTakehome}만원` : '-';
+
+  const yearsEl = document.getElementById('s-years');
+  yearsEl.textContent = years<=0?'지금 바로! 🎉':`약 ${years}년`;
+  yearsEl.className = 'stat-value highlight ' + (years<=0?'good':years<=5?'good':years<=10?'warn':'bad');
+
+  // 차트
+  if(d.simMonthly && d.simMonthly.length > 0){
+    renderChart(d);
+    document.getElementById('chart-card').style.display = 'block';
+  }
+
+  // 리포트
+  if(d.report){
+    renderReport(d.report);
+    document.getElementById('report-card').style.display = 'block';
+  }
+
+  // OG 태그 동적 업데이트
+  const ogTitle = `남친 재력 분석 결과: ${d.verdict || '결과 확인하기'}`;
+  const ogDesc  = `연봉 ${fmt(d.grossSalary)} · ${RN[d.region]||''} ${SN[d.size]||''} · ${years<=0?'지금 바로 가능!':years+'년 후 구매 가능'}`;
+  document.getElementById('og-title').content = ogTitle;
+  document.getElementById('og-desc').content  = ogDesc;
+  document.title = ogTitle;
+}
+
+// ━━ 차트 렌더 ━━
+let chartInstance = null;
+function renderChart(d){
+  const age      = d.age || 30;
+  const sim      = d.simMonthly; // [{month,asset,salary}]
+  const target   = d.effectiveTarget || d.targetPrice || 0;
+  const maxM     = Math.min(sim.length, 360);
+
+  const labels=[], assetArr=[], costArr=[], incomeArr=[];
+  const labelSet = new Set([age, age+Math.floor(maxM/12)]);
+  if(d.homeMonth>=0) labelSet.add(age+Math.floor(d.homeMonth/12));
+
+  for(let m=0;m<=maxM;m++){
+    const yr=Math.floor(m/12), mon=m%12, curAge=age+yr;
+    labels.push(mon===0&&labelSet.has(curAge)?`${curAge}세`:'');
+    const e=sim[m]||sim[sim.length-1]||{};
+    assetArr.push(+((e.asset||0)/10000).toFixed(2));
+    incomeArr.push(Math.round((e.salary||0)/12));
+    costArr.push(Math.round((e.monthlyCost||0)));
+  }
+  const targetLine=Array(maxM+1).fill(+(target/10000).toFixed(2));
+
+  // 집구매 플래그 플러그인
+  const homeMonth = d.homeMonth>=0&&d.homeMonth<=maxM?d.homeMonth:-1;
+  const markerPlugin={
+    id:'marker',
+    afterDraw(chart){
+      if(homeMonth<0) return;
+      const{ctx:c,scales:{x,y}}=chart;
+      const xPos=x.getPixelForValue(homeMonth);
+      const homeY=y.getPixelForValue(+(target/10000).toFixed(2));
+      c.save();
+      c.strokeStyle='rgba(61,184,138,.7)';c.lineWidth=2;c.setLineDash([]);
+      c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();
+      c.restore();
+      c.save();
+      const bw=74,bh=24;
+      const bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2);
+      const by=Math.max(homeY-bh-8,y.top+2);
+      c.fillStyle='#3DB88A';c.beginPath();c.roundRect(bx,by,bw,bh,5);c.fill();
+      c.fillStyle='white';c.font='bold 9px sans-serif';c.textAlign='center';
+      c.fillText('🏠 집구매 가능!',bx+bw/2,by+15);c.restore();
+    }
+  };
+
+  if(chartInstance) chartInstance.destroy();
+  const ctx=document.getElementById('result-chart').getContext('2d');
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'자산',data:assetArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',
+       borderWidth:2.5,pointRadius:0,tension:.3,fill:true,yAxisID:'y'},
+      {label:'목표',data:targetLine,borderColor:'#3DB88A',borderWidth:1.5,
+       pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
+      {label:'월지출',data:costArr,borderColor:'#FF9966',backgroundColor:'transparent',
+       borderWidth:1.5,pointRadius:0,tension:.1,fill:false,borderDash:[3,2],yAxisID:'yFlow'},
+      {label:'월수익',data:incomeArr,borderColor:'#6CB4E4',backgroundColor:'transparent',
+       borderWidth:1.5,pointRadius:0,tension:.3,fill:false,borderDash:[5,2],yAxisID:'yFlow'},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:true,animation:{duration:800},
+      layout:{padding:{bottom:20}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:c=>{
+            if(c.dataset.label==='월지출'||c.dataset.label==='월수익')
+              return `${c.dataset.label}: ${c.parsed.y.toLocaleString()}만원`;
+            return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`;
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{font:{size:9},color:'#9B7B8A',maxRotation:0,autoSkip:false,
+          callback(v,i){return labels[i]||''}},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#9B7B8A',callback:v=>`${v}억`},
+          grid:{color:'rgba(0,0,0,.04)'}},
+        yFlow:{position:'right',ticks:{font:{size:8.5},color:'#9B7B8A',
+          callback:v=>v>=10000?`${(v/10000).toFixed(1)}억`:`${v.toLocaleString()}만`,
+          maxTicksLimit:4},grid:{display:false},
+          title:{display:true,text:'월 수익·지출',color:'#9B7B8A',font:{size:8}}}
+      }
+    },
+    plugins:[markerPlugin]
+  });
+}
+
+// ━━ 리포트 렌더 ━━
+function renderReport(report){
+  const el = document.getElementById('report-rows');
+  el.innerHTML = report.map(sec=>`
+    <div class="report-section-title">${sec.title}</div>
+    ${sec.rows.map(([l,v])=>`
+      <div class="report-row">
+        <span class="report-label">${l}</span>
+        <span class="report-val">${v}</span>
+      </div>`).join('')}
+  `).join('');
+}
+
+// ━━ 공유 ━━
+function goAnalyze(){
+  location.href = ANALYZE_URL;
+}
+
+function copyLink(){
+  navigator.clipboard?.writeText(location.href).then(()=>{
+    showToast('🔗 링크 복사 완료!');
+  }).catch(()=>prompt('링크를 복사하세요:',location.href));
+}
+
+function shareKakao(){
+  // 카카오 SDK 미설치 시 링크 복사로 대체
+  if(typeof Kakao !== 'undefined' && Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title: document.title,
+        description: document.getElementById('og-desc').content,
+        imageUrl: document.getElementById('og-image').content,
+        link:{mobileWebUrl:location.href, webUrl:location.href}
+      },
+      buttons:[{title:'나도 분석하기',link:{mobileWebUrl:ANALYZE_URL,webUrl:ANALYZE_URL}}]
+    });
+  } else {
+    copyLink();
+    showToast('링크를 복사했어요! 카카오에 붙여넣기 해주세요 💌');
+  }
+}
+
+function saveInstaImage(){
+  generateShareImage().then(dataUrl=>{
+    const a=document.createElement('a');
+    a.download='남친재력분석.png';a.href=dataUrl;a.click();
+    showToast('📸 이미지 저장! 인스타 스토리에 올려보세요 ✨');
+  }).catch(()=>showToast('이미지 생성 실패. 스크린샷을 이용해주세요!'));
+}
+
+// ━━ 인스타 공유 이미지 생성 ━━
+async function generateShareImage(){
+  const d = window._shareData;
+  const canvas = document.getElementById('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W=1080, H=1920;
+
+  // 배경 그라디언트
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#FF6B9D'); bg.addColorStop(0.5,'#C850C0'); bg.addColorStop(1,'#8134AF');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // 반투명 오버레이 패턴
+  ctx.globalAlpha=0.08;
+  ctx.fillStyle='#fff';
+  for(let i=0;i<6;i++){
+    ctx.beginPath();ctx.arc(W*0.8,H*0.15+i*80,200-i*20,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // 흰 카드
+  ctx.fillStyle='rgba(255,255,255,.95)';
+  roundRect(ctx,60,140,W-120,H-280,48); ctx.fill();
+
+  // 브랜드
+  ctx.fillStyle='#FF6B9D';ctx.font=`bold ${52}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center';ctx.fillText('남친 재력 분석 결과',W/2,230);
+
+  // 이모지 + 판정
+  ctx.font=`${160}px serif`;ctx.fillText(d.emoji||'🏠',W/2,420);
+  ctx.fillStyle='#3D2C35';ctx.font=`900 ${68}px 'Noto Sans KR',sans-serif`;
+  ctx.fillText(d.verdict||'',W/2,520);
+
+  // 구분선
+  ctx.strokeStyle='#FFB3CC';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(140,560);ctx.lineTo(W-140,560);ctx.stroke();
+
+  // 핵심 수치 4개
+  const stats=[
+    ['목표 집값',fmt(d.targetPrice||0)],
+    ['현재 자산',fmt(d.totalAsset||0)],
+    ['세전 연봉',fmt(d.grossSalary||0)],
+    ['집 구매까지',d.yearsNeeded<=0?'지금 바로!':d.yearsNeeded+'년'],
+  ];
+  stats.forEach(([l,v],i)=>{
+    const col=i%2, row=Math.floor(i/2);
+    const bx=120+col*480, by=600+row*180;
+    ctx.fillStyle='#FFF0F5';
+    roundRect(ctx,bx,by,420,150,24);ctx.fill();
+    ctx.fillStyle='#9B7B8A';ctx.font=`400 ${38}px 'Noto Sans KR',sans-serif`;
+    ctx.textAlign='center';ctx.fillText(l,bx+210,by+55);
+    ctx.fillStyle='#3D2C35';ctx.font=`900 ${52}px 'Noto Sans KR',sans-serif`;
+    ctx.fillText(v,bx+210,by+115);
+  });
+
+  // 차트 삽입
+  const chartCanvas=document.getElementById('result-chart');
+  if(chartCanvas){
+    try{ctx.drawImage(chartCanvas,120,1000,W-240,380);}catch(e){}
+  }
+
+  // CTA 박스
+  ctx.fillStyle='#FF6B9D';
+  roundRect(ctx,80,1440,W-160,200,36);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.font=`900 ${52}px 'Noto Sans KR',sans-serif`;
+  ctx.textAlign='center';
+  ctx.fillText('나도 남친 재력 분석하기 →',W/2,1545);
+  ctx.font=`400 ${36}px 'Gowun Dodum',sans-serif`;
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.fillText('xalysis.com · 무료로 시작하기',W/2,1600);
+
+  // 워터마크
+  ctx.font=`400 ${30}px 'Gowun Dodum',sans-serif`;
+  ctx.fillStyle='rgba(155,123,138,.5)';
+  ctx.fillText('Powered by Xalysis',W/2,H-80);
+
+  return canvas.toDataURL('image/png');
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function showToast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#3D2C35;color:white;padding:12px 24px;border-radius:99px;font-size:.9rem;font-weight:700;z-index:9999;font-family:"Noto Sans KR",sans-serif;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ━━ 초기화 ━━
+(function init(){
+  const d = parseData();
+
+  if(!d){
+    document.getElementById('loading-state').style.display='none';
+    document.getElementById('error-state').style.display='block';
+    document.getElementById('footer').style.display='block';
+    return;
+  }
+
+  window._shareData = d; // 이미지 생성용
+
+  render(d);
+
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  document.getElementById('footer').style.display='block';
+})();
+</script>
+</body>
+</html>

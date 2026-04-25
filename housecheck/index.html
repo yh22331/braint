@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>HouseCheck Pro — 내 집 마련 시뮬레이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0D1117; --surface:#161B22; --surface2:#1C2128;
+  --border:#30363D; --border2:rgba(63,185,80,.25);
+  --primary:#3FB950; --primary-dim:#1A3D22;
+  --accent:#F78166; --accent-dim:#3D1A13;
+  --blue:#58A6FF; --purple:#BC8CFF; --gold:#F0C846;
+  --text:#E6EDF3; --muted:#7D8590; --dim:#484F58;
+  --mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(63,185,80,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(63,185,80,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+
+/* ── 헤더 ── */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:52px;padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(13,17,23,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.logo{font-size:15px;font-weight:700;color:var(--primary);letter-spacing:-.3px}
+.logo span{color:var(--muted);font-weight:300}
+.header-badge{
+  font-family:var(--mono);font-size:11px;color:var(--gold);
+  background:rgba(240,200,70,.1);border:1px solid rgba(240,200,70,.25);
+  padding:3px 10px;border-radius:99px;letter-spacing:.5px;
+}
+
+/* ── 컨테이너 ── */
+.container{
+  position:relative;z-index:1;
+  max-width:680px;margin:0 auto;
+  padding:72px 20px 120px;
+}
+
+/* ── 히어로 ── */
+.hero{text-align:center;margin-bottom:40px;animation:fadeUp .6s ease both}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--primary-dim);border:1px solid var(--border2);
+  color:var(--primary);font-size:12px;font-weight:500;
+  padding:4px 14px;border-radius:99px;margin-bottom:18px;letter-spacing:.5px;
+}
+.hero-title{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(28px,7vw,48px);line-height:1.15;
+  letter-spacing:-1px;margin-bottom:12px;
+}
+.hero-title em{font-style:italic;color:var(--primary)}
+.hero-sub{font-size:14px;color:var(--muted);line-height:1.6;font-weight:300}
+
+/* ── 진행 바 ── */
+.progress-wrap{margin-bottom:28px;animation:fadeUp .5s ease both}
+.progress-meta{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+  margin-bottom:8px;letter-spacing:.5px;
+}
+.progress-bar{height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--primary),#58D68D);
+  border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;
+}
+
+/* ── 질문 카드 ── */
+.q-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px;margin-bottom:12px;
+  transition:all .4s cubic-bezier(.4,0,.2,1);
+  animation:fadeUp .5s ease both;
+}
+.q-card.active{border-color:var(--border2);box-shadow:0 0 0 1px rgba(63,185,80,.15),0 8px 32px rgba(0,0,0,.4)}
+.q-card.done{opacity:.4;transform:scale(.997)}
+.q-card.hidden{display:none}
+
+.q-step{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--primary);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.q-text{font-size:17px;font-weight:600;line-height:1.4;margin-bottom:6px}
+.q-hint{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;font-weight:300}
+.q-hint strong{color:var(--gold);font-weight:500}
+
+/* ── 입력 ── */
+.input-row{display:flex;gap:10px;align-items:center}
+.input-wrap{flex:1;position:relative}
+.input-field{
+  width:100%;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:13px 16px;font-size:20px;font-weight:700;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+  -moz-appearance:textfield;
+}
+.input-field::-webkit-inner-spin-button,.input-field::-webkit-outer-spin-button{-webkit-appearance:none}
+.input-field:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(63,185,80,.12)}
+.input-field.sm{font-size:16px;padding:11px 14px}
+.input-unit{font-size:14px;color:var(--muted);white-space:nowrap;font-weight:400;min-width:32px}
+
+.sub-info{
+  margin-top:8px;font-family:var(--mono);font-size:12px;
+  color:var(--primary);min-height:16px;transition:all .3s;
+}
+
+/* ── 선택 버튼 ── */
+.choice-grid{display:grid;gap:8px}
+.choice-grid.cols2{grid-template-columns:1fr 1fr}
+.choice-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.choice-btn{
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:10px;padding:12px 14px;cursor:pointer;
+  transition:all .2s;text-align:left;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+}
+.choice-btn:hover{border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.06)}
+.choice-btn.selected{border-color:var(--primary);background:var(--primary-dim);box-shadow:0 0 0 1px rgba(63,185,80,.25)}
+.choice-label{font-size:14px;font-weight:600;display:block;margin-bottom:2px}
+.choice-sub{font-size:11px;color:var(--muted);display:block}
+.choice-btn.selected .choice-sub{color:var(--primary)}
+.badge-rec{
+  display:inline-block;background:var(--accent-dim);
+  border:1px solid rgba(247,129,102,.3);color:var(--accent);
+  font-size:9px;padding:2px 6px;border-radius:99px;margin-top:3px;
+}
+
+/* ── 확인 버튼 ── */
+.confirm-btn{
+  background:var(--primary);color:#000;border:none;
+  border-radius:10px;padding:13px 18px;font-size:14px;font-weight:700;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;
+  white-space:nowrap;transition:all .2s;flex-shrink:0;
+}
+.confirm-btn:hover{background:#58D68D;transform:translateY(-1px)}
+.confirm-btn:disabled{background:var(--border);color:var(--dim);cursor:not-allowed;transform:none}
+
+/* ── 완료 체크 ── */
+.done-check{
+  display:none;align-items:center;gap:8px;
+  font-size:13px;color:var(--primary);margin-top:12px;
+}
+.q-card.done .done-check{display:flex}
+.done-val{font-size:15px;font-weight:700;color:var(--text)}
+.check-icon{
+  width:18px;height:18px;background:var(--primary);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.check-icon svg{width:10px;height:10px}
+
+/* ── 슬라이더 ── */
+.slider-wrap{margin-top:14px}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+input[type=range]{
+  flex:1;height:4px;border-radius:2px;
+  background:var(--border);outline:none;cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;
+  background:var(--primary);border-radius:50%;cursor:pointer;
+  box-shadow:0 0 0 3px rgba(63,185,80,.2);
+}
+.slider-val{
+  font-family:var(--mono);font-size:14px;font-weight:500;
+  color:var(--primary);min-width:60px;text-align:right;
+}
+.slider-labels{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;color:var(--dim);
+}
+
+/* ── 토글 스위치 ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.toggle-label{font-size:14px;color:var(--text)}
+.toggle-switch{
+  width:44px;height:24px;background:var(--border);
+  border-radius:12px;cursor:pointer;position:relative;transition:background .2s;
+}
+.toggle-switch.on{background:var(--primary)}
+.toggle-switch::after{
+  content:'';position:absolute;width:18px;height:18px;
+  background:#fff;border-radius:50%;top:3px;left:3px;
+  transition:transform .2s;
+}
+.toggle-switch.on::after{transform:translateX(20px)}
+
+/* ── 섹션 구분선 ── */
+.section-divider{
+  display:flex;align-items:center;gap:12px;margin:20px 0 14px;
+}
+.section-divider-line{flex:1;height:1px;background:var(--border)}
+.section-divider-text{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:1px;white-space:nowrap}
+
+/* ── 최종 CTA ── */
+.final-cta{display:none;animation:fadeUp .5s ease both;margin-top:16px}
+.final-cta.visible{display:block}
+.cta-btn{
+  width:100%;background:var(--primary);color:#000;border:none;
+  border-radius:14px;padding:18px;font-size:17px;font-weight:700;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;
+  transition:all .25s;position:relative;overflow:hidden;letter-spacing:-.3px;
+}
+.cta-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%)}
+.cta-btn:hover{background:#58D68D;transform:translateY(-2px);box-shadow:0 12px 32px rgba(63,185,80,.35)}
+.cta-sub{text-align:center;font-size:11px;color:var(--dim);margin-top:8px;font-family:var(--mono)}
+
+/* ── 로딩 ── */
+.loading{
+  display:none;position:fixed;inset:0;
+  background:rgba(13,17,23,.92);backdrop-filter:blur(8px);
+  z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+.loading.visible{display:flex}
+.loading-steps{display:flex;flex-direction:column;gap:10px;width:260px}
+.loading-step{
+  display:flex;align-items:center;gap:12px;
+  font-size:13px;color:var(--muted);
+  opacity:0;transition:opacity .4s;
+}
+.loading-step.active{opacity:1;color:var(--text)}
+.loading-step .step-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--border);flex-shrink:0;transition:background .4s;
+}
+.loading-step.active .step-dot{background:var(--primary);box-shadow:0 0 8px rgba(63,185,80,.5)}
+
+/* ── 결과 ── */
+#result-section{display:none;animation:fadeUp .6s ease both}
+#result-section.visible{display:block}
+
+.result-hero{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:32px 28px;margin-bottom:12px;
+  position:relative;overflow:hidden;
+}
+.result-hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:240px;height:240px;
+  background:radial-gradient(circle,rgba(63,185,80,.1),transparent 70%);
+}
+.result-eyebrow{
+  font-family:var(--mono);font-size:11px;color:var(--primary);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;
+}
+.result-verdict{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(32px,8vw,56px);
+  line-height:1;letter-spacing:-2px;color:var(--text);margin-bottom:10px;
+}
+.result-verdict span{color:var(--primary)}
+.result-sub{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+.result-badges{display:flex;gap:8px;flex-wrap:wrap}
+.rbadge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:99px;font-size:11px;font-weight:500;
+}
+.rbadge-green{background:var(--primary-dim);border:1px solid var(--border2);color:var(--primary)}
+.rbadge-orange{background:var(--accent-dim);border:1px solid rgba(247,129,102,.3);color:var(--accent)}
+.rbadge-blue{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);color:var(--blue)}
+.rbadge-gold{background:rgba(240,200,70,.1);border:1px solid rgba(240,200,70,.25);color:var(--gold)}
+
+/* 지표 그리드 */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.metric-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px;
+}
+.metric-label{font-size:10px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);letter-spacing:.5px}
+.metric-val{font-size:18px;font-weight:700;color:var(--primary);letter-spacing:-.5px}
+.metric-val.neutral{color:var(--text)}
+.metric-val.warn{color:var(--accent)}
+
+/* 차트 */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px;margin-bottom:12px;
+}
+.chart-title{
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;
+}
+.chart-legend{display:flex;gap:14px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.chart-legend span{display:flex;align-items:center;gap:4px}
+.ldot{width:8px;height:2px;border-radius:1px;display:inline-block}
+
+/* 리포트 */
+.report-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px;margin-bottom:12px;
+}
+.report-section-title{
+  font-family:var(--mono);font-size:11px;color:var(--primary);
+  letter-spacing:1.5px;text-transform:uppercase;
+  margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border);
+}
+.report-section-title:first-child{margin-top:0;padding-top:0;border-top:none}
+.report-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;padding:7px 0;border-bottom:1px solid rgba(48,54,61,.6);
+}
+.report-row:last-child{border-bottom:none}
+.report-label{color:var(--muted)}
+.report-val{font-weight:700;color:var(--text);font-family:var(--mono);font-size:12px}
+.report-val.positive{color:var(--primary)}
+.report-val.negative{color:var(--accent)}
+.report-total{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0 0;font-size:14px;font-weight:700;
+  border-top:1px solid var(--border);margin-top:4px;
+}
+
+/* 액션 버튼들 */
+.action-btns{display:flex;gap:8px;margin-top:12px}
+.action-btn{
+  flex:1;padding:12px;border:1px solid var(--border);
+  border-radius:10px;background:transparent;
+  color:var(--muted);font-family:'Noto Sans KR',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .2s;text-align:center;
+}
+.action-btn:hover{border-color:var(--primary);color:var(--primary)}
+.action-btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+.action-btn.primary:hover{background:#FF9B7A;color:#fff}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:480px){
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .metrics-grid .metric-card:last-child{grid-column:1/-1}
+  .choice-grid.cols3{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">house<span>check</span></div>
+  <div class="header-badge">PRO</div>
+</header>
+
+<div class="loading" id="loading">
+  <div class="loading-steps">
+    <div class="loading-step" id="ls1"><div class="step-dot"></div>소득 분석 중...</div>
+    <div class="loading-step" id="ls2"><div class="step-dot"></div>자산 성장 시뮬레이션...</div>
+    <div class="loading-step" id="ls3"><div class="step-dot"></div>이벤트 비용 반영...</div>
+    <div class="loading-step" id="ls4"><div class="step-dot"></div>최적 전략 도출...</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 히어로 -->
+  <div class="hero" id="hero-section">
+    <div class="hero-eyebrow">🏠 내 집 마련 시뮬레이터</div>
+    <h1 class="hero-title">내 연봉으로<br><em>집 살 수 있을까?</em></h1>
+    <p class="hero-sub">월별 자산 시뮬레이션 · 투자수익률 · 이벤트 비용까지<br>현실적인 내 집 마련 계획을 분석해드려요</p>
+  </div>
+
+  <!-- 입력 섹션 -->
+  <div id="input-section">
+
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+      <div class="progress-meta">
+        <span id="progress-step">STEP 1 / 8</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <!-- Q1: 나이 -->
+    <div class="q-card active" id="q1" style="animation-delay:.1s">
+      <div class="q-step">STEP 01 · 기본 정보</div>
+      <div class="q-text">몇 살이세요?</div>
+      <div class="q-hint">나이에 따라 투자 기간과 이벤트 발생 시점을 계산해요</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" class="input-field" id="age-input" placeholder="30" min="18" max="65">
+        </div>
+        <span class="input-unit">세</span>
+        <button class="confirm-btn" id="q1-btn" onclick="confirmQ1()">확인 →</button>
+      </div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q1-done"></span>
+      </div>
+    </div>
+
+    <!-- Q2: 세전 연봉 -->
+    <div class="q-card hidden" id="q2">
+      <div class="q-step">STEP 02 · 소득</div>
+      <div class="q-text">세전 연봉이 얼마예요?</div>
+      <div class="q-hint">세전 기준으로 입력하면 <strong>실수령액을 자동 계산</strong>해드려요</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" class="input-field" id="salary-input" placeholder="5000" min="500">
+        </div>
+        <span class="input-unit">만원</span>
+        <button class="confirm-btn" onclick="confirmQ2()">확인 →</button>
+      </div>
+      <div class="sub-info" id="q2-info"></div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q2-done"></span>
+      </div>
+    </div>
+
+    <!-- Q3: 현재 자산 -->
+    <div class="q-card hidden" id="q3">
+      <div class="q-step">STEP 03 · 현재 자산</div>
+      <div class="q-text">지금 모아둔 돈이 얼마예요?</div>
+      <div class="q-hint">예금, 주식, 청약 등 유동 자산 합계 (없으면 0)</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" class="input-field" id="asset-input" placeholder="3000" min="0">
+        </div>
+        <span class="input-unit">만원</span>
+        <button class="confirm-btn" onclick="confirmQ3()">확인 →</button>
+      </div>
+      <div class="sub-info" id="q3-info"></div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q3-done"></span>
+      </div>
+    </div>
+
+    <!-- Q4: 목표 집값 -->
+    <div class="q-card hidden" id="q4">
+      <div class="q-step">STEP 04 · 목표</div>
+      <div class="q-text">사고 싶은 집값이 얼마예요?</div>
+      <div class="q-hint">희망 매매가를 입력해주세요 (7억 → 70000)</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="number" class="input-field" id="price-input" placeholder="70000" min="5000">
+        </div>
+        <span class="input-unit">만원</span>
+        <button class="confirm-btn" onclick="confirmQ4()">확인 →</button>
+      </div>
+      <div class="sub-info" id="q4-info"></div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q4-done"></span>
+      </div>
+    </div>
+
+    <!-- Q5: 투자 성향 + 수익률 -->
+    <div class="q-card hidden" id="q5">
+      <div class="q-step">STEP 05 · 투자</div>
+      <div class="q-text">돈을 어떻게 굴리세요?</div>
+      <div class="q-hint">투자 성향에 따라 자산 증식 속도가 크게 달라져요</div>
+      <div class="choice-grid cols3" id="invest-choices">
+        <button class="choice-btn" onclick="selectInvest(this,3)">
+          <span class="choice-label">🏦 예·적금</span>
+          <span class="choice-sub">연 3%</span>
+        </button>
+        <button class="choice-btn" onclick="selectInvest(this,5)">
+          <span class="choice-label">📊 주식 포함</span>
+          <span class="choice-sub">연 5%</span>
+          <span class="badge-rec">평균</span>
+        </button>
+        <button class="choice-btn" onclick="selectInvest(this,7)">
+          <span class="choice-label">🚀 공격적</span>
+          <span class="choice-sub">연 7%+</span>
+        </button>
+      </div>
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">직접 입력</div><div class="section-divider-line"></div></div>
+      <div class="slider-wrap">
+        <div class="slider-row">
+          <input type="range" id="invest-slider" min="1" max="15" value="5" step="0.5" oninput="onInvestSlider(this.value)">
+          <span class="slider-val" id="invest-slider-val">연 5%</span>
+        </div>
+        <div class="slider-labels"><span>1%</span><span>8%</span><span>15%</span></div>
+      </div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q5-done"></span>
+      </div>
+    </div>
+
+    <!-- Q6: 월 생활비 -->
+    <div class="q-card hidden" id="q6">
+      <div class="q-step">STEP 06 · 지출</div>
+      <div class="q-text">한 달에 생활비가 얼마나 드세요?</div>
+      <div class="q-hint">식비, 교통비, 구독료, 여가비 등 고정 지출 합계</div>
+      <div class="choice-grid cols2" style="margin-bottom:14px" id="living-choices">
+        <button class="choice-btn" onclick="selectLiving(this,100)">
+          <span class="choice-label">💸 절약형</span>
+          <span class="choice-sub">월 100만원</span>
+        </button>
+        <button class="choice-btn" onclick="selectLiving(this,200)">
+          <span class="choice-label">🏙️ 직장인 평균</span>
+          <span class="choice-sub">월 200만원</span>
+          <span class="badge-rec">평균</span>
+        </button>
+        <button class="choice-btn" onclick="selectLiving(this,300)">
+          <span class="choice-label">✨ 여유로운</span>
+          <span class="choice-sub">월 300만원</span>
+        </button>
+        <button class="choice-btn" onclick="selectLiving(this,null)">
+          <span class="choice-label">✏️ 직접 입력</span>
+          <span class="choice-sub">내 지출 맞춤</span>
+        </button>
+      </div>
+      <div id="living-custom" style="display:none">
+        <div class="input-row">
+          <div class="input-wrap">
+            <input type="number" class="input-field sm" id="living-input" placeholder="250" min="30">
+          </div>
+          <span class="input-unit">만원</span>
+          <button class="confirm-btn" onclick="confirmLivingCustom()">확인</button>
+        </div>
+      </div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q6-done"></span>
+      </div>
+    </div>
+
+    <!-- Q7: 연봉 인상 -->
+    <div class="q-card hidden" id="q7">
+      <div class="q-step">STEP 07 · 커리어</div>
+      <div class="q-text">연봉이 매년 얼마나 오를 것 같아요?</div>
+      <div class="q-hint">현실적인 커리어 성장 속도를 선택해주세요</div>
+      <div class="choice-grid cols3" id="raise-choices">
+        <button class="choice-btn" onclick="selectRaise(this,'fixed3',3,false)">
+          <span class="choice-label">📊 연 3%</span>
+          <span class="choice-sub">물가 수준</span>
+        </button>
+        <button class="choice-btn" onclick="selectRaise(this,'promo5',3,true)">
+          <span class="choice-label">🎖️ 3%+진급</span>
+          <span class="choice-sub">5년마다 +10%</span>
+          <span class="badge-rec">평균</span>
+        </button>
+        <button class="choice-btn" onclick="selectRaise(this,'high7',7,false)">
+          <span class="choice-label">🚀 연 7%+</span>
+          <span class="choice-sub">고성장</span>
+        </button>
+      </div>
+      <div class="section-divider"><div class="section-divider-line"></div><div class="section-divider-text">MAX 연봉 상한</div><div class="section-divider-line"></div></div>
+      <div class="input-row" style="margin-top:4px">
+        <div class="input-wrap">
+          <input type="number" class="input-field sm" id="max-salary-input" placeholder="15000" min="3000">
+        </div>
+        <span class="input-unit">만원</span>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:6px;font-family:var(--mono)">이 금액 이상으로는 연봉이 오르지 않아요 (기본 1.5억)</div>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q7-done"></span>
+      </div>
+    </div>
+
+    <!-- Q8: 인생 이벤트 -->
+    <div class="q-card hidden" id="q8">
+      <div class="q-step">STEP 08 · 인생 이벤트</div>
+      <div class="q-text">앞으로 예정된 지출이 있나요?</div>
+      <div class="q-hint">해당하는 항목을 선택하면 자산 계획에 반영해드려요</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- 대출 -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div class="toggle-row">
+            <span class="toggle-label">🏦 주택담보대출 활용</span>
+            <div class="toggle-switch" id="loan-toggle" onclick="toggleEvent('loan')"></div>
+          </div>
+          <div id="loan-detail" style="display:none">
+            <div style="font-size:12px;color:var(--muted);font-family:var(--mono)">집값의 40% LTV · 연 4% · 30년 원리금균등상환</div>
+            <div style="font-size:12px;color:var(--primary);margin-top:4px" id="loan-info"></div>
+          </div>
+        </div>
+
+        <!-- 결혼 -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div class="toggle-row">
+            <span class="toggle-label">💍 결혼 비용 <span style="font-size:11px;color:var(--dim)">약 33세</span></span>
+            <div class="toggle-switch" id="wedding-toggle" onclick="toggleEvent('wedding')"></div>
+          </div>
+          <div id="wedding-detail" style="display:none">
+            <div class="input-row" style="margin-top:8px">
+              <div class="input-wrap">
+                <input type="number" class="input-field sm" id="wedding-cost" placeholder="5000" value="5000">
+              </div>
+              <span class="input-unit">만원</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 육아 -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div class="toggle-row">
+            <span class="toggle-label">👶 출산·육아비 <span style="font-size:11px;color:var(--dim)">26년간</span></span>
+            <div class="toggle-switch" id="baby-toggle" onclick="toggleEvent('baby')"></div>
+          </div>
+          <div id="baby-detail" style="display:none">
+            <div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px">초기 연 육아비 · 매년 3% 상승 · MAX 2,000만원</div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" class="input-field sm" id="baby-cost" placeholder="500" value="500">
+              </div>
+              <span class="input-unit">만원/년</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 차량 -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div class="toggle-row">
+            <span class="toggle-label">🚗 차량 구매 <span style="font-size:11px;color:var(--dim)">약 30세</span></span>
+            <div class="toggle-switch" id="car-toggle" onclick="toggleEvent('car')"></div>
+          </div>
+          <div id="car-detail" style="display:none">
+            <div class="choice-grid cols3" style="margin-bottom:10px" id="car-choices">
+              <button class="choice-btn" onclick="selectCar(this,3500,'domestic')"><span class="choice-label">🇰🇷 국산차</span><span class="choice-sub">~3,500만</span></button>
+              <button class="choice-btn" onclick="selectCar(this,8000,'foreign')"><span class="choice-label">🌍 외제차</span><span class="choice-sub">~8,000만</span></button>
+              <button class="choice-btn" onclick="selectCar(this,30000,'super')"><span class="choice-label">🏎️ 슈퍼카</span><span class="choice-sub">3억+</span></button>
+            </div>
+            <div class="input-row">
+              <div class="input-wrap">
+                <input type="number" class="input-field sm" id="car-cost" placeholder="3500" value="3500" oninput="updateCarNote()">
+              </div>
+              <span class="input-unit">만원</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:var(--mono)" id="car-note">유지비 약 월 59만원 포함</div>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="confirm-btn" style="width:100%;margin-top:16px" onclick="confirmQ8()">
+        설정 완료 →
+      </button>
+      <div class="done-check">
+        <div class="check-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="done-val" id="q8-done"></span>
+      </div>
+    </div>
+
+    <!-- 최종 CTA -->
+    <div class="final-cta" id="final-cta">
+      <button class="cta-btn" onclick="showResult()">📊 내 집 마련 계획 분석하기 →</button>
+      <div class="cta-sub">월별 자산 시뮬레이션 · 이벤트 비용 반영 · 투자수익률 적용</div>
+    </div>
+
+  </div><!-- /input-section -->
+
+  <!-- 결과 섹션 -->
+  <div id="result-section">
+    <div class="result-hero">
+      <div class="result-eyebrow">📊 내 집 마련 분석 결과</div>
+      <div class="result-verdict" id="r-verdict">— 년 후</div>
+      <div class="result-sub" id="r-sub"></div>
+      <div class="result-badges" id="r-badges"></div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">월 순저축</div>
+        <div class="metric-val" id="r-save">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">저축률</div>
+        <div class="metric-val" id="r-rate">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">달성 나이</div>
+        <div class="metric-val" id="r-age">-</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">
+        <span>자산 흐름 시뮬레이션</span>
+        <div class="chart-legend">
+          <span><span class="ldot" style="background:#3FB950"></span>자산</span>
+          <span><span class="ldot" style="background:#58A6FF"></span>목표</span>
+          <span><span class="ldot" style="background:#F78166;border-top:2px dashed #F78166"></span>월지출</span>
+          <span><span class="ldot" style="background:#BC8CFF;border-top:2px dashed #BC8CFF"></span>월수익</span>
+        </div>
+      </div>
+      <canvas id="result-chart" height="220"></canvas>
+    </div>
+
+    <div class="report-card" id="report-card"></div>
+
+    <div class="action-btns">
+      <button class="action-btn" onclick="resetAll()">↺ 다시 계산</button>
+      <button class="action-btn primary" onclick="shareResult()">🔗 결과 공유</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ━━ 상수 ━━
+const TOTAL_STEPS = 8;
+const EVENT_AGES  = { wedding:33, baby:35, car:30 };
+const CAR_MAINT   = { domestic:{fuel:15,insure:10,repair:5}, foreign:{fuel:25,insure:20,repair:15}, super:{fuel:50,insure:50,repair:50} };
+
+// ━━ 상태 ━━
+const S = {
+  age:null, salary:null, takeHome:null,
+  asset:null, housePrice:null,
+  investRate:5, livingCost:200,
+  raiseMode:'promo5', raiseRate:3, raisePromo:true, maxSalary:15000,
+  loan:false, wedding:false, weddingCost:5000,
+  baby:false, babyCost:500, car:false, carCost:3500, carType:'domestic',
+  step:0,
+};
+let chartInstance = null;
+
+// ━━ 유틸 ━━
+const fmt = v => {
+  if(v==null||isNaN(v)) return '-';
+  return v>=10000?(v/10000).toFixed(1)+'억원':Math.round(v).toLocaleString()+'만원';
+};
+const fmtM = v => v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';
+
+function calcTakeHome(gross){
+  let rate;
+  if(gross<=3000)rate=.88; else if(gross<=4000)rate=.855; else if(gross<=5000)rate=.835;
+  else if(gross<=6000)rate=.82; else if(gross<=7000)rate=.805; else if(gross<=8000)rate=.79;
+  else if(gross<=10000)rate=.775; else if(gross<=12000)rate=.755; else if(gross<=15000)rate=.73;
+  else rate=.70;
+  return Math.round(gross*rate/12);
+}
+
+function calcMortgage(loan, annualRate, years){
+  if(!loan||loan<=0) return{monthly:0,totalInterest:0,totalPayment:0};
+  const r=annualRate/100/12, n=years*12;
+  const monthly=Math.round(loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1));
+  const total=monthly*n;
+  return{monthly,totalInterest:total-loan,totalPayment:total};
+}
+
+function calcBabyByYear(startCost){
+  const result={};let cost=startCost;let total=0;
+  for(let i=0;i<26;i++){
+    const c=Math.min(Math.round(cost),2000);
+    result[i]=c;total+=c;cost*=1.03;
+  }
+  return{byOffset:result,total};
+}
+
+function calcCarMonthly(price, type){
+  const base=CAR_MAINT[type]||CAR_MAINT.domestic;
+  const bprice={domestic:3500,foreign:8000,super:30000}[type]||3500;
+  const ratio=Math.max(.5,Math.min(3,price/bprice));
+  const fuel=Math.round(base.fuel*Math.sqrt(ratio));
+  const insure=Math.round(base.insure*ratio);
+  const repair=Math.round(base.repair*Math.sqrt(ratio));
+  const deprec=Math.round(price*.10/12);
+  return fuel+insure+repair+deprec;
+}
+
+// ━━ 진행 바 ━━
+function updateProgress(step){
+  const pct=Math.round(step/TOTAL_STEPS*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-step').textContent=`STEP ${step} / ${TOTAL_STEPS}`;
+  document.getElementById('progress-pct').textContent=pct+'%';
+  document.getElementById('progress-wrap').style.display='block';
+}
+
+function showCard(id){
+  const c=document.getElementById(id);
+  c.classList.remove('hidden');c.classList.add('active');
+  setTimeout(()=>{
+    c.scrollIntoView({behavior:'smooth',block:'center'});
+    const inp=c.querySelector('input[type=number]');
+    if(inp) inp.focus();
+  },150);
+}
+
+function markDone(id,doneId,text){
+  const c=document.getElementById(id);
+  c.classList.remove('active');c.classList.add('done');
+  document.getElementById(doneId).textContent=text;
+}
+
+// ━━ Q1: 나이 ━━
+function confirmQ1(){
+  const v=parseInt(document.getElementById('age-input').value);
+  if(!v||v<18||v>65){showToast('18~65세로 입력해주세요');return;}
+  S.age=v;
+  markDone('q1','q1-done',`${v}세`);
+  S.step=2;updateProgress(2);showCard('q2');
+}
+
+// ━━ Q2: 연봉 ━━
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('salary-input').addEventListener('input',e=>{
+    const v=parseInt(e.target.value);
+    const el=document.getElementById('q2-info');
+    if(v>0) el.textContent=`→ 세후 실수령 월 약 ${calcTakeHome(v).toLocaleString()}만원`;
+    else el.textContent='';
+  });
+  document.getElementById('asset-input').addEventListener('input',e=>{
+    const v=parseInt(e.target.value)||0;
+    document.getElementById('q3-info').textContent=v>0?`→ ${fmtM(v)} 보유 중`:'→ 자산 없음으로 시작';
+  });
+  document.getElementById('price-input').addEventListener('input',e=>{
+    const v=parseInt(e.target.value);
+    const el=document.getElementById('q4-info');
+    if(v>0){
+      const loanAmt=Math.round(v*.4);
+      el.textContent=`→ ${fmtM(v)} · 대출 활용 시 ${fmtM(loanAmt)} 차감 가능`;
+    }else el.textContent='';
+    updateLoanInfo();
+  });
+  document.getElementById('living-input').addEventListener('input',e=>{
+    const v=parseInt(e.target.value)||0;
+    if(v>0){ S.livingCost=v; }
+  });
+  ['age-input','salary-input','asset-input','price-input'].forEach((id,i)=>{
+    document.getElementById(id).addEventListener('keydown',e=>{
+      if(e.key==='Enter')[confirmQ1,confirmQ2,confirmQ3,confirmQ4][i]?.();
+    });
+  });
+  document.getElementById('invest-slider').addEventListener('input',e=>onInvestSlider(e.target.value));
+});
+
+function confirmQ2(){
+  const v=parseInt(document.getElementById('salary-input').value);
+  if(!v||v<500){showToast('연봉을 입력해주세요');return;}
+  S.salary=v;S.takeHome=calcTakeHome(v);
+  markDone('q2','q2-done',`세전 ${v.toLocaleString()}만원 → 월 실수령 ${S.takeHome.toLocaleString()}만원`);
+  S.step=3;updateProgress(3);showCard('q3');
+}
+
+// ━━ Q3: 자산 ━━
+function confirmQ3(){
+  const v=parseInt(document.getElementById('asset-input').value)||0;
+  S.asset=v;
+  markDone('q3','q3-done',v>0?`${fmt(v)} 보유`:'자산 없음으로 시작');
+  S.step=4;updateProgress(4);showCard('q4');
+}
+
+// ━━ Q4: 집값 ━━
+function confirmQ4(){
+  const v=parseInt(document.getElementById('price-input').value);
+  if(!v||v<1000){showToast('집값을 입력해주세요 (예: 7억 → 70000)');return;}
+  S.housePrice=v;
+  markDone('q4','q4-done',`${fmt(v)}`);
+  S.step=5;updateProgress(5);showCard('q5');
+}
+
+// ━━ Q5: 투자 ━━
+function selectInvest(btn,rate){
+  document.querySelectorAll('#invest-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.investRate=rate;
+  document.getElementById('invest-slider').value=rate;
+  document.getElementById('invest-slider-val').textContent=`연 ${rate}%`;
+  setTimeout(()=>{
+    markDone('q5','q5-done',`투자수익률 연 ${rate}% 적용`);
+    S.step=6;updateProgress(6);showCard('q6');
+  },350);
+}
+function onInvestSlider(v){
+  const rate=parseFloat(v);
+  S.investRate=rate;
+  document.getElementById('invest-slider-val').textContent=`연 ${rate}%`;
+  document.querySelectorAll('#invest-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  setTimeout(()=>{
+    if(!document.getElementById('q5').classList.contains('done')){
+      markDone('q5','q5-done',`투자수익률 연 ${rate}% 적용`);
+      S.step=6;updateProgress(6);showCard('q6');
+    }
+  },800);
+}
+
+// ━━ Q6: 생활비 ━━
+function selectLiving(btn,amount){
+  document.querySelectorAll('#living-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  if(amount===null){
+    document.getElementById('living-custom').style.display='block';
+    return;
+  }
+  document.getElementById('living-custom').style.display='none';
+  S.livingCost=amount;
+  setTimeout(()=>{
+    markDone('q6','q6-done',`월 생활비 ${amount}만원`);
+    S.step=7;updateProgress(7);showCard('q7');
+  },350);
+}
+function confirmLivingCustom(){
+  const v=parseInt(document.getElementById('living-input').value);
+  if(!v||v<10){showToast('생활비를 입력해주세요');return;}
+  S.livingCost=v;
+  markDone('q6','q6-done',`월 생활비 ${v}만원`);
+  S.step=7;updateProgress(7);showCard('q7');
+}
+
+// ━━ Q7: 연봉 인상 ━━
+function selectRaise(btn,mode,rate,promo){
+  document.querySelectorAll('#raise-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.raiseMode=mode;S.raiseRate=rate;S.raisePromo=promo;
+  const maxV=parseInt(document.getElementById('max-salary-input').value)||15000;
+  S.maxSalary=maxV;
+  setTimeout(()=>{
+    const label=promo?`연 ${rate}% + 5년마다 진급`:`연 ${rate}% 인상`;
+    markDone('q7','q7-done',`${label} · MAX ${fmtM(maxV)}`);
+    S.step=8;updateProgress(8);showCard('q8');
+  },350);
+}
+
+// ━━ Q8: 이벤트 ━━
+function toggleEvent(type){
+  const toggle=document.getElementById(`${type}-toggle`);
+  const detail=document.getElementById(`${type}-detail`);
+  const isOn=toggle.classList.toggle('on');
+  detail.style.display=isOn?'block':'none';
+  S[type]=isOn;
+  if(type==='loan') updateLoanInfo();
+}
+function updateLoanInfo(){
+  if(!S.housePrice) return;
+  const loanAmt=Math.round(S.housePrice*.4);
+  const m=calcMortgage(loanAmt,4,30);
+  document.getElementById('loan-info').textContent=
+    S.loan?`대출 ${fmt(loanAmt)} · 월 상환 ${m.monthly.toLocaleString()}만원 · 30년`:'';
+}
+function selectCar(btn,cost,type){
+  document.querySelectorAll('#car-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.carCost=cost;S.carType=type;
+  document.getElementById('car-cost').value=cost;
+  updateCarNote();
+}
+function updateCarNote(){
+  const cost=parseInt(document.getElementById('car-cost')?.value)||S.carCost;
+  S.carCost=cost;
+  const maint=calcCarMonthly(cost,S.carType||'domestic');
+  document.getElementById('car-note').textContent=`유지비 월 약 ${maint}만원 포함`;
+}
+function confirmQ8(){
+  S.wedding=document.getElementById('wedding-toggle').classList.contains('on');
+  S.weddingCost=parseInt(document.getElementById('wedding-cost').value)||5000;
+  S.baby=document.getElementById('baby-toggle').classList.contains('on');
+  S.babyCost=parseInt(document.getElementById('baby-cost').value)||500;
+  S.car=document.getElementById('car-toggle').classList.contains('on');
+  S.carCost=parseInt(document.getElementById('car-cost').value)||3500;
+  S.maxSalary=parseInt(document.getElementById('max-salary-input').value)||15000;
+
+  const events=[];
+  if(S.loan) events.push('대출');
+  if(S.wedding) events.push('결혼');
+  if(S.baby) events.push('육아');
+  if(S.car) events.push('차량');
+  markDone('q8','q8-done',events.length?events.join(' · ')+'반영':'이벤트 없음');
+  document.getElementById('final-cta').classList.add('visible');
+  setTimeout(()=>document.getElementById('final-cta').scrollIntoView({behavior:'smooth',block:'center'}),200);
+}
+
+// ━━ 시뮬레이션 엔진 ━━
+function simulateMonthly(){
+  const netSalary = S.takeHome*12; // 연 세후
+  const initAsset = S.asset;
+  const investRate = S.investRate;
+  const loanAmt = S.loan ? Math.round(S.housePrice*.4) : 0;
+  const effectiveTarget = S.housePrice - loanAmt;
+  const monthlyR = Math.pow(1+investRate/100,1/12)-1;
+
+  // 원리금
+  const r30=loanAmt>0?4/100/12:0, n30=360;
+  const monthlyLoan=loanAmt>0&&r30>0?Math.round(loanAmt*r30*Math.pow(1+r30,n30)/(Math.pow(1+r30,n30)-1)):0;
+
+  // 이벤트 일시금 (자산 차감)
+  const extraByYear={};
+  if(S.wedding){
+    const yr=Math.max(0,EVENT_AGES.wedding-S.age);
+    extraByYear[yr]=(extraByYear[yr]||0)+S.weddingCost;
+  }
+  if(S.car){
+    const yr=Math.max(0,EVENT_AGES.car-S.age);
+    extraByYear[yr]=(extraByYear[yr]||0)+S.carCost;
+  }
+
+  // 육아비 월균등
+  const monthlyBabyByYr={};
+  if(S.baby){
+    const startYr=Math.max(0,EVENT_AGES.baby-S.age);
+    const{byOffset}=calcBabyByYear(S.babyCost);
+    Object.entries(byOffset).forEach(([offset,ann])=>{
+      const yr=startYr+Number(offset);
+      monthlyBabyByYr[yr]=(monthlyBabyByYr[yr]||0)+Math.round(ann/12);
+    });
+  }
+
+  // 차량 유지비
+  const carStartYr=S.car?Math.max(0,EVENT_AGES.car-S.age):Infinity;
+  const carMaintMonthly=S.car?calcCarMonthly(S.carCost,S.carType):0;
+
+  // MAX 세후 연봉
+  const maxNetSalary=calcTakeHome(S.maxSalary)*12;
+
+  let asset=initAsset;
+  let currentNet=netSalary;
+  let reachedMonth=-1;
+  let maxSalaryMonth=-1;
+  const results=[];
+
+  if(asset>=effectiveTarget) reachedMonth=0;
+
+  for(let m=0;m<360;m++){
+    const yr=Math.floor(m/12), mon=m%12;
+
+    // 연봉 인상 (1월)
+    if(mon===0&&m>0){
+      if(S.raisePromo){
+        currentNet*=(1+S.raiseRate/100);
+        if(yr%5===0) currentNet*=1.10;
+      } else {
+        currentNet*=(1+S.raiseRate/100);
+      }
+      if(currentNet>maxNetSalary){
+        if(maxSalaryMonth<0) maxSalaryMonth=m;
+        currentNet=maxNetSalary;
+      }
+    }
+
+    const income=currentNet/12;
+    const babyM=monthlyBabyByYr[yr]||0;
+    const carM=yr>=carStartYr?carMaintMonthly:0;
+    const netCF=income-S.livingCost-monthlyLoan-carM-babyM;
+    const eventCost=mon===0&&extraByYear[yr]?extraByYear[yr]:0;
+
+    asset=asset*(1+monthlyR)+netCF-eventCost;
+    const monthlyCost=S.livingCost+monthlyLoan+carM+babyM;
+
+    results.push({
+      month:m,year:yr,
+      asset:Math.round(asset),
+      salary:Math.round(currentNet),
+      monthlyCost:Math.round(monthlyCost),
+    });
+
+    if(reachedMonth<0&&asset>=effectiveTarget){
+      reachedMonth=m+1;
+      asset=0;
+      results.push({month:m,year:yr,asset:0,salary:Math.round(currentNet),monthlyCost:Math.round(monthlyCost),housePurchase:true});
+      break;
+    }
+  }
+
+  return{results,reachedMonth,effectiveTarget,maxSalaryMonth,loanAmt,monthlyLoan};
+}
+
+// ━━ 결과 표시 ━━
+function showResult(){
+  const loading=document.getElementById('loading');
+  loading.classList.add('visible');
+  const steps=['ls1','ls2','ls3','ls4'];
+  steps.forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('active'),i*350));
+  setTimeout(()=>{loading.classList.remove('visible');renderResult();},1800);
+}
+
+function renderResult(){
+  const sim=simulateMonthly();
+  window._lastSim=sim;
+
+  document.getElementById('input-section').style.display='none';
+  document.getElementById('hero-section').style.display='none';
+  const rs=document.getElementById('result-section');
+  rs.classList.add('visible');
+  rs.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // 기간
+  const yrs=sim.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null;
+  const achieveAge=yrs!=null?S.age+yrs:null;
+
+  if(yrs===0||yrs===null&&sim.results[0]?.asset>=sim.effectiveTarget){
+    document.getElementById('r-verdict').innerHTML='지금 바로 <span>가능해요!</span>';
+  } else if(yrs!=null){
+    document.getElementById('r-verdict').innerHTML=`약 <span>${yrs}년</span> 후 가능해요`;
+  } else {
+    document.getElementById('r-verdict').innerHTML='30년 내 <span>어려울 수 있어요</span>';
+  }
+  document.getElementById('r-sub').textContent=
+    `${achieveAge?achieveAge+'세 예상 · ':""}목표 ${fmt(S.housePrice)}${sim.loanAmt>0?' · 대출 '+fmt(sim.loanAmt)+' 활용':''}`;
+
+  // 지표
+  const lastResult=sim.results[sim.results.length-1];
+  const monthlySave=Math.round(S.takeHome-S.livingCost-(sim.monthlyLoan||0));
+  const saveRate=Math.max(0,Math.round(monthlySave/S.takeHome*100));
+  const el=document.getElementById('r-save');
+  el.textContent=`${Math.max(0,monthlySave).toLocaleString()}만원`;
+  el.className='metric-val '+(monthlySave<0?'warn':monthlySave>200?'':'neutral');
+  document.getElementById('r-rate').textContent=saveRate+'%';
+  document.getElementById('r-rate').className='metric-val '+(saveRate<20?'warn':saveRate>=40?'':'neutral');
+  document.getElementById('r-age').textContent=achieveAge?achieveAge+'세':'-';
+
+  // 뱃지
+  const badges=document.getElementById('r-badges');
+  badges.innerHTML='';
+  if(saveRate>=40) badges.innerHTML+=`<span class="rbadge rbadge-green">💪 저축률 ${saveRate}% 우수</span>`;
+  else if(saveRate<20) badges.innerHTML+=`<span class="rbadge rbadge-orange">⚠️ 저축률 ${saveRate}% 점검 필요</span>`;
+  if(sim.loanAmt>0) badges.innerHTML+=`<span class="rbadge rbadge-blue">🏦 대출 ${fmt(sim.loanAmt)} 활용</span>`;
+  if(S.raisePromo) badges.innerHTML+=`<span class="rbadge rbadge-gold">📈 연봉 인상 반영</span>`;
+
+  // 차트
+  renderChart(sim);
+  // 리포트
+  renderReport(sim);
+}
+
+function renderChart(sim){
+  const age=S.age, res=sim.results;
+  const maxM=Math.min(res.length,360);
+  const labelSet=new Set([age]);
+  if(sim.reachedMonth>=0) labelSet.add(age+Math.floor(sim.reachedMonth/12));
+  if(sim.maxSalaryMonth>=0) labelSet.add(age+Math.floor(sim.maxSalaryMonth/12));
+  labelSet.add(age+Math.floor(maxM/12));
+
+  const labels=[],assetArr=[],costArr=[],incomeArr=[];
+  for(let m=0;m<=maxM;m++){
+    const yr=Math.floor(m/12),mon=m%12,curAge=age+yr;
+    labels.push(mon===0&&labelSet.has(curAge)?`${curAge}세`:'');
+    const e=res[m]||res[res.length-1]||{};
+    assetArr.push(+((e.asset||0)/10000).toFixed(2));
+    incomeArr.push(Math.round((e.salary||0)/12));
+    costArr.push(Math.round(e.monthlyCost||0));
+  }
+  const targetLine=Array(maxM+1).fill(+(sim.effectiveTarget/10000).toFixed(2));
+
+  const homeMonth=sim.reachedMonth>=0&&sim.reachedMonth<=maxM?sim.reachedMonth:-1;
+  const markerPlugin={
+    id:'marker',
+    afterDraw(chart){
+      if(homeMonth<0) return;
+      const{ctx:c,scales:{x,y}}=chart;
+      const xPos=x.getPixelForValue(homeMonth);
+      const target=+(sim.effectiveTarget/10000).toFixed(2);
+      const homeY=Math.max(y.getPixelForValue(target),y.top+30);
+      c.save();
+      c.strokeStyle='rgba(63,185,80,.7)';c.lineWidth=1.5;c.setLineDash([4,4]);
+      c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();
+      c.restore();
+      c.save();
+      const bw=78,bh=22;
+      const bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2);
+      const by=Math.max(homeY-bh-6,y.top+2);
+      c.fillStyle='#3FB950';c.beginPath();if(c.roundRect)c.roundRect(bx,by,bw,bh,4);else c.rect(bx,by,bw,bh);c.fill();
+      c.fillStyle='#000';c.font='bold 9px sans-serif';c.textAlign='center';
+      c.fillText('🏠 집구매 가능!',bx+bw/2,by+14);c.restore();
+    }
+  };
+
+  if(chartInstance) chartInstance.destroy();
+  const ctx=document.getElementById('result-chart').getContext('2d');
+  chartInstance=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'자산',data:assetArr,borderColor:'#3FB950',backgroundColor:'rgba(63,185,80,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true,yAxisID:'y'},
+      {label:'목표',data:targetLine,borderColor:'#58A6FF',borderWidth:1.5,pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
+      {label:'월지출',data:costArr,borderColor:'#F78166',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.1,fill:false,borderDash:[3,2],yAxisID:'yFlow'},
+      {label:'월수익',data:incomeArr,borderColor:'#BC8CFF',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3,fill:false,borderDash:[5,2],yAxisID:'yFlow'},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:true,animation:{duration:800},
+      layout:{padding:{bottom:20}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:c=>{
+            if(c.dataset.label==='월지출'||c.dataset.label==='월수익')
+              return `${c.dataset.label}: ${c.parsed.y.toLocaleString()}만원`;
+            return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`;
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{font:{size:9},color:'#7D8590',maxRotation:0,autoSkip:false,callback(v,i){return labels[i]||''}},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#7D8590',callback:v=>`${v}억`},grid:{color:'rgba(48,54,61,.6)'}},
+        yFlow:{position:'right',ticks:{font:{size:8.5},color:'#7D8590',callback:v=>v>=10000?`${(v/10000).toFixed(1)}억`:`${v.toLocaleString()}만`,maxTicksLimit:4},grid:{display:false},title:{display:true,text:'월 수익·지출',color:'#484F58',font:{size:8}}}
+      }
+    },
+    plugins:[markerPlugin]
+  });
+}
+
+function renderReport(sim){
+  const loanAmt=sim.loanAmt;
+  const mortgage=calcMortgage(loanAmt,4,30);
+  const investRate=S.investRate;
+  const monthlyInvest=Math.round(S.asset*(Math.pow(1+investRate/100,1/12)-1));
+  const totalIncome=S.takeHome+monthlyInvest;
+  const babyMonthAvg=S.baby?Math.round(calcBabyByYear(S.babyCost).total/26/12):0;
+  const carM=S.car?calcCarMonthly(S.carCost,S.carType):0;
+  const totalExpense=S.livingCost+babyMonthAvg+carM+(loanAmt>0?mortgage.monthly:0);
+
+  const sections=[
+    {title:'💰 수익 영역',rows:[
+      ['현재 자산',fmt(S.asset)],
+      ['세전 연봉',fmt(S.salary)],
+      ['월 실수령',`${S.takeHome.toLocaleString()}만원`],
+      [`월 투자수익 (${investRate}%)`,`약 ${monthlyInvest.toLocaleString()}만원`],
+      ['연봉 인상',S.raisePromo?`연 ${S.raiseRate}% + 5년마다 진급`:`연 ${S.raiseRate}% 인상`],
+    ],total:['📥 월 수익 합계',`약 ${totalIncome.toLocaleString()}만원`,'positive']},
+    {title:'💸 지출 영역',rows:[
+      ['월 생활비',`${S.livingCost.toLocaleString()}만원`],
+      ['월 육아비',S.baby?`약 ${babyMonthAvg.toLocaleString()}만원 (월평균)`:'미반영'],
+      ['월 차량 유지비',S.car?`약 ${carM.toLocaleString()}만원`:'미반영'],
+      ['월 대출 상환',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (30년)`:'없음'],
+    ],total:['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`,'negative']},
+    {title:'🏠 목표',rows:[
+      ['목표 집값',fmt(S.housePrice)],
+      ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
+      ['실제 필요 현금',fmt(S.housePrice-loanAmt)],
+      ['이자 총액',loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
+    ]},
+    {title:'📊 결과',rows:[
+      ['월 순수익',`약 ${(totalIncome-totalExpense).toLocaleString()}만원`],
+      ['저축률',`${Math.max(0,Math.round((S.takeHome-S.livingCost)/S.takeHome*100))}%`],
+      ['집 구매 가능',sim.reachedMonth>=0?`약 ${Math.ceil(sim.reachedMonth/12)}년 후`:'30년 초과'],
+    ]},
+  ];
+
+  const el=document.getElementById('report-card');
+  el.innerHTML=sections.map(sec=>`
+    <div class="report-section-title">${sec.title}</div>
+    ${sec.rows.map(([l,v])=>`
+      <div class="report-row">
+        <span class="report-label">${l}</span>
+        <span class="report-val">${v}</span>
+      </div>`).join('')}
+    ${sec.total?`<div class="report-total"><span>${sec.total[0]}</span><span class="report-val ${sec.total[2]}">${sec.total[1]}</span></div>`:''}
+  `).join('');
+}
+
+// ━━ 공유 ━━
+function shareResult(){
+  const url=location.href;
+  navigator.clipboard?.writeText(url).then(()=>showToast('링크 복사 완료!')).catch(()=>prompt('링크를 복사하세요:',url));
+}
+
+// ━━ 리셋 ━━
+function resetAll(){
+  Object.assign(S,{
+    age:null,salary:null,takeHome:null,asset:null,housePrice:null,
+    investRate:5,livingCost:200,raiseMode:'promo5',raiseRate:3,raisePromo:true,maxSalary:15000,
+    loan:false,wedding:false,weddingCost:5000,baby:false,babyCost:500,car:false,carCost:3500,carType:'domestic',step:0
+  });
+  for(let i=1;i<=8;i++){
+    const c=document.getElementById(`q${i}`);
+    c.classList.remove('done','active');
+    c.classList.add(i===1?'active':'hidden');
+  }
+  document.querySelectorAll('.input-field').forEach(el=>el.value='');
+  document.querySelectorAll('.choice-btn').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('.toggle-switch').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.q-card [id$="-detail"]').forEach(el=>el.style.display='none');
+  document.getElementById('final-cta').classList.remove('visible');
+  document.getElementById('progress-wrap').style.display='none';
+  document.getElementById('input-section').style.display='block';
+  document.getElementById('hero-section').style.display='block';
+  document.getElementById('result-section').classList.remove('visible');
+  document.getElementById('living-custom').style.display='none';
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(()=>document.getElementById('age-input').focus(),300);
+}
+
+// ━━ 토스트 ━━
+function showToast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#3FB950;color:#000;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:700;z-index:9999;font-family:"Noto Sans KR",sans-serif;white-space:nowrap;box-shadow:0 4px 20px rgba(63,185,80,.4)';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
+}
+</script>
+</body>
+</html>
