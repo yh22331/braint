@@ -211,9 +211,8 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
 
 <!-- 헤더 -->
 <div class="header">
-  <a href="/bf-home/" class="header-back">← BF 분석기</a>
+  <a href="/bf-home/" class="header-back">← 내 남친</a>
   <div class="header-logo">💑 커플 집 계산기</div>
-  <div class="header-badge">PRO</div>
 </div>
 
 <!-- 파트너 배너 -->
@@ -298,9 +297,9 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
   <div class="section-card">
     <div class="section-title">🛒 월 생활비 (내 몫)</div>
     <div class="option-grid col3" id="living-opts">
-      <button class="opt-btn" onclick="selectLiving(this,80)">절약<span>월 80만</span></button>
-      <button class="opt-btn active" onclick="selectLiving(this,150)">평균<span>월 150만</span></button>
-      <button class="opt-btn" onclick="selectLiving(this,250)">여유<span>월 250만</span></button>
+      <button class="opt-btn" onclick="selectLiving(this,100)">절약형<span>월 100만</span></button>
+      <button class="opt-btn active" onclick="selectLiving(this,200)">직장인 평균<span>월 200만</span></button>
+      <button class="opt-btn" onclick="selectLiving(this,300)">여유로운<span>월 300만+</span></button>
     </div>
   </div>
 
@@ -322,6 +321,28 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
       <div class="result-years" id="my-years-display">—</div>
       <div class="result-label" id="my-result-label">혼자라면</div>
       <div class="result-sub" id="my-result-sub"></div>
+    </div>
+
+    <!-- 핵심 스탯 3개 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px" id="my-stats">
+      <div style="background:var(--card);border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:.65rem;color:var(--text-soft);font-family:var(--soft);margin-bottom:4px">월 실수령</div>
+        <div style="font-size:1rem;font-weight:900;color:var(--text)" id="stat-net">—</div>
+      </div>
+      <div style="background:var(--card);border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:.65rem;color:var(--text-soft);font-family:var(--soft);margin-bottom:4px">월 순저축</div>
+        <div style="font-size:1rem;font-weight:900;color:var(--pink)" id="stat-save">—</div>
+      </div>
+      <div style="background:var(--card);border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:.65rem;color:var(--text-soft);font-family:var(--soft);margin-bottom:4px">저축률</div>
+        <div style="font-size:1rem;font-weight:900;color:var(--green)" id="stat-rate">—</div>
+      </div>
+    </div>
+
+    <!-- 자산 흐름 차트 -->
+    <div class="chart-wrap">
+      <div class="chart-title">📈 내 자산 흐름 (혼자라면)</div>
+      <canvas id="my-chart" height="180"></canvas>
     </div>
 
     <!-- 미니 리포트 -->
@@ -441,7 +462,7 @@ if(window.Kakao&&!Kakao.isInitialized()) Kakao.init('b3a8d118868373f29970b5c5568
 
 // ━━ 상태 ━━
 const S={
-  region:'seoul', size:'mid', investRate:5, living:150,
+  region:'seoul', size:'mid', investRate:5, living:200,
   myResult:null, partnerData:null, coupleCode:null, sessionId:null,
   isPartner:false  // 짝꿍 링크로 들어온 경우
 };
@@ -459,6 +480,40 @@ function calcTakehome(gross){
   else if(gross<=6000)r=.82;else if(gross<=7000)r=.805;else if(gross<=8000)r=.79;
   else if(gross<=10000)r=.775;else if(gross<=12000)r=.755;else if(gross<=15000)r=.73;else r=.70;
   return Math.round(gross*r/12);
+}
+
+// 내 자산 흐름 차트
+let myChartInstance=null;
+function renderMyChart(salary, asset, livingCost, investRate, targetPrice, years){
+  const months=Math.min(((years||20)+3)*12, 180);
+  const data=simulateFull(salary, asset, livingCost, investRate, targetPrice, months);
+  const labels=data.map((_,i)=>`${i+1}년`);
+  const targetArr=Array(data.length).fill(+(targetPrice/10000).toFixed(1));
+
+  if(myChartInstance) myChartInstance.destroy();
+  const ctx=document.getElementById('my-chart').getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(255,107,157,.25)');
+  grad.addColorStop(1,'rgba(255,107,157,0)');
+
+  myChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'내 자산',data:data.map(v=>+(v/10000).toFixed(1)),borderColor:'#FF6B9D',backgroundColor:grad,borderWidth:2.5,pointRadius:0,tension:.3,fill:true},
+        {label:'목표',data:targetArr,borderColor:'rgba(61,184,138,.6)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{font:{size:11},boxWidth:16}}},
+      scales:{
+        x:{ticks:{font:{size:9},color:'#9B7B8A'},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(255,179,204,.15)'}}
+      }
+    }
+  });
 }
 
 function simulate(salary, asset, livingCost, investRate, targetPrice){
@@ -574,6 +629,7 @@ function selectLiving(btn,val){
   S.living=val;
 }
 
+
 // ━━ 내 분석 ━━
 async function analyzeMe(){
   const salary=parseInt(document.getElementById('my-salary').value);
@@ -589,9 +645,18 @@ async function analyzeMe(){
 
   // 결과 표시
   const yearsEl=document.getElementById('my-years-display');
-  yearsEl.textContent=result.years?`${result.years}년 후 🏠`:'30년 내 어려워요 😢';
+  yearsEl.textContent=result.years<=0?'지금 바로 가능! 🎉':result.years?`${result.years}년 후 🏠`:'30년 내 어려워요 😢';
   document.getElementById('my-result-label').textContent='혼자라면';
   document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표 · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
+
+  // 핵심 스탯
+  const savingRate=netMonthly>0?Math.round(monthlySave/netMonthly*100):0;
+  document.getElementById('stat-net').textContent=`${netMonthly.toLocaleString()}만`;
+  document.getElementById('stat-save').textContent=monthlySave>0?`${monthlySave.toLocaleString()}만`:'부족';
+  document.getElementById('stat-rate').textContent=`${savingRate}%`;
+
+  // 내 자산 흐름 차트
+  renderMyChart(salary, asset, S.living, S.investRate, targetPrice, result.years);
 
   // 리포트
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
@@ -605,6 +670,8 @@ async function analyzeMe(){
     ['목표 집값',fmt(targetPrice)],
     ['월 생활비',`${S.living.toLocaleString()}만원`],
     ['월 순저축',`${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족 😢'}`],
+    ['저축률',`${savingRate}%`],
+    ['투자수익률',`연 ${S.investRate}%`],
   ].map(([l,v])=>`<div class="report-row"><span class="report-label">${l}</span><span class="report-val">${v}</span></div>`).join('');
 
   document.getElementById('my-result').style.display='block';
@@ -865,6 +932,7 @@ function applyLivingVal(val){
   }
   S.living=val;
 }
+
 
 // ━━ 짝꿍으로 입력 완료 후 Supabase 저장 ━━
 async function saveGuestAndRender(){

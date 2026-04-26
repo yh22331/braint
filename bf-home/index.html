@@ -712,15 +712,16 @@
         </button>
       </div>
 
-      <!-- ⑤ 커플 합산 (오픈 예정) -->
-      <div class="section-wrap" style="opacity:.7;pointer-events:none;user-select:none">
-        <div class="section-title">❤️ 커플/부부 합산 계산
-          <span style="margin-left:8px;font-size:.68rem;font-weight:700;background:linear-gradient(135deg,#C8A8E9,#9B7BCC);color:#fff;padding:3px 10px;border-radius:99px;letter-spacing:.3px">🔒 오픈 예정</span>
-        </div>
-        <div style="text-align:center;padding:32px 20px;background:linear-gradient(135deg,#F8F0FF,#EDE6FF);border-radius:20px;border:2px dashed rgba(200,168,233,.4)">
-          <div style="font-size:2rem;margin-bottom:10px">💑</div>
-          <div style="font-size:.9rem;font-weight:900;color:#7B4FBE;margin-bottom:6px">커플 합산 계산</div>
-          <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6">파트너와 합산 소득으로 집 살 수 있는지<br>계산하는 기능이 곧 오픈돼요! 💜<br><br>업데이트를 기다려주세요 🙏</div>
+      <!-- ⑤ 커플 합산 계산기 -->
+      <div class="section-wrap">
+        <div class="section-title">💑 커플 합산 계산</div>
+        <div style="text-align:center;padding:28px 20px;background:linear-gradient(135deg,#F8F0FF,#EDE6FF);border-radius:20px;border:1.5px solid rgba(200,168,233,.3)">
+          <div style="font-size:2.2rem;margin-bottom:10px">💑</div>
+          <div style="font-size:.95rem;font-weight:900;color:#7B4FBE;margin-bottom:6px">우리 커플 집 살 수 있을까?</div>
+          <div style="font-size:.78rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:16px">둘이 합치면 얼마나 빨리 살 수 있는지<br>현실적으로 계산해드려요 💜</div>
+          <button onclick="goToCouple()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C8A8E9,#9B7BCC);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            💑 커플 계산기 바로가기
+          </button>
         </div>
       </div>
 
@@ -2603,6 +2604,7 @@ function devUnlockPremium(){
 window.addEventListener('load',()=>{
   if(isPremium) document.getElementById('dev-premium-btn').textContent='🔓 dev';
 });
+function goToCouple(){ location.href='/couple/'; }
 </script>
 </body>
 </html>
