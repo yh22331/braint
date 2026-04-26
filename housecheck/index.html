@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg:#0D1117; --surface:#161B22; --surface2:#1C2128;
@@ -358,6 +359,48 @@ input[type=range]::-webkit-slider-thumb{
 const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ━━ 카카오 초기화 ━━
+if(window.Kakao && !Kakao.isInitialized()){
+  Kakao.init('b3a8d118868373f29970b5c5568200c4');
+}
+
+function shareKakaoHC(){
+  if(!document.getElementById('result-section').classList.contains('visible')){
+    return;
+  }
+  const verdict = document.getElementById('r-verdict')?.innerText || '분석 완료';
+  const sub = document.getElementById('r-sub')?.innerText || '';
+  trackHCShare();
+  if(window.Kakao && Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title:'내 집 마련 계획 분석 완료 🏠',
+        description: verdict + ' · ' + sub,
+        imageUrl:'https://braint.net/og-housecheck.png',
+        link:{
+          mobileWebUrl:'https://braint.net/housecheck/',
+          webUrl:'https://braint.net/housecheck/',
+        },
+      },
+      buttons:[{
+        title:'나도 분석하기',
+        link:{
+          mobileWebUrl:'https://braint.net/housecheck/',
+          webUrl:'https://braint.net/housecheck/',
+        },
+      }],
+    });
+  } else {
+    window.open(\`https://story.kakao.com/share?url=\${encodeURIComponent('https://braint.net/housecheck/')}&text=\${encodeURIComponent('🏠 '+verdict)}\`,'_blank','width=600,height=500');
+  }
+}
+
+async function trackHCShare(){
+  try{ await sb.rpc('increment_analytics',{p_service:'housecheck',p_field:'total_shares'}); }
+  catch(e){}
+}
 
 async function trackHCAnalysis(){
   try{ await sb.rpc('increment_analytics',{p_service:'housecheck',p_field:'total_analyses'}); }
@@ -737,7 +780,8 @@ async function saveHCAnalysis(data){
 
     <div class="action-btns">
       <button class="action-btn" onclick="resetAll()">↺ 다시 계산</button>
-      <button class="action-btn primary" onclick="shareResult()">🔗 결과 공유</button>
+      <button class="action-btn" onclick="shareResult()">🔗 링크 공유</button>
+      <button class="action-btn primary" onclick="shareKakaoHC()" style="background:#FEE500;color:#3C1E1E;border:none">💬 카카오 공유</button>
     </div>
   </div>
 

@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
 <style>
   :root {
     --pink: #FF6B9D;
@@ -854,6 +855,11 @@ const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ━━ 카카오 초기화 ━━
+if(window.Kakao && !Kakao.isInitialized()){
+  Kakao.init('b3a8d118868373f29970b5c5568200c4');
+}
+
 // ━━ Supabase: 분석 횟수 증가 ━━
 async function trackAnalysis(){
   try{
@@ -1476,7 +1482,32 @@ function renderCoupleResult(partner){
 function generateCoupleLink(){const{salary,asset,region,size,myAssetKey}=calcResult;return`${location.origin+location.pathname}?p=${btoa(JSON.stringify({salary,asset,region,size,myAsset:myAssetKey}))}`}
 function openCoupleModal(){if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return}document.getElementById('couple-link-box').textContent=generateCoupleLink();document.getElementById('couple-modal').classList.add('show')}
 function copyCoupleLink(){navigator.clipboard?.writeText(generateCoupleLink()).then(()=>showToast('🔗 링크 복사 완료!'))}
-function shareCoupleKakao(){window.open(`https://story.kakao.com/share?url=${encodeURIComponent(generateCoupleLink())}&text=${encodeURIComponent('💌 집 계산기 같이 해봐! 둘이 합치면 얼마나 빨리 살 수 있는지 나와 🏠')}`,'_blank','width=600,height=500')}
+function shareCoupleKakao(){
+  const link = generateCoupleLink();
+  if(window.Kakao && Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title:'💌 집 계산기 같이 해봐!',
+        description:'둘이 합치면 얼마나 빨리 살 수 있는지 나와 🏠',
+        imageUrl:'https://braint.net/og-image.png',
+        link:{
+          mobileWebUrl: link,
+          webUrl: link,
+        },
+      },
+      buttons:[{
+        title:'같이 계산하기',
+        link:{
+          mobileWebUrl: link,
+          webUrl: link,
+        },
+      }],
+    });
+  } else {
+    window.open(`https://story.kakao.com/share?url=${encodeURIComponent(link)}&text=${encodeURIComponent('💌 집 계산기 같이 해봐! 둘이 합치면 얼마나 빨리 살 수 있는지 나와 🏠')}`,'_blank','width=600,height=500');
+  }
+}
 
 // ━━ ③ 이벤트 + 주식담보대출 ━━
 function getLoanData(){
@@ -2336,7 +2367,35 @@ function drawShareCard(){
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
 function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='남친연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
-function shareKakao(){const{verdict,pushMsg}=calcResult;window.open(`https://story.kakao.com/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent('🏠 '+verdict+'\n\n'+pushMsg)}`,'_blank','width=600,height=500');trackShare();}
+function shareKakao(){
+  if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
+  const{verdict,pushMsg,targetPrice,yearsNeeded}=calcResult;
+  trackShare();
+  if(window.Kakao && Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title:'우리 남친 연봉으로 집 살 수 있을까? 🏠',
+        description: verdict + (pushMsg ? '\n' + pushMsg : ''),
+        imageUrl:'https://braint.net/og-image.png',
+        link:{
+          mobileWebUrl:'https://braint.net/bf-home/',
+          webUrl:'https://braint.net/bf-home/',
+        },
+      },
+      buttons:[{
+        title:'나도 분석하기',
+        link:{
+          mobileWebUrl:'https://braint.net/bf-home/',
+          webUrl:'https://braint.net/bf-home/',
+        },
+      }],
+    });
+  } else {
+    // SDK 로드 실패 시 폴백
+    window.open(`https://story.kakao.com/share?url=${encodeURIComponent('https://braint.net/bf-home/')}&text=${encodeURIComponent('🏠 '+verdict+'\n\n'+(pushMsg||''))}`,'_blank','width=600,height=500');
+  }
+}
 function copyMessage(){const msg=calcResult.pushMsg||'';navigator.clipboard?.writeText(msg).then(()=>showToast('📋 복사 완료!'))}
 
 function launchConfetti(){const colors=['#FF6B9D','#FFB3CC','#C8A8E9','#FFAA80','#A8DDD5','#FFF069'];for(let i=0;i<60;i++){setTimeout(()=>{const el=document.createElement('div');el.className='confetti-piece';el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${2+Math.random()*2}s`;document.body.appendChild(el);setTimeout(()=>el.remove(),4000)},i*50)}}
