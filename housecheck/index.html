@@ -1145,7 +1145,9 @@ function simulateMonthly(){
     const netCF=income-S.livingCost-monthlyLoan-carM-babyM;
     const eventCost=mon===0&&extraByYear[yr]?extraByYear[yr]:0;
 
-    asset=asset*(1+monthlyR)+netCF-eventCost;
+    // 자산이 0 이상일 때만 투자수익률 적용 (음수 복리 방지)
+    const investedAsset=Math.max(0,asset);
+    asset=investedAsset*(1+monthlyR)+(asset<0?asset:0)+netCF-eventCost;
     const monthlyCost=S.livingCost+monthlyLoan+carM+babyM;
 
     results.push({

@@ -80,7 +80,7 @@ function simulateWithEvents({
     const babyM = monthlyBabyByYr[yr] || 0;
     const eventCost = m%12===0 ? (extraByYear[yr]||0) : 0;
 
-    cur = cur*(1+monthlyR) + (netM - living - carM - babyM) - eventCost;
+    cur = Math.max(0,cur)*(1+monthlyR) + (netM - living - carM - babyM) - eventCost;
 
     if(m%12 === 0) {
       chartData.push({

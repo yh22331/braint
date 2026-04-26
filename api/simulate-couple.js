@@ -113,7 +113,7 @@ function simulateCoupled({
     const meEvCost    = m%12===0 ? (meEv.extraByYear[yr]||0) : 0;
 
     // 합산 자산 (평균 투자수익률)
-    totalAsset = totalAsset*(1+monthlyR) + (totalNet - totalLiving - totalCarM - totalBabyM) - totalEvCost;
+    totalAsset = Math.max(0,totalAsset)*(1+monthlyR) + (totalNet - totalLiving - totalCarM - totalBabyM) - totalEvCost;
 
     // 혼자(나) 자산
     soloAsset = soloAsset*(1+meMonthlyR) + (meNet - me.living - meCarM - meBabyM) - meEvCost;
