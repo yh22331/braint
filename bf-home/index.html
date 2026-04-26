@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --pink: #FF6B9D;
@@ -723,7 +724,34 @@
       실제 부동산 시세는 지역·시기마다 다를 수 있어요 🏠<br>
       진짜 집 살 땐 전문가와 상담하세요!
     </p>
+
+    <!-- 법적 링크 -->
+    <div style="text-align:center;margin-top:12px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+      <button onclick="openLegal('terms')" style="background:none;border:none;font-size:.7rem;color:var(--text-soft);cursor:pointer;text-decoration:underline;font-family:'Gowun Dodum',sans-serif">이용약관</button>
+      <button onclick="openLegal('privacy')" style="background:none;border:none;font-size:.7rem;color:var(--text-soft);cursor:pointer;text-decoration:underline;font-family:'Gowun Dodum',sans-serif">개인정보처리방침</button>
+      <button onclick="openLegal('refund')" style="background:none;border:none;font-size:.7rem;color:var(--text-soft);cursor:pointer;text-decoration:underline;font-family:'Gowun Dodum',sans-serif">환불정책</button>
+    </div>
+
+    <!-- 사업자 정보 푸터 -->
+    <div style="margin-top:16px;padding:16px;background:rgba(0,0,0,.04);border-radius:12px;font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.8;text-align:center">
+      상호명: 엑스분석(Xalysis) · 대표자: 이윤한 · 사업자등록번호: 868-66-00625<br>
+      사업장 주소: 경기도 성남시 수정구 희망로 531<br>
+      전화: 010-8244-2331 · 이메일: hello@braint.net<br>
+      통신판매업 신고번호: 신고 진행 중
+    </div>
+
     <div style="height:100px"></div><!-- 플로팅 버튼 여백 -->
+  </div>
+</div>
+
+<!-- 약관/개인정보/환불 모달 -->
+<div id="legal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:flex-end;justify-content:center" onclick="closeLegal(event)">
+  <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;padding:28px 24px 40px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:1rem;font-weight:900;color:#3D2C35" id="legal-title">이용약관</div>
+      <button onclick="closeLegal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9B7B8A">✕</button>
+    </div>
+    <div id="legal-content" style="font-size:.8rem;color:#666;line-height:1.8;font-family:'Gowun Dodum',sans-serif"></div>
   </div>
 </div>
 
@@ -741,7 +769,7 @@
     </button>
     <button class="floating-tab floating-tab-analyze" id="ftab-analyze"
       onclick="floatAnalyze()">
-      <span class="floating-tab-icon">🔮</span>분석하기
+      <span class="floating-tab-icon">📊</span>분석하기
     </button>
   </div>
 </div>
@@ -820,6 +848,73 @@ const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid
 const MY_ASSETS={none:0,small:8000,mid:25000,big:40000};
 const EVENT_AGES={wedding:33,baby:35,car:30};
 const LS_MY='bfhc_my_data',LS_PARTNER='bfhc_partner_data',LS_PREMIUM='bfhc_premium';
+
+// ━━ Supabase 초기화 ━━
+const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ━━ Supabase: 분석 횟수 증가 ━━
+async function trackAnalysis(){
+  try{
+    await sb.rpc('increment_analytics',{p_service:'bf-home',p_field:'total_analyses'});
+  }catch(e){console.log('analytics track error',e);}
+}
+
+// ━━ Supabase: 공유 횟수 증가 ━━
+async function trackShare(){
+  try{
+    await sb.rpc('increment_analytics',{p_service:'bf-home',p_field:'total_shares'});
+  }catch(e){console.log('share track error',e);}
+}
+
+// ━━ Supabase: 분석 결과 저장 ━━
+async function saveAnalysis(result){
+  try{
+    const session=localStorage.getItem('bfhc_session_id')||crypto.randomUUID();
+    localStorage.setItem('bfhc_session_id',session);
+    await sb.from('analyses').insert({
+      session_id: session,
+      service: 'bf-home',
+      age: result.age||null,
+      gross_salary: result.grossSalary||null,
+      total_asset: result.totalAsset||null,
+      region: result.region||null,
+      house_size: result.size||null,
+      target_price: result.targetPrice||null,
+      years_needed: result.yearsNeeded||null,
+      verdict: result.verdict||null,
+      is_premium: isPremium,
+      shared: false
+    });
+  }catch(e){console.log('save analysis error',e);}
+}
+
+// ━━ Supabase: 프리미엄 검증 ━━
+async function checkPremiumFromServer(phone){
+  try{
+    const{data,error}=await sb.from('payments')
+      .select('id,status')
+      .eq('status','done')
+      .limit(1);
+    if(error) return false;
+    return data&&data.length>0;
+  }catch(e){return false;}
+}
+
+// ━━ Supabase: 결제 완료 저장 (토스페이먼츠 연동 후 사용) ━━
+async function savePremiumPayment(orderId, paymentKey, amount){
+  try{
+    await sb.from('payments').upsert({
+      order_id: orderId,
+      payment_key: paymentKey,
+      amount: amount,
+      status: 'done',
+      paid_at: new Date().toISOString()
+    });
+    await sb.rpc('increment_analytics',{p_service:'bf-home',p_field:'total_payments'});
+  }catch(e){console.log('save payment error',e);}
+}
 const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
 let calcResult={},isPremium=localStorage.getItem(LS_PREMIUM)==='true',chartInstance=null;
 let _premiumDirty=false;
@@ -1285,6 +1380,9 @@ function calculate(){
   else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n부동산보다 남친 업그레이드가 빠를 수도...? 농담이에요 💕';color=['#a18cd1','#fbc2eb']}
   calcResult={emoji,verdict,sub,targetPrice,totalAsset,yearsNeeded,ratio,pct,color,salary,annualSavings,asset,myAsset,region:state.region,size:state.size,myAssetKey:state.myAsset,age,grossSalary,netSalary,monthlyTakehome};
   localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age}));
+  // Supabase 분석 저장 + 횟수 추적
+  trackAnalysis();
+  saveAnalysis({age,grossSalary,totalAsset,region:state.region,size:state.size,targetPrice,yearsNeeded:calcResult.yearsNeeded,verdict:calcResult.verdict});
   // 무료 결과
   document.getElementById('result-hero').style.background=`linear-gradient(135deg,${color[0]} 0%,${color[1]} 100%)`;
   document.getElementById('result-emoji').textContent=emoji;document.getElementById('result-verdict').textContent=verdict;document.getElementById('result-sub').textContent=sub;
@@ -1771,12 +1869,12 @@ function renderPDFPreview(newYears,totalExtra,loanAmt){
     + (loanAmt > 0 ? mortgage.monthly : 0);                            // 월 지출 합계
 
   const sections=[
-    {title:'🏠 목표 영역',rows:[
+    {title:'🏠 목표',rows:[
       ['지역',rN[region]],['평수',sN[size]],['목표 집값',fmt(targetPrice)],
       ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
       ['실제 필요 현금',fmt(targetPrice-loanAmt)],
     ]},
-    {title:'💰 수익 영역',rows:[
+    {title:'💰 수익',rows:[
       ['현재 자산',fmt(totalAsset)],
       ['연봉 (세전)',fmt(grossSalary)],
       ['월 실수령',`약 ${monthlyNet.toLocaleString()}만원`],
@@ -1784,14 +1882,14 @@ function renderPDFPreview(newYears,totalExtra,loanAmt){
       ['연봉 인상 방식',raiseState.promo?`연 ${raiseState.rate}% + 5년마다 진급`:`연 ${raiseState.rate}% 인상`],
       ['📥 월 수익 합계',`약 ${totalIncome.toLocaleString()}만원`],
     ]},
-    {title:'💸 지출 영역',rows:[
+    {title:'💸 지출',rows:[
       ['월 생활비',`${monthlyLivingCost.toLocaleString()}만원`],
       ['월 육아비',babyOn?`약 ${babyMonthly.toLocaleString()}만원 (월평균·26년)`:'미반영'],
       ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원 (구매 후 매월)`:'미반영'],
       ['월 대출 상환액',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (원리금균등, 30년)`:'없음'],
       ['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`],
     ]},
-    {title:'📊 결과 영역',rows:[
+    {title:'📊 결과',rows:[
       ['집 구매 가능 기간',newYears<=0?'지금 바로 가능! 🎉':`약 ${newYears}년 후`],
       ['월 순수익',`약 ${(totalIncome-totalExpense).toLocaleString()}만원`],
       ['대출 상환 기간',loanAmt>0?'30년 (원리금균등상환)':'해당없음'],
@@ -1814,10 +1912,10 @@ function renderPDFPreview(newYears,totalExtra,loanAmt){
 
 function downloadPDF(){
   if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return}
-  const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:'mm',format:'a4'});
+  showToast('📥 PDF 생성 중...');
+
   const{targetPrice,totalAsset,grossSalary,monthlyTakehome,region,size,yearsNeeded}=calcResult;
-  const{loanAmt,loanRate}=getLoanData();
+  const{loanAmt}=getLoanData();
   const mortgage=calcMortgage(loanAmt,4,30);
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
@@ -1827,62 +1925,149 @@ function downloadPDF(){
   const babyStart=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
   const{total:babyTotal}=calcBabyByYear(babyStart);
   const babyMonthly=babyOn?Math.round(babyTotal/26/12):0;
-  const carMonthlyDL = document.getElementById('ev-car')?.checked ? getCarMonthlyMaintenance() : 0;
-  const totalIncomeDL = (monthlyTakehome||0) + Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
-  const totalExpenseDL = monthlyLivingCost + (babyOn?babyMonthly:0) + carMonthlyDL + (loanAmt>0?mortgage.monthly:0);
-  doc.setFillColor(255,228,239);doc.rect(0,0,210,297,'F');
-  doc.setFillColor(255,255,255);doc.roundedRect(15,15,180,267,8,8,'F');
-  doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(255,107,157);
-  doc.text('Boyfriend Home Report',105,30,{align:'center'});
-  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(155,123,138);
-  doc.text('남친 재력 분석 리포트 · by Xalysis',105,37,{align:'center'});
-  doc.text(`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`,105,43,{align:'center'});
-  doc.setDrawColor(255,179,204);doc.setLineWidth(.5);doc.line(25,47,185,47);
-  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(61,44,53);
-  doc.text(yearsNeeded<=0?'지금 바로 구매 가능!':'약 '+yearsNeeded+'년 후 집 구매 가능',105,56,{align:'center'});
+  const carM=document.getElementById('ev-car')?.checked?getCarMonthlyMaintenance():0;
+  const totalInc=(monthlyTakehome||0)+Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
+  const totalExp=monthlyLivingCost+(babyOn?babyMonthly:0)+carM+(loanAmt>0?mortgage.monthly:0);
+
+  // Canvas로 한글 PDF 생성
+  const W=794, PD=40;
   const sections=[
-    {title:'🏠 목표 영역',bg:[255,240,245],rows:[
-      ['지역',rN[region]],['평수',sN[size]],['목표 집값',fmt(targetPrice)],
-      ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
-      ['실제 필요 현금',fmt(targetPrice-loanAmt)],
+    {title:'🏠 목표', color:'#FFE4EF', rows:[
+      ['지역', rN[region]||'-'],['평수', sN[size]||'-'],
+      ['목표 집값', fmt(targetPrice)],
+      ['대출 활용', loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
+      ['실제 필요 현금', fmt(targetPrice-loanAmt)],
     ]},
-    {title:'💰 수익 영역',bg:[245,255,245],rows:[
-      ['현재 자산',fmt(totalAsset)],
-      ['연봉 세전/실수령',`${fmt(grossSalary)} / 월 ${monthlyTakehome}만원`],
-      ['월 투자수익',`약 ${Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1))}만원 (${investRate}%)`],
-      ['연봉 인상',raiseState.promo?`연${raiseState.rate}%+5년진급`:`연${raiseState.rate}%`],
-      ['📥 월 수익 합계',`약 ${totalIncomeDL}만원`],
+    {title:'💰 수익', color:'#E8F5E9', rows:[
+      ['현재 자산', fmt(totalAsset)],
+      ['세전 연봉', fmt(grossSalary)],
+      ['월 실수령', `${(monthlyTakehome||0).toLocaleString()}만원`],
+      ['월 투자수익', `약 ${Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1)).toLocaleString()}만원`],
+      ['📥 월 수익 합계', `약 ${totalInc.toLocaleString()}만원`],
     ]},
-    {title:'💸 지출 영역',bg:[255,250,235],rows:[
-      ['월 생활비',`${monthlyLivingCost}만원`],
-      ['월 육아비',babyOn?`약 ${babyMonthly}만원 (월평균·26년)`:'미반영'],
-      ['월 차량 유지비',carMonthlyDL>0?`약 ${carMonthlyDL}만원`:'미반영'],
-      ['월 대출 상환',loanAmt>0?`${mortgage.monthly}만원 (원리금균등)`:'없음'],
-      ['📤 월 지출 합계',`약 ${totalExpenseDL}만원`],
+    {title:'💸 지출', color:'#FFF8E1', rows:[
+      ['월 생활비', `${monthlyLivingCost.toLocaleString()}만원`],
+      ['월 육아비', babyOn?`약 ${babyMonthly.toLocaleString()}만원`:'미반영'],
+      ['월 차량 유지비', carM>0?`약 ${carM.toLocaleString()}만원`:'미반영'],
+      ['월 대출 상환', loanAmt>0?`${mortgage.monthly.toLocaleString()}만원`:'없음'],
+      ['📤 월 지출 합계', `약 ${totalExp.toLocaleString()}만원`],
     ]},
-    {title:'📊 결과 영역',bg:[240,248,255],rows:[
-      ['집 구매 가능',yearsNeeded<=0?'지금!':yearsNeeded+'년'],
-      ['월 순수익',`약 ${totalIncomeDL-totalExpenseDL}만원`],
-      ['대출 상환 기간',loanAmt>0?'30년':'해당없음'],
-      ['총 이자 비용',loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
-      ['총 상환 금액',loanAmt>0?fmt(mortgage.totalPayment):'해당없음'],
+    {title:'📊 결과', color:'#E3F2FD', rows:[
+      ['집 구매 가능', yearsNeeded<=0?'지금 바로!':yearsNeeded+'년 후'],
+      ['월 순수익', `약 ${(totalInc-totalExp).toLocaleString()}만원`],
+      ['대출 상환', loanAmt>0?'30년 (원리금균등)':'해당없음'],
+      ['총 이자', loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
     ]},
   ];
-  let y=63;
+
+  // 높이 계산
+  let totalH = 200; // 헤더
+  sections.forEach(s=>{ totalH += 44 + s.rows.length*36 + 20; });
+  // 차트
+  const chartCanvas=document.getElementById('asset-chart');
+  const chartH = chartCanvas ? 300 : 0;
+  totalH += chartH + (chartH>0?40:0) + 60; // 푸터
+
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=totalH;
+  const ctx=canvas.getContext('2d');
+
+  // 배경
+  const bgGrad=ctx.createLinearGradient(0,0,0,totalH);
+  bgGrad.addColorStop(0,'#FFF5FA'); bgGrad.addColorStop(1,'#FFE8F2');
+  ctx.fillStyle=bgGrad; ctx.fillRect(0,0,W,totalH);
+
+  // 헤더 카드
+  ctx.fillStyle='#fff';
+  ctx.shadowColor='rgba(255,107,157,.15)'; ctx.shadowBlur=20;
+  roundRectFill(ctx,PD,PD,W-PD*2,140,16);
+  ctx.shadowBlur=0;
+
+  // 헤더 텍스트
+  ctx.textAlign='center';
+  ctx.fillStyle='#FF6B9D'; ctx.font='bold 22px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  ctx.fillText('남친 재력 분석 리포트', W/2, 80);
+  ctx.fillStyle='#9B7B8A'; ctx.font='13px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  ctx.fillText(`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 · by Xalysis`, W/2, 108);
+  ctx.fillStyle='#3D2C35'; ctx.font='bold 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  const verdict = yearsNeeded<=0?'지금 바로 집 구매 가능! 🎉':`약 ${yearsNeeded}년 후 집 구매 가능`;
+  ctx.fillText(verdict, W/2, 148);
+
+  // 섹션
+  let y=200;
   sections.forEach(sec=>{
-    doc.setFillColor(...sec.bg);doc.rect(20,y-3,170,8,'F');
-    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(255,107,157);
-    doc.text(sec.title,23,y+2);y+=9;
-    sec.rows.forEach(([l,v])=>{
-      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(155,123,138);doc.text(l,25,y);
-      doc.setFont('helvetica','bold');doc.setTextColor(61,44,53);doc.text(String(v),185,y,{align:'right'});y+=7;
-    });y+=3;
+    const rowH=36, secH=44+sec.rows.length*rowH;
+    // 섹션 카드
+    ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,0,0,.06)'; ctx.shadowBlur=12;
+    roundRectFill(ctx,PD,y,W-PD*2,secH,12);
+    ctx.shadowBlur=0;
+    // 섹션 헤더
+    ctx.fillStyle=sec.color;
+    roundRectFill(ctx,PD,y,W-PD*2,40,12);
+    ctx.fillStyle='#3D2C35'; ctx.font='bold 15px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+    ctx.textAlign='left';
+    ctx.fillText(sec.title, PD+20, y+26);
+    // 행
+    sec.rows.forEach(([l,v],i)=>{
+      const ry=y+44+i*rowH;
+      if(i%2===1){ctx.fillStyle='rgba(0,0,0,.025)';ctx.fillRect(PD,ry,W-PD*2,rowH);}
+      ctx.fillStyle='#9B7B8A'; ctx.font='13px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+      ctx.textAlign='left'; ctx.fillText(l, PD+24, ry+23);
+      ctx.fillStyle='#3D2C35'; ctx.font='bold 13px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+      ctx.textAlign='right'; ctx.fillText(String(v), W-PD-24, ry+23);
+    });
+    y+=secH+16;
   });
-  try{const cc=document.getElementById('asset-chart');if(cc&&y<235){doc.addImage(cc.toDataURL('image/png'),'PNG',20,y,170,50);y+=53;}}catch(e){}
-  if(loanAmt>0){doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(180,140,160);doc.text('※ 원리금균등상환 기준, 연 4% 고정금리, 30년 상환 (국내 주담대 표준)',105,272,{align:'center'});}
-  doc.setFontSize(7);doc.setTextColor(200,168,233);doc.text('Powered by Xalysis | 재미 목적 제작, 투자 조언 아님',105,278,{align:'center'});
-  doc.save(`남친재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`);
+
+  // 차트 삽입
+  if(chartCanvas && chartH>0){
+    ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,0,0,.06)'; ctx.shadowBlur=12;
+    roundRectFill(ctx,PD,y,W-PD*2,chartH+20,12);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#3D2C35'; ctx.font='bold 14px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+    ctx.textAlign='left'; ctx.fillText('📈 자산 흐름 시뮬레이션', PD+20, y+30);
+    try{ ctx.drawImage(chartCanvas, PD+10, y+44, W-PD*2-20, chartH-44); }catch(e){}
+    y+=chartH+36;
+  }
+
+  // 푸터
+  ctx.fillStyle='rgba(155,123,138,.5)';
+  ctx.font='11px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('※ 이 리포트는 재미 목적으로 제작되었으며 실제 투자 조언이 아닙니다. · Powered by Xalysis', W/2, y+20);
+
+  // PDF 변환
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const imgData=canvas.toDataURL('image/jpeg',0.92);
+  const pdfW=210, pdfH=Math.round(totalH*(210/W));
+  if(pdfH<=297){
+    doc.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+  } else {
+    // 여러 페이지로 분할
+    let srcY=0, pageH=Math.round(297*W/210);
+    while(srcY<totalH){
+      const sliceH=Math.min(pageH,totalH-srcY);
+      const sliceCanvas=document.createElement('canvas');
+      sliceCanvas.width=W; sliceCanvas.height=sliceH;
+      const sCtx=sliceCanvas.getContext('2d');
+      sCtx.drawImage(canvas,0,-srcY);
+      if(srcY>0) doc.addPage();
+      doc.addImage(sliceCanvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,Math.round(sliceH*210/W));
+      srcY+=pageH;
+    }
+  }
+  const fn=`남친재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
+  doc.save(fn);
   showToast('📥 PDF 저장 완료!');
+}
+
+function roundRectFill(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
 }
 
 function copyReportText(){
@@ -1910,10 +2095,13 @@ function copyReportText(){
 
 function unlockPremium(){
   // TODO: 토스페이먼츠 실제 연동 자리 (990원 평생 이용권)
+  // 현재: 테스트 모드 (결제 없이 바로 해제)
   isPremium=true;localStorage.setItem(LS_PREMIUM,'true');
   closeModalById('pay-modal');showPremiumContent();
   if(calcResult.salary){ calcAll(); scrollToPremium(); }
   showToast('🎉 990원 프리미엄 잠금 해제 완료!');launchConfetti();
+  // Supabase에 프리미엄 활성화 기록 (토스 연동 전 임시)
+  savePremiumPayment('test_'+Date.now(),'test_key',990);
 }
 // ━━ 플로팅 탭 버튼 ━━
 function floatGoBasic(){
@@ -1964,7 +2152,7 @@ function updatePremiumTabLabel(){
     label.textContent = '프리미엄설정';
   } else if(_premiumDirty){
     icon.textContent  = '⚡';
-    label.textContent = '업데이트필요';
+    label.textContent = '프리미엄설정';
     document.getElementById('ftab-analyze')?.classList.add('dirty');
   } else {
     icon.textContent  = '🔓';
@@ -2047,26 +2235,26 @@ function buildReportData(){
   const totalExpense = monthlyLivingCost+(babyOn?babyMonthly:0)+carMonthly+(loanAmt>0?mortgage.monthly:0);
 
   return [
-    {title:'🏠 목표 영역', rows:[
+    {title:'🏠 목표', rows:[
       ['지역', rN[region]], ['평수', sN[size]], ['목표 집값', fmt(targetPrice)],
       ['대출 활용', loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
       ['실제 필요 현금', fmt(targetPrice-loanAmt)],
     ]},
-    {title:'💰 수익 영역', rows:[
+    {title:'💰 수익', rows:[
       ['현재 자산', fmt(totalAsset)],
       ['연봉 (세전)', fmt(grossSalary)],
       ['월 실수령', `약 ${monthlyNet}만원`],
       [`월 투자수익 (${investRate}%/년)`, `약 ${monthlyInvest}만원`],
       ['📥 월 수익 합계', `약 ${totalIncome}만원`],
     ]},
-    {title:'💸 지출 영역', rows:[
+    {title:'💸 지출', rows:[
       ['월 생활비', `${monthlyLivingCost}만원`],
       ['월 육아비', babyOn?`약 ${babyMonthly}만원 (월평균)`:'미반영'],
       ['월 차량 유지비', carMonthly>0?`약 ${carMonthly}만원`:'미반영'],
       ['월 대출 상환', loanAmt>0?`${mortgage.monthly}만원`:'없음'],
       ['📤 월 지출 합계', `약 ${totalExpense}만원`],
     ]},
-    {title:'📊 결과 영역', rows:[
+    {title:'📊 결과', rows:[
       ['집 구매 가능 기간', yearsNeeded<=0?'지금 바로! 🎉':`약 ${yearsNeeded}년 후`],
       ['월 순수익', `약 ${totalIncome-totalExpense}만원`],
       ['대출 상환', loanAmt>0?`30년 (원리금균등)`:'해당없음'],
@@ -2148,10 +2336,38 @@ function drawShareCard(){
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
 function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='남친연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
-function shareKakao(){const{verdict,pushMsg}=calcResult;window.open(`https://story.kakao.com/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent('🏠 '+verdict+'\n\n'+pushMsg)}`,'_blank','width=600,height=500')}
+function shareKakao(){const{verdict,pushMsg}=calcResult;window.open(`https://story.kakao.com/share?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent('🏠 '+verdict+'\n\n'+pushMsg)}`,'_blank','width=600,height=500');trackShare();}
 function copyMessage(){const msg=calcResult.pushMsg||'';navigator.clipboard?.writeText(msg).then(()=>showToast('📋 복사 완료!'))}
 
 function launchConfetti(){const colors=['#FF6B9D','#FFB3CC','#C8A8E9','#FFAA80','#A8DDD5','#FFF069'];for(let i=0;i<60;i++){setTimeout(()=>{const el=document.createElement('div');el.className='confetti-piece';el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${2+Math.random()*2}s`;document.body.appendChild(el);setTimeout(()=>el.remove(),4000)},i*50)}}
+// ━━ 약관 모달 ━━
+const LEGAL = {
+  terms: {
+    title: '이용약관',
+    content: `<b>제1조 (목적)</b><br>본 약관은 엑스분석(이하 "회사")이 제공하는 "우리 남친 연봉으로 집 살 수 있을까?" 서비스의 이용 조건을 규정합니다.<br><br><b>제2조 (서비스 내용)</b><br>사용자가 입력한 정보를 바탕으로 부동산 구매 가능 시점을 시뮬레이션하는 서비스를 제공합니다. 분석 결과는 참고용이며 실제 투자·금융 결정의 법적 책임을 지지 않습니다.<br><br><b>제3조 (유료 서비스)</b><br>프리미엄 분석 기능은 990원의 일회성 이용료를 결제하여 이용할 수 있습니다. 결제 완료 시 즉시 서비스가 활성화됩니다.<br><br><b>제4조 (면책조항)</b><br>분석 결과는 시뮬레이션이며 실제 부동산 시세와 다를 수 있습니다. 서비스 이용으로 인한 손해에 대해 책임을 지지 않습니다.<br><br>시행일: 2025년 4월 25일 · 사업자: 엑스분석(Xalysis) · 대표: 이윤한`
+  },
+  privacy: {
+    title: '개인정보처리방침',
+    content: `<b>1. 수집 항목</b><br>결제 시 휴대폰 번호 (프리미엄 이용권 관리), 서비스 이용 기록<br><br><b>2. 수집 목적</b><br>프리미엄 이용권 본인 확인 및 관리, 서비스 품질 개선<br><br><b>3. 보유 기간</b><br>서비스 이용 종료 시까지 보관 후 파기<br><br><b>4. 제3자 제공</b><br>원칙적으로 제3자 제공 없음. 결제 처리를 위해 토스페이먼츠에 최소 정보 제공<br><br><b>5. 개인정보 보호책임자</b><br>이윤한 · hello@braint.net · 010-8244-2331<br><br>시행일: 2025년 4월 25일`
+  },
+  refund: {
+    title: '환불정책',
+    content: `<b>환불 원칙</b><br>디지털 콘텐츠 특성상 결제 즉시 서비스가 활성화되어 <b>원칙적으로 환불이 불가</b>합니다.<br><br><b>환불 가능 경우</b><br>· 결제 후 서비스 정상 작동하지 않는 기술적 오류 발생<br>· 중복 결제된 경우<br><br><b>환불 신청</b><br>이메일: hello@braint.net · 전화: 010-8244-2331<br>환불 요청 확인 후 영업일 기준 3~5일 내 처리<br><br><b>상품 정보</b><br>상품명: 프리미엄 분석 평생 이용권 · 금액: 990원 (일회성)<br>제공: 투자수익률·연봉인상·이벤트 시나리오 분석, 자산 흐름 차트, PDF 리포트<br><br>사업자: 엑스분석(Xalysis) · 대표: 이윤한`
+  }
+};
+function openLegal(type){
+  const d=LEGAL[type];if(!d)return;
+  document.getElementById('legal-title').textContent=d.title;
+  document.getElementById('legal-content').innerHTML=d.content;
+  document.getElementById('legal-modal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeLegal(e){
+  if(e&&e.target!==document.getElementById('legal-modal'))return;
+  document.getElementById('legal-modal').style.display='none';
+  document.body.style.overflow='';
+}
+
 function showToast(msg){const t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#3D2C35;color:white;padding:12px 24px;border-radius:99px;font-size:.9rem;font-weight:700;z-index:9999;font-family:Noto Sans KR,sans-serif';document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 
 // 초기화
