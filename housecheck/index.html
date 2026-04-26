@@ -452,14 +452,13 @@ input[type=range]::-webkit-slider-thumb{
     <div class="q-card hidden" id="q4">
       <div class="q-step">STEP 04 · 목표</div>
       <div class="q-text">사고 싶은 집값이 얼마예요?</div>
-      <div class="q-hint">희망 매매가를 입력해주세요 (7억 → 70000)</div>
+      <div class="q-hint">단위: 만원 &nbsp;·&nbsp; 예) 9억 → 90000</div>
       <div class="input-row">
-        <div class="input-wrap">
-          <input type="number" class="input-field" id="price-input" placeholder="70000" min="5000" max="990000">
+        <div class="input-wrap" style="flex:1">
+          <input type="number" class="input-field" id="price-input" placeholder="70000" min="5000" max="990000" style="width:100%">
         </div>
         <span class="input-unit">만원</span>
         <button class="confirm-btn" onclick="confirmQ4()">확인 →</button>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">예) 5억 → 50000 / 9억 → 90000 / 15억 → 150000</div>
       </div>
       <div class="sub-info" id="q4-info"></div>
       <div class="done-check">
