@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg:#0D1117; --surface:#161B22; --surface2:#1C2128;
@@ -352,6 +353,36 @@ input[type=range]::-webkit-slider-thumb{
   .choice-grid.cols3{grid-template-columns:1fr 1fr}
 }
 </style>
+<script>
+// ━━ Supabase 초기화 ━━
+const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function trackHCAnalysis(){
+  try{ await sb.rpc('increment_analytics',{p_service:'housecheck',p_field:'total_analyses'}); }
+  catch(e){ console.log('track error',e); }
+}
+
+async function saveHCAnalysis(data){
+  try{
+    const session = localStorage.getItem('bfhc_session_id') || crypto.randomUUID();
+    localStorage.setItem('bfhc_session_id', session);
+    await sb.from('analyses').insert({
+      session_id: session,
+      service: 'housecheck',
+      age: data.age || null,
+      gross_salary: data.salary || null,
+      total_asset: data.asset || null,
+      target_price: data.housePrice || null,
+      years_needed: data.years || null,
+      verdict: data.verdict || null,
+      is_premium: false,
+      shared: false
+    });
+  } catch(e){ console.log('save error',e); }
+}
+</script>
 </head>
 <body>
 
@@ -1088,6 +1119,18 @@ function renderResult(){
   const rs=document.getElementById('result-section');
   rs.classList.add('visible');
   rs.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // ━━ Supabase 트래킹 ━━
+  const yrsCalc = sim.reachedMonth>=0 ? Math.ceil(sim.reachedMonth/12) : null;
+  trackHCAnalysis();
+  saveHCAnalysis({
+    age: S.age,
+    salary: S.salary,
+    asset: S.asset,
+    housePrice: S.housePrice,
+    years: yrsCalc,
+    verdict: yrsCalc===0 ? '즉시가능' : yrsCalc ? yrsCalc+'년후' : '30년초과'
+  });
 
   // 기간
   const yrs=sim.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null;
