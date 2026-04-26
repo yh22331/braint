@@ -1652,57 +1652,109 @@ function updateLoanBox(){
     calcBox.style.display='none';
   }
 }
-function calcAll(){
+async function calcAll(){
   if(!calcResult.salary)return;
   const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  const age=getAge();
   const investRate=getInvestRate();
-  const{extraByYear,monthlyBabyByYr,totalExtra}=getEventDataWithLabels();
   const{loanAmt,loanRate}=getLoanData();
-  const loanInterest=loanAmt*loanRate/100;
-  const effectiveTarget=targetPrice-loanAmt;
-  const realTarget=effectiveTarget+totalExtra;
 
-  // 이벤트 합산 결과 UI
+  // 이벤트 수집
+  const weddingOn=document.getElementById('ev-wedding')?.checked||false;
+  const babyOn=document.getElementById('ev-baby')?.checked||false;
+  const carOn=document.getElementById('ev-car')?.checked||false;
+
+  // ━━ API 호출 ━━
+  let apiResult=null;
+  try{
+    const res=await fetch('/api/simulate-bf',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        salary:calcResult.grossSalary||salary,
+        asset:totalAsset,
+        region:state.region,
+        size:state.size,
+        living:monthlyLivingCost,
+        investRate,
+        age,
+        raisePct:raiseState.rate||3,
+        promoRaise:raiseState.promo||false,
+        maxSalary:raiseState.maxSalary||15000,
+        weddingOn,
+        weddingCost:parseInt(document.getElementById('cost-wedding')?.value)||5000,
+        weddingAge:parseInt(document.getElementById('age-wedding')?.textContent)||33,
+        babyOn,
+        babyCost:parseInt(document.getElementById('cost-baby-yr')?.value)||500,
+        babyAge:parseInt(document.getElementById('age-baby')?.textContent)||35,
+        carOn,
+        carCost:parseInt(document.getElementById('cost-car')?.value)||3500,
+        carAge:parseInt(document.getElementById('age-car')?.textContent)||30,
+        loanOn:loanAmt>0,
+      })
+    });
+    apiResult=await res.json();
+    if(!res.ok) throw new Error(apiResult.error);
+  }catch(e){
+    console.error('BF API 오류, 로컬 폴백:', e);
+    // API 실패 시 기존 로컬 계산으로 폴백
+    const{extraByYear,monthlyBabyByYr,totalExtra}=getEventDataWithLabels();
+    const effectiveTarget=targetPrice-loanAmt;
+    const ar=raiseState.rate||0;
+    const carMonthlyMaint=carOn?getCarMonthlyMaintenance():0;
+    const carStartYr=carOn?Math.max(0,EVENT_AGES.car-age):Infinity;
+    const monthlySimResult=simulateMonthly({
+      netSalary:salary,initAsset:totalAsset,targetPrice:effectiveTarget,
+      investRate,extraByYear,monthlyBabyByYr,loanAmt,loanRate,
+      annualRaisePct:ar,promoRaise:raiseState.promo,promoBasePct:ar,
+      maxNetSalary:getMaxNetSalary(),carStartYr,carMonthlyMaint,
+    });
+    const reachedYr=monthlySimResult.reachedMonth>=0?Math.ceil(monthlySimResult.reachedMonth/12):61;
+    const addedYears=reachedYr-yearsNeeded;
+    document.getElementById('er-years').textContent=reachedYr<=0?'지금 바로 가능!':`${reachedYr}년${addedYears>0?' (+'+addedYears+'년)':addedYears<0?' ('+addedYears+'년)':''}`;
+    document.getElementById('er-years').style.color=addedYears>0?'#FF6B6B':addedYears<0?'#3DB88A':'var(--text)';
+    window._lastSimResult=monthlySimResult;window._lastEffectiveTarget=effectiveTarget;
+    try{renderChart(monthlySimResult,effectiveTarget,totalAsset,salary,investRate);}catch(e){}
+    const{totalExtra}=getEventDataWithLabels();
+    updateLoanBox();
+    document.getElementById('er-base').textContent=fmt(targetPrice);
+    document.getElementById('er-loan').textContent=loanAmt>0?`-${fmt(loanAmt)}`:'미사용';
+    document.getElementById('er-extra').textContent=totalExtra>0?`+${fmt(totalExtra)}`:'+0원';
+    document.getElementById('er-extra').style.color=totalExtra>0?'#FF6B6B':'#3DB88A';
+    document.getElementById('er-total').textContent=fmt(effectiveTarget+totalExtra);
+    renderPDFPreview(reachedYr,totalExtra,loanAmt);
+    return;
+  }
+
+  // ━━ API 결과 반영 ━━
+  const{years,reachedMonth,effectiveTarget,loanAmt:apiLoan,monthlyLoanPayment,
+        totalEventCost,chartData,eventMarkers}=apiResult;
+
+  const reachedYr=years||61;
+  const addedYears=reachedYr-yearsNeeded;
+
   updateLoanBox();
   document.getElementById('er-base').textContent=fmt(targetPrice);
-  document.getElementById('er-loan').textContent=loanAmt>0?`-${fmt(loanAmt)}`:'미사용';
-  const cleanExtra=totalExtra;
-  document.getElementById('er-extra').textContent=cleanExtra>0?`+${fmt(cleanExtra)}`:'+0원';
-  document.getElementById('er-extra').style.color=cleanExtra>0?'#FF6B6B':'#3DB88A';
-  document.getElementById('er-total').textContent=fmt(realTarget);
-
-  // 월별 시뮬 (이벤트 라인)
-  const ar = (raiseState.rate||0);
-  const age = getAge();
-  const carOn = document.getElementById('ev-car')?.checked;
-  const carStartYr = carOn ? Math.max(0, EVENT_AGES.car - age) : Infinity;
-  const carMonthlyMaint = carOn ? getCarMonthlyMaintenance() : 0;
-
-  const monthlySimResult = simulateMonthly({
-    netSalary:salary, initAsset:totalAsset, targetPrice:effectiveTarget,
-    investRate, extraByYear, monthlyBabyByYr, loanAmt, loanRate,
-    annualRaisePct:ar, promoRaise:raiseState.promo, promoBasePct:ar,
-    maxNetSalary: getMaxNetSalary(),
-    carStartYr, carMonthlyMaint,
-  });
-
-  // 기간 계산 (연 단위)
-  const reachedYr = monthlySimResult.reachedMonth >= 0
-    ? Math.ceil(monthlySimResult.reachedMonth / 12) : 61;
-  const addedYears=reachedYr-yearsNeeded;
+  document.getElementById('er-loan').textContent=apiLoan>0?`-${fmt(apiLoan)}`:'미사용';
+  document.getElementById('er-extra').textContent=totalEventCost>0?`+${fmt(totalEventCost)}`:'+0원';
+  document.getElementById('er-extra').style.color=totalEventCost>0?'#FF6B6B':'#3DB88A';
+  document.getElementById('er-total').textContent=fmt((effectiveTarget||targetPrice)+totalEventCost);
   document.getElementById('er-years').textContent=reachedYr<=0?'지금 바로 가능!':`${reachedYr}년${addedYears>0?' (+'+addedYears+'년)':addedYears<0?' ('+addedYears+'년)':''}`;
   document.getElementById('er-years').style.color=addedYears>0?'#FF6B6B':addedYears<0?'#3DB88A':'var(--text)';
 
-  // 시뮬 결과 공유용으로 저장
-  window._lastSimResult = monthlySimResult;
-  window._lastEffectiveTarget = effectiveTarget;
+  // 차트 데이터 변환 (API chartData → renderChart 포맷)
+  const mockSimResult={
+    results: chartData.flatMap(d=>[
+      {month:d.year*12,year:d.year,asset:d.asset,salary:d.netMonthly*12,label:d.label,housePurchase:d.housePurchase||false}
+    ]),
+    reachedMonth: reachedMonth,
+    maxSalaryMonth:-1,
+  };
+  window._lastSimResult=mockSimResult;
+  window._lastEffectiveTarget=effectiveTarget||targetPrice;
 
-  try {
-    renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, investRate);
-  } catch(e) {
-    console.error('차트 렌더 오류:', e);
-  }
-  renderPDFPreview(reachedYr, cleanExtra, loanAmt);
+  try{renderChart(mockSimResult,effectiveTarget||targetPrice,totalAsset,salary,investRate);}catch(e){console.error('차트 오류:',e);}
+  renderPDFPreview(reachedYr,totalEventCost,apiLoan||0);
 }
 
 // ━━ ④ 차트 (월별 시뮬레이션 기반) ━━
