@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrainT Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#09090B; --surface:#18181B; --surface2:#27272A;
+  --border:#3F3F46; --border2:rgba(255,255,255,.06);
+  --text:#FAFAFA; --muted:#A1A1AA; --dim:#71717A;
+  --green:#22C55E; --green-dim:rgba(34,197,94,.1); --green-border:rgba(34,197,94,.25);
+  --red:#EF4444; --red-dim:rgba(239,68,68,.1);
+  --blue:#3B82F6; --blue-dim:rgba(59,130,246,.1);
+  --yellow:#EAB308; --yellow-dim:rgba(234,179,8,.1);
+  --purple:#A855F7; --purple-dim:rgba(168,85,247,.1);
+  --mono:'JetBrains Mono',monospace;
+  --font:'Space Grotesk',sans-serif;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── 로그인 화면 ── */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+}
+.login-card{
+  width:100%;max-width:360px;padding:40px;
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+}
+.login-logo{
+  font-family:var(--mono);font-size:1.1rem;font-weight:700;
+  color:var(--green);letter-spacing:2px;margin-bottom:8px;
+}
+.login-title{font-size:1.3rem;font-weight:600;margin-bottom:4px}
+.login-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px}
+.login-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:12px 16px;color:var(--text);
+  font-family:var(--font);font-size:.9rem;outline:none;
+  transition:border-color .2s;margin-bottom:12px;
+}
+.login-input:focus{border-color:var(--green)}
+.login-btn{
+  width:100%;background:var(--green);color:#000;border:none;
+  border-radius:8px;padding:12px;font-size:.9rem;font-weight:700;
+  font-family:var(--font);cursor:pointer;transition:all .2s;
+}
+.login-btn:hover{background:#16A34A}
+.login-error{font-size:.78rem;color:var(--red);margin-top:8px;display:none}
+
+/* ── 레이아웃 ── */
+#admin-screen{display:none}
+.layout{display:flex;min-height:100vh}
+
+/* 사이드바 */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--surface);
+  border-right:1px solid var(--border2);
+  padding:24px 16px;display:flex;flex-direction:column;gap:4px;
+  position:fixed;top:0;bottom:0;
+}
+.sidebar-logo{
+  font-family:var(--mono);font-size:.85rem;font-weight:700;
+  color:var(--green);letter-spacing:2px;
+  padding:0 12px;margin-bottom:20px;
+}
+.sidebar-logo span{color:var(--dim)}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  font-size:.82rem;font-weight:500;color:var(--muted);
+  cursor:pointer;transition:all .2s;text-decoration:none;
+  border:none;background:none;font-family:var(--font);width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.nav-icon{font-size:1rem;width:20px;text-align:center}
+.nav-divider{height:1px;background:var(--border2);margin:8px 0}
+.sidebar-bottom{margin-top:auto}
+.sidebar-version{font-family:var(--mono);font-size:.65rem;color:var(--dim);padding:0 12px}
+
+/* 메인 */
+.main{margin-left:220px;flex:1;padding:28px;max-width:calc(100vw - 220px)}
+.page-header{margin-bottom:28px}
+.page-title{font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:8px}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2s ease-in-out infinite}
+
+/* 섹션 */
+.section{display:none}
+.section.active{display:block}
+
+/* 스탯 카드 */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+}
+.stat-card.green::before{background:var(--green)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.yellow::before{background:var(--yellow)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-label{font-family:var(--mono);font-size:.65rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.stat-value{font-size:1.8rem;font-weight:700;color:var(--text);letter-spacing:-1px;margin-bottom:4px}
+.stat-change{font-size:.75rem;color:var(--muted)}
+.stat-icon{position:absolute;right:16px;top:16px;font-size:1.4rem;opacity:.4}
+
+/* 차트 카드 */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:20px;margin-bottom:20px;
+}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:.9rem;font-weight:600}
+.card-meta{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+
+/* 테이블 */
+.table-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:20px;
+}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:.9rem;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--mono);font-size:.65rem;color:var(--dim);letter-spacing:1px;text-transform:uppercase;padding:10px 20px;text-align:left;border-bottom:1px solid var(--border2);background:rgba(255,255,255,.01)}
+td{padding:12px 20px;font-size:.82rem;color:var(--muted);border-bottom:1px solid rgba(63,63,70,.4)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:.5px}
+.badge-green{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.badge-yellow{background:var(--yellow-dim);color:var(--yellow)}
+.badge-red{background:var(--red-dim);color:var(--red)}
+
+/* 새로고침 버튼 */
+.refresh-btn{
+  padding:6px 14px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;color:var(--muted);font-family:var(--mono);font-size:.7rem;
+  cursor:pointer;transition:all .2s;
+}
+.refresh-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* 로딩 */
+.loading-text{color:var(--dim);font-family:var(--mono);font-size:.78rem;padding:20px;text-align:center}
+
+/* 빈 상태 */
+.empty-state{padding:40px;text-align:center;color:var(--dim);font-size:.82rem}
+
+/* 애니메이션 */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fadeIn{animation:fadeIn .4s ease forwards}
+
+/* 그리드 2열 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+
+@media(max-width:1200px){.stats-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0;max-width:100vw}.stats-grid{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">BRAINT<span>/ADMIN</span></div>
+    <div class="login-title">관리자 로그인</div>
+    <div class="login-sub">BrainT 관리자만 접근 가능한 페이지예요</div>
+    <input type="email" class="login-input" id="email-input" placeholder="이메일" onkeydown="if(event.key==='Enter')document.getElementById('pw-input').focus()">
+    <input type="password" class="login-input" id="pw-input" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="login-error">이메일 또는 비밀번호가 틀렸어요</div>
+  </div>
+</div>
+
+<!-- 어드민 -->
+<div id="admin-screen">
+  <div class="layout">
+
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">BRAIN<span>T</span></div>
+      <button class="nav-item active" onclick="showSection('dashboard',this)">
+        <span class="nav-icon">📊</span> 대시보드
+      </button>
+      <button class="nav-item" onclick="showSection('payments',this)">
+        <span class="nav-icon">💳</span> 결제 내역
+      </button>
+      <button class="nav-item" onclick="showSection('analyses',this)">
+        <span class="nav-icon">🔍</span> 분석 기록
+      </button>
+      <button class="nav-item" onclick="showSection('services',this)">
+        <span class="nav-icon">🏠</span> 서비스 현황
+      </button>
+      <div class="nav-divider"></div>
+      <div class="sidebar-bottom">
+        <button class="nav-item" onclick="doLogout()" style="color:var(--red)">
+          <span class="nav-icon">🚪</span> 로그아웃
+        </button>
+        <div class="sidebar-version" style="margin-top:8px">v1.0.0 · BrainT Admin</div>
+      </div>
+    </aside>
+
+    <!-- 메인 -->
+    <main class="main">
+
+      <!-- 대시보드 섹션 -->
+      <div class="section active" id="section-dashboard">
+        <div class="page-header">
+          <div class="page-title">대시보드</div>
+          <div class="page-sub">
+            <div class="live-dot"></div>
+            실시간 현황 · <span id="last-updated">업데이트 중...</span>
+            <button class="refresh-btn" onclick="loadDashboard()">↺ 새로고침</button>
+          </div>
+        </div>
+
+        <!-- 스탯 -->
+        <div class="stats-grid">
+          <div class="stat-card green">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">총 분석 횟수</div>
+            <div class="stat-value" id="s-analyses">-</div>
+            <div class="stat-change" id="s-analyses-today">오늘: -</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon">🔗</div>
+            <div class="stat-label">총 공유 횟수</div>
+            <div class="stat-value" id="s-shares">-</div>
+            <div class="stat-change" id="s-shares-today">오늘: -</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-icon">💰</div>
+            <div class="stat-label">총 결제 횟수</div>
+            <div class="stat-value" id="s-payments">-</div>
+            <div class="stat-change" id="s-revenue">매출: -</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">📊</div>
+            <div class="stat-label">전환율</div>
+            <div class="stat-value" id="s-conversion">-%</div>
+            <div class="stat-change">결제/분석 비율</div>
+          </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">일별 분석 추이 (최근 14일)</div>
+            <div class="card-meta" id="chart-range">-</div>
+          </div>
+          <canvas id="daily-chart" height="120"></canvas>
+        </div>
+
+        <!-- 서비스별 현황 -->
+        <div class="grid2">
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="card-header">
+              <div class="card-title">서비스별 분석</div>
+            </div>
+            <div id="service-breakdown">
+              <div class="loading-text">로딩 중...</div>
+            </div>
+          </div>
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="card-header">
+              <div class="card-title">최근 결제</div>
+            </div>
+            <div id="recent-payments-mini">
+              <div class="loading-text">로딩 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 결제 내역 섹션 -->
+      <div class="section" id="section-payments">
+        <div class="page-header">
+          <div class="page-title">결제 내역</div>
+          <div class="page-sub">토스페이먼츠 연동 후 실제 데이터가 표시돼요</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">전체 결제</div>
+            <button class="refresh-btn" onclick="loadPayments()">↺ 새로고침</button>
+          </div>
+          <div id="payments-table-wrap">
+            <div class="loading-text">로딩 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 분석 기록 섹션 -->
+      <div class="section" id="section-analyses">
+        <div class="page-header">
+          <div class="page-title">분석 기록</div>
+          <div class="page-sub">사용자 분석 데이터 (개인정보 미포함)</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">최근 분석 100건</div>
+            <button class="refresh-btn" onclick="loadAnalyses()">↺ 새로고침</button>
+          </div>
+          <div id="analyses-table-wrap">
+            <div class="loading-text">로딩 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 서비스 현황 -->
+      <div class="section" id="section-services">
+        <div class="page-header">
+          <div class="page-title">서비스 현황</div>
+          <div class="page-sub">운영 중인 서비스 관리</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><div class="table-title">서비스 목록</div></div>
+          <table>
+            <thead><tr><th>서비스</th><th>상태</th><th>URL</th><th>누적 분석</th></tr></thead>
+            <tbody id="services-table-body">
+              <tr>
+                <td>🏠 남친 재력 분석기</td>
+                <td><span class="badge badge-green">● LIVE</span></td>
+                <td><a href="https://braint.net/bf-home/" target="_blank" style="color:var(--blue);text-decoration:none">braint.net/bf-home/</a></td>
+                <td id="svc-bf-count">-</td>
+              </tr>
+              <tr>
+                <td>📊 HouseCheck PRO</td>
+                <td><span class="badge badge-yellow">● NEW</span></td>
+                <td><a href="https://braint.net/housecheck/" target="_blank" style="color:var(--blue);text-decoration:none">braint.net/housecheck/</a></td>
+                <td id="svc-hc-count">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ━━ 설정 ━━
+const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ━━ 관리자 이메일 (이것만 아는 사람만 로그인 가능)
+const ADMIN_EMAIL = 'yh22331@gmail.com';
+
+// ━━ 로그인 (Supabase Auth) ━━
+async function doLogin(){
+  const email = document.getElementById('email-input').value.trim();
+  const pw = document.getElementById('pw-input').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+
+  if(!email||!pw){ errEl.textContent='이메일과 비밀번호를 입력해주세요';errEl.style.display='block';return; }
+
+  // 관리자 이메일 체크
+  if(email !== ADMIN_EMAIL){
+    errEl.textContent='접근 권한이 없어요';errEl.style.display='block';return;
+  }
+
+  btn.textContent='로그인 중...';btn.disabled=true;errEl.style.display='none';
+
+  try{
+    const{data,error} = await sb.auth.signInWithPassword({email,password:pw});
+    if(error){
+      errEl.textContent='이메일 또는 비밀번호가 틀렸어요';
+      errEl.style.display='block';
+      btn.textContent='로그인';btn.disabled=false;
+      document.getElementById('pw-input').value='';
+      return;
+    }
+    // 로그인 성공
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-screen').style.display='block';
+    loadDashboard();
+  }catch(e){
+    errEl.textContent='오류가 발생했어요. 다시 시도해주세요';
+    errEl.style.display='block';
+    btn.textContent='로그인';btn.disabled=false;
+  }
+}
+
+// ━━ 세션 확인 (이미 로그인된 경우 자동 진입) ━━
+async function checkSession(){
+  const{data:{session}} = await sb.auth.getSession();
+  if(session && session.user.email === ADMIN_EMAIL){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-screen').style.display='block';
+    loadDashboard();
+  }
+}
+checkSession();
+
+// ━━ 로그아웃 ━━
+async function doLogout(){
+  await sb.auth.signOut();
+  document.getElementById('admin-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('email-input').value='';
+  document.getElementById('pw-input').value='';
+}
+
+// ━━ 섹션 전환 ━━
+function showSection(name, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='payments') loadPayments();
+  if(name==='analyses') loadAnalyses();
+  if(name==='services') loadServices();
+}
+
+// ━━ 대시보드 데이터 ━━
+let chartInstance = null;
+
+async function loadDashboard(){
+  document.getElementById('last-updated').textContent = '업데이트 중...';
+  try{
+    // 전체 합계
+    const{data:all} = await sb.from('analytics').select('*').order('date',{ascending:false});
+    if(!all||all.length===0){
+      ['s-analyses','s-shares','s-payments','s-conversion'].forEach(id=>document.getElementById(id).textContent='0');
+      document.getElementById('s-analyses-today').textContent='오늘: 0';
+      document.getElementById('s-shares-today').textContent='오늘: 0';
+      document.getElementById('s-revenue').textContent='매출: 0원';
+      document.getElementById('last-updated').textContent='데이터 없음';
+      return;
+    }
+    const totAnalyses = all.reduce((s,r)=>s+(r.total_analyses||0),0);
+    const totShares = all.reduce((s,r)=>s+(r.total_shares||0),0);
+    const totPayments = all.reduce((s,r)=>s+(r.total_payments||0),0);
+    const totRevenue = all.reduce((s,r)=>s+(r.total_revenue||0),0);
+    const conversion = totAnalyses>0?((totPayments/totAnalyses)*100).toFixed(1):0;
+
+    document.getElementById('s-analyses').textContent = totAnalyses.toLocaleString();
+    document.getElementById('s-shares').textContent = totShares.toLocaleString();
+    document.getElementById('s-payments').textContent = totPayments.toLocaleString();
+    document.getElementById('s-conversion').textContent = conversion+'%';
+    document.getElementById('s-revenue').textContent = '매출: '+(totRevenue||totPayments*990).toLocaleString()+'원';
+
+    // 오늘
+    const today = new Date().toISOString().slice(0,10);
+    const todayData = all.filter(r=>r.date===today);
+    const todayAnalyses = todayData.reduce((s,r)=>s+(r.total_analyses||0),0);
+    const todayShares = todayData.reduce((s,r)=>s+(r.total_shares||0),0);
+    document.getElementById('s-analyses-today').textContent = '오늘: '+todayAnalyses.toLocaleString();
+    document.getElementById('s-shares-today').textContent = '오늘: '+todayShares.toLocaleString();
+
+    // 차트 (최근 14일)
+    const last14 = [...new Set(all.map(r=>r.date))].sort().slice(-14);
+    document.getElementById('chart-range').textContent = last14[0]||'' + ' ~ ' + (last14[last14.length-1]||'');
+    const chartLabels = last14.map(d=>d.slice(5));
+    const chartData = last14.map(d=>{
+      const rows = all.filter(r=>r.date===d);
+      return rows.reduce((s,r)=>s+(r.total_analyses||0),0);
+    });
+    renderChart(chartLabels, chartData);
+
+    // 서비스별
+    const services = [...new Set(all.map(r=>r.service))];
+    const breakdown = services.map(svc=>{
+      const rows = all.filter(r=>r.service===svc);
+      return{svc, count:rows.reduce((s,r)=>s+(r.total_analyses||0),0)};
+    }).sort((a,b)=>b.count-a.count);
+    document.getElementById('service-breakdown').innerHTML = breakdown.length?
+      breakdown.map(({svc,count})=>`
+        <div style="display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border2);font-size:.82rem">
+          <span style="color:var(--muted)">${svc}</span>
+          <span style="font-family:var(--mono);color:var(--green)">${count.toLocaleString()}회</span>
+        </div>`).join(''):
+      '<div class="empty-state">데이터 없음</div>';
+
+    // 최근 결제
+    const{data:recentPays}=await sb.from('payments').select('*').order('created_at',{ascending:false}).limit(5);
+    document.getElementById('recent-payments-mini').innerHTML = recentPays&&recentPays.length?
+      recentPays.map(p=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border2);font-size:.78rem">
+          <div>
+            <div style="color:var(--text);font-family:var(--mono)">${p.order_id?.slice(0,16)||'-'}...</div>
+            <div style="color:var(--dim);margin-top:2px">${p.created_at?.slice(0,10)||'-'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="color:var(--green);font-weight:600">${(p.amount||990).toLocaleString()}원</div>
+            <span class="badge ${p.status==='done'?'badge-green':'badge-yellow'}">${p.status||'pending'}</span>
+          </div>
+        </div>`).join(''):
+      '<div class="empty-state">결제 내역 없음<br><span style="font-size:.72rem;margin-top:4px;display:block">토스페이먼츠 연동 후 표시</span></div>';
+
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('ko-KR');
+  }catch(e){
+    console.error(e);
+    document.getElementById('last-updated').textContent = '오류 발생';
+  }
+}
+
+function renderChart(labels, data){
+  if(chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('daily-chart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(34,197,94,.3)');
+  grad.addColorStop(1,'rgba(34,197,94,0)');
+  chartInstance = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'분석 횟수',data,
+        borderColor:'#22C55E',backgroundColor:grad,
+        borderWidth:2,pointRadius:4,pointBackgroundColor:'#22C55E',
+        tension:.4,fill:true,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#71717A',font:{size:10}},grid:{color:'rgba(63,63,70,.4)'}},
+        y:{ticks:{color:'#71717A',font:{size:10},callback:v=>v+'회'},grid:{color:'rgba(63,63,70,.4)'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+// ━━ 결제 내역 ━━
+async function loadPayments(){
+  document.getElementById('payments-table-wrap').innerHTML='<div class="loading-text">로딩 중...</div>';
+  try{
+    const{data}=await sb.from('payments').select('*').order('created_at',{ascending:false}).limit(100);
+    if(!data||data.length===0){
+      document.getElementById('payments-table-wrap').innerHTML='<div class="empty-state">결제 내역이 없어요<br><span style="font-size:.72rem;margin-top:4px;display:block">토스페이먼츠 심사 통과 후 실제 데이터가 표시돼요</span></div>';
+      return;
+    }
+    document.getElementById('payments-table-wrap').innerHTML=`
+      <table>
+        <thead><tr><th>주문번호</th><th>금액</th><th>상태</th><th>결제일</th></tr></thead>
+        <tbody>${data.map(p=>`
+          <tr>
+            <td><span style="font-family:var(--mono);font-size:.75rem">${p.order_id||'-'}</span></td>
+            <td style="color:var(--green);font-weight:600">${(p.amount||990).toLocaleString()}원</td>
+            <td><span class="badge ${p.status==='done'?'badge-green':p.status==='failed'?'badge-red':'badge-yellow'}">${p.status||'pending'}</span></td>
+            <td style="font-family:var(--mono);font-size:.72rem">${p.paid_at?.slice(0,16)||p.created_at?.slice(0,16)||'-'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }catch(e){document.getElementById('payments-table-wrap').innerHTML='<div class="empty-state">오류 발생</div>';}
+}
+
+// ━━ 분석 기록 ━━
+async function loadAnalyses(){
+  document.getElementById('analyses-table-wrap').innerHTML='<div class="loading-text">로딩 중...</div>';
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평↓',mid:'25~33평',big:'40평↑'};
+  try{
+    const{data}=await sb.from('analyses').select('*').order('created_at',{ascending:false}).limit(100);
+    if(!data||data.length===0){
+      document.getElementById('analyses-table-wrap').innerHTML='<div class="empty-state">분석 기록이 없어요</div>';
+      return;
+    }
+    document.getElementById('analyses-table-wrap').innerHTML=`
+      <table>
+        <thead><tr><th>날짜</th><th>서비스</th><th>연봉</th><th>자산</th><th>지역</th><th>목표</th><th>결과</th><th>프리미엄</th></tr></thead>
+        <tbody>${data.map(a=>`
+          <tr>
+            <td style="font-family:var(--mono);font-size:.72rem">${a.created_at?.slice(0,10)||'-'}</td>
+            <td><span class="badge badge-green">${a.service||'bf-home'}</span></td>
+            <td>${a.gross_salary?a.gross_salary.toLocaleString()+'만':'-'}</td>
+            <td>${a.total_asset?a.total_asset.toLocaleString()+'만':'-'}</td>
+            <td>${rN[a.region]||a.region||'-'}</td>
+            <td>${a.target_price?Math.round(a.target_price/10000)+'억':'-'}</td>
+            <td>${a.years_needed!=null?(a.years_needed<=0?'즉시':a.years_needed+'년'):'-'}</td>
+            <td>${a.is_premium?'<span class="badge badge-green">PRO</span>':'<span style="color:var(--dim);font-size:.72rem">-</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }catch(e){document.getElementById('analyses-table-wrap').innerHTML='<div class="empty-state">오류 발생</div>';}
+}
+
+// ━━ 서비스 현황 ━━
+async function loadServices(){
+  try{
+    const{data}=await sb.from('analytics').select('service,total_analyses');
+    const bf = data?.filter(r=>r.service==='bf-home').reduce((s,r)=>s+(r.total_analyses||0),0)||0;
+    const hc = data?.filter(r=>r.service==='housecheck').reduce((s,r)=>s+(r.total_analyses||0),0)||0;
+    document.getElementById('svc-bf-count').textContent = bf.toLocaleString()+'회';
+    document.getElementById('svc-hc-count').textContent = hc.toLocaleString()+'회';
+  }catch(e){}
+}
+
+// ━━ 자동 새로고침 (5분마다) ━━
+setInterval(()=>{
+  if(document.getElementById('admin-screen').style.display==='block') loadDashboard();
+},300000);
+</script>
+</body>
+</html>
