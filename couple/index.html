@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>우리 커플 집 살 수 있을까? 💑</title>
+<meta name="description" content="커플 합산 연봉으로 집 살 수 있는지 계산해봐요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+<style>
+:root{
+  --bg:#FFF5F9;--card:#fff;--text:#3D2C35;--text-soft:#9B7B8A;
+  --pink:#FF6B9D;--pink-light:#FFE4EF;
+  --purple:#C8A8E9;--purple-light:#F0E8FF;
+  --green:#3DB88A;--green-light:#E8FFF5;
+  --gold:#F5A623;
+  --border:rgba(255,179,204,.25);
+  --radius:20px;
+  --font:'Noto Sans KR',sans-serif;
+  --soft:'Gowun Dodum',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,157,.1),transparent 70%);pointer-events:none;z-index:0}
+
+/* ── 헤더 ── */
+.header{position:sticky;top:0;z-index:100;background:rgba(255,245,249,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{font-size:.85rem;font-weight:900;color:var(--pink);display:flex;align-items:center;gap:6px}
+.header-back{font-size:.78rem;color:var(--text-soft);text-decoration:none;display:flex;align-items:center;gap:4px}
+
+/* ── 프리미엄 게이트 ── */
+#premium-gate{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(255,245,249,.97);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.gate-card{background:var(--card);border-radius:28px;padding:36px 28px;text-align:center;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(255,107,157,.15)}
+.gate-emoji{font-size:3.5rem;margin-bottom:16px;display:block}
+.gate-title{font-size:1.3rem;font-weight:900;margin-bottom:8px}
+.gate-sub{font-size:.85rem;color:var(--text-soft);font-family:var(--soft);line-height:1.6;margin-bottom:24px}
+.gate-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#F5A623,#FFD166);color:#3D2C35;font-size:.72rem;font-weight:900;padding:5px 14px;border-radius:99px;margin-bottom:20px}
+.gate-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--pink),#FF8FB5);border:none;border-radius:16px;color:#fff;font-size:.95rem;font-weight:900;font-family:var(--font);cursor:pointer;margin-bottom:10px;transition:all .2s}
+.gate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,107,157,.4)}
+.gate-btn-sec{width:100%;padding:13px;background:transparent;border:1.5px solid var(--border);border-radius:16px;color:var(--text-soft);font-size:.85rem;font-weight:700;font-family:var(--font);cursor:pointer}
+
+/* ── 탭 ── */
+.tab-wrap{padding:20px 16px 0;max-width:480px;margin:0 auto}
+.tab-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(255,179,204,.15);border-radius:16px;padding:4px}
+.tab-btn{
+  padding:12px;border:none;border-radius:12px;
+  font-family:var(--font);font-size:.88rem;font-weight:700;
+  cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  background:transparent;color:var(--text-soft);
+}
+.tab-btn.active{background:var(--card);color:var(--text);box-shadow:0 2px 12px rgba(255,107,157,.15)}
+.tab-lock{font-size:.75rem;opacity:.7}
+
+/* ── 컨테이너 ── */
+.container{max-width:480px;margin:0 auto;padding:16px 16px 120px;position:relative;z-index:1}
+
+/* ── 섹션 카드 ── */
+.section-card{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:0 2px 12px rgba(255,107,157,.06);border:1px solid var(--border)}
+.section-title{font-size:.9rem;font-weight:900;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+
+/* ── 입력 ── */
+.input-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.input-field{
+  flex:1;background:#FFF5F9;border:1.5px solid var(--border);
+  border-radius:12px;padding:12px 16px;
+  font-size:1.1rem;font-weight:700;color:var(--text);
+  font-family:var(--font);outline:none;
+  transition:border-color .2s;-moz-appearance:textfield;
+}
+.input-field::-webkit-inner-spin-button{-webkit-appearance:none}
+.input-field:focus{border-color:var(--pink)}
+.input-unit{font-size:.82rem;color:var(--text-soft);white-space:nowrap}
+.input-hint{font-size:.72rem;color:var(--pink);font-family:var(--soft);margin-top:4px;min-height:16px}
+
+/* 선택 버튼 */
+.option-grid{display:grid;gap:8px}
+.option-grid.col2{grid-template-columns:1fr 1fr}
+.option-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.opt-btn{
+  padding:10px 8px;background:#FFF5F9;
+  border:1.5px solid var(--border);border-radius:12px;
+  font-family:var(--font);font-size:.78rem;font-weight:700;
+  color:var(--text-soft);cursor:pointer;transition:all .2s;
+  text-align:center;line-height:1.4;
+}
+.opt-btn.active{background:var(--pink-light);border-color:var(--pink);color:var(--text)}
+.opt-btn span{display:block;font-size:.65rem;font-weight:400;color:var(--text-soft);margin-top:2px}
+
+/* ── 분석 버튼 ── */
+.analyze-btn{
+  width:100%;padding:17px;background:linear-gradient(135deg,var(--pink),#FF8FB5);
+  border:none;border-radius:16px;color:#fff;font-size:1rem;font-weight:900;
+  font-family:var(--font);cursor:pointer;transition:all .2s;
+  box-shadow:0 6px 20px rgba(255,107,157,.35);margin-bottom:12px;
+}
+.analyze-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,157,.45)}
+
+/* ── 결과 ── */
+.result-card{
+  background:linear-gradient(135deg,var(--pink-light),var(--purple-light));
+  border-radius:var(--radius);padding:24px;margin-bottom:12px;
+  border:1.5px solid rgba(255,179,204,.3);text-align:center;
+}
+.result-years{font-size:3rem;font-weight:900;color:var(--pink);line-height:1}
+.result-label{font-size:.85rem;color:var(--text-soft);font-family:var(--soft);margin-top:4px}
+.result-sub{font-size:.78rem;color:var(--text-soft);font-family:var(--soft);margin-top:8px}
+
+/* ── 짝꿍 봉인 ── */
+#partner-lock{
+  text-align:center;padding:48px 24px;
+}
+.lock-emoji{font-size:4rem;margin-bottom:16px;display:block;filter:grayscale(.3)}
+.lock-title{font-size:1.1rem;font-weight:900;margin-bottom:8px;color:var(--text)}
+.lock-sub{font-size:.82rem;color:var(--text-soft);font-family:var(--soft);line-height:1.7;margin-bottom:24px}
+.lock-steps{text-align:left;background:var(--card);border-radius:16px;padding:16px 20px;margin-bottom:20px;border:1px solid var(--border)}
+.lock-step-item{display:flex;align-items:flex-start;gap:10px;font-size:.8rem;color:var(--text-soft);font-family:var(--soft);padding:6px 0;border-bottom:1px solid var(--border)}
+.lock-step-item:last-child{border-bottom:none}
+.lock-step-num{width:20px;height:20px;background:var(--pink-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:900;color:var(--pink);flex-shrink:0;margin-top:1px}
+
+/* ── 합산 결과 ── */
+.couple-result{background:linear-gradient(135deg,#FFE4EF,#F0E8FF);border-radius:var(--radius);padding:24px;margin-bottom:12px;border:1.5px solid rgba(200,168,233,.3)}
+.couple-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:16px}
+.compare-box{background:rgba(255,255,255,.7);border-radius:12px;padding:12px;text-align:center}
+.compare-label{font-size:.68rem;color:var(--text-soft);font-family:var(--soft);margin-bottom:4px}
+.compare-years{font-size:1.4rem;font-weight:900;color:var(--text)}
+.compare-vs{font-size:1.2rem;color:var(--pink);font-weight:900}
+.couple-save{background:var(--pink);color:#fff;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px}
+.save-num{font-size:1.8rem;font-weight:900}
+.save-label{font-size:.78rem;opacity:.85;font-family:var(--soft)}
+
+/* ── 공유 버튼 ── */
+.share-area{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.share-link-box{
+  background:#FFF5F9;border:1.5px dashed rgba(255,107,157,.3);
+  border-radius:12px;padding:12px 16px;
+  font-size:.75rem;color:var(--text-soft);font-family:var(--soft);
+  word-break:break-all;line-height:1.5;
+}
+.share-btn{
+  width:100%;padding:14px;border:none;border-radius:16px;
+  font-family:var(--font);font-size:.88rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;
+}
+.share-btn:hover{transform:translateY(-2px)}
+.btn-kakao{background:#FEE500;color:#3C1E1E;box-shadow:0 4px 16px rgba(254,229,0,.4)}
+.btn-copy{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 16px rgba(102,126,234,.35)}
+
+/* ── 차트 ── */
+.chart-wrap{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:12px;border:1px solid var(--border)}
+.chart-title{font-size:.85rem;font-weight:700;margin-bottom:14px;color:var(--text)}
+
+/* ── 파트너 배너 ── */
+.partner-banner{
+  background:linear-gradient(135deg,var(--pink-light),var(--purple-light));
+  border-radius:16px;padding:16px 20px;margin-bottom:16px;
+  border:1.5px solid rgba(255,179,204,.4);
+  display:none;align-items:center;gap:12px;
+}
+.partner-banner-icon{font-size:1.8rem;flex-shrink:0}
+.partner-banner-text{font-size:.88rem;font-weight:700;color:var(--text)}
+.partner-banner-sub{font-size:.72rem;color:var(--text-soft);font-family:var(--soft);margin-top:2px}
+
+/* ── 미니 리포트 ── */
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,179,204,.15);font-size:.82rem}
+.report-row:last-child{border-bottom:none}
+.report-label{color:var(--text-soft);font-family:var(--soft)}
+.report-val{font-weight:700;color:var(--text)}
+.report-val.pink{color:var(--pink)}
+
+/* 플로팅 버튼 */
+.floating{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:rgba(255,245,249,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  padding:12px 16px 28px;
+  max-width:480px;margin:0 auto;
+  left:50%;transform:translateX(-50%);width:100%;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fadeUp{animation:fadeUp .4s ease forwards}
+</style>
+</head>
+<body>
+
+<!-- 프리미엄 게이트 -->
+<div id="premium-gate">
+  <div class="gate-card">
+    <span class="gate-emoji">💑</span>
+    <div class="gate-badge">✨ 프리미엄 전용</div>
+    <div class="gate-title">커플 집 계산기</div>
+    <div class="gate-sub">
+      둘이 합치면 얼마나 빨리 집 살 수 있는지<br>
+      현실적으로 계산해드려요 💕<br><br>
+      <strong>BF 프리미엄 이용자 전용</strong> 기능이에요
+    </div>
+    <button class="gate-btn" onclick="checkPremiumGate()">🔓 프리미엄으로 시작하기</button>
+    <button class="gate-btn-sec" onclick="goToBF()">← 남친 재력 분석기로 가기</button>
+  </div>
+</div>
+
+<!-- 헤더 -->
+<div class="header">
+  <a href="/bf-home/" class="header-back">← BF 분석기</a>
+  <div class="header-logo">💑 커플 집 계산기</div>
+  <div class="header-badge">PRO</div>
+</div>
+
+<!-- 파트너 배너 -->
+<div class="container" style="padding-bottom:0">
+  <div class="partner-banner" id="partner-banner">
+    <div class="partner-banner-icon">💌</div>
+    <div>
+      <div class="partner-banner-text" id="partner-banner-text">짝꿍이 링크를 공유했어요!</div>
+      <div class="partner-banner-sub">연봉·자산을 입력하면 합산 결과를 볼 수 있어요 💑</div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭 -->
+<div class="tab-wrap">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-me" onclick="switchTab('me')">
+      👤 나
+    </button>
+    <button class="tab-btn" id="tab-partner" onclick="switchTab('partner')">
+      <span id="partner-tab-icon">🔒</span> 짝꿍
+    </button>
+  </div>
+</div>
+
+<!-- 나 탭 -->
+<div class="container" id="page-me">
+
+  <!-- BF 데이터 로드 안내 -->
+  <div id="bf-loaded-notice" style="display:none;background:linear-gradient(135deg,#FFE4EF,#F0E8FF);border:1.5px solid rgba(255,107,157,.25);border-radius:16px;padding:14px 18px;margin-bottom:12px;font-size:.82rem;line-height:1.6">
+    <div style="font-weight:700;color:var(--pink);margin-bottom:4px">✨ BF 분석기 데이터 불러옴!</div>
+    <div style="color:var(--text-soft);font-family:var(--soft)">남친 재력 분석기에서 입력했던 정보를 자동으로 가져왔어요. 내 정보로 수정해주세요 💕</div>
+  </div>
+
+  <!-- 파트너 배너 (짝꿍 링크로 들어온 경우) -->
+  <div id="joined-notice" style="display:none;background:var(--green-light);border:1.5px solid rgba(61,184,138,.3);border-radius:16px;padding:14px 18px;margin-bottom:12px;font-size:.82rem;color:#2A7A5E;font-family:var(--soft);line-height:1.6">
+    💌 짝꿍이 먼저 분석을 완료했어요! 내 정보를 입력하면 합산 결과를 볼 수 있어요 💑
+  </div>
+
+  <!-- 연봉 -->
+  <div class="section-card">
+    <div class="section-title">💰 내 연봉</div>
+    <div class="input-row">
+      <input type="number" class="input-field" id="my-salary" placeholder="5000" min="500" oninput="onSalaryInput()">
+      <span class="input-unit">만원 (세전)</span>
+    </div>
+    <div class="input-hint" id="my-takehome"></div>
+  </div>
+
+  <!-- 현재 자산 -->
+  <div class="section-card">
+    <div class="section-title">💎 현재 모은 돈</div>
+    <div class="input-row">
+      <input type="number" class="input-field" id="my-asset" placeholder="3000" min="0" oninput="onAssetInput()">
+      <span class="input-unit">만원</span>
+    </div>
+    <div class="input-hint" id="my-asset-hint"></div>
+  </div>
+
+  <!-- 지역 -->
+  <div class="section-card">
+    <div class="section-title">📍 목표 지역</div>
+    <div class="option-grid col2" id="region-opts">
+      <button class="opt-btn" onclick="selectOpt(this,'region','gangnam')">강남권<span>평균 14억</span></button>
+      <button class="opt-btn active" onclick="selectOpt(this,'region','seoul')">서울기타<span>평균 9억</span></button>
+      <button class="opt-btn" onclick="selectOpt(this,'region','gyeonggi')">수도권<span>평균 5.5억</span></button>
+      <button class="opt-btn" onclick="selectOpt(this,'region','local')">지방<span>평균 2.5억</span></button>
+    </div>
+  </div>
+
+  <!-- 평수 -->
+  <div class="section-card">
+    <div class="section-title">🏠 희망 평수</div>
+    <div class="option-grid col3" id="size-opts">
+      <button class="opt-btn" onclick="selectOpt(this,'size','small')">20평 이하<span>소형</span></button>
+      <button class="opt-btn active" onclick="selectOpt(this,'size','mid')">25~33평<span>국민평형</span></button>
+      <button class="opt-btn" onclick="selectOpt(this,'size','big')">40평 이상<span>대형</span></button>
+    </div>
+  </div>
+
+  <!-- 월 생활비 -->
+  <div class="section-card">
+    <div class="section-title">🛒 월 생활비 (내 몫)</div>
+    <div class="option-grid col3" id="living-opts">
+      <button class="opt-btn" onclick="selectLiving(this,80)">절약<span>월 80만</span></button>
+      <button class="opt-btn active" onclick="selectLiving(this,150)">평균<span>월 150만</span></button>
+      <button class="opt-btn" onclick="selectLiving(this,250)">여유<span>월 250만</span></button>
+    </div>
+  </div>
+
+  <!-- 투자 수익률 -->
+  <div class="section-card">
+    <div class="section-title">📈 투자 수익률</div>
+    <div class="option-grid col3" id="invest-opts">
+      <button class="opt-btn" onclick="selectOpt(this,'investRate',3)">예적금<span>연 3%</span></button>
+      <button class="opt-btn active" onclick="selectOpt(this,'investRate',5)">주식 포함<span>연 5%</span></button>
+      <button class="opt-btn" onclick="selectOpt(this,'investRate',7)">공격적<span>연 7%</span></button>
+    </div>
+  </div>
+
+  <button class="analyze-btn" onclick="analyzeMe()">📊 내 분석하기</button>
+
+  <!-- 내 결과 -->
+  <div id="my-result" style="display:none">
+    <div class="result-card fadeUp">
+      <div class="result-years" id="my-years-display">—</div>
+      <div class="result-label" id="my-result-label">혼자라면</div>
+      <div class="result-sub" id="my-result-sub"></div>
+    </div>
+
+    <!-- 미니 리포트 -->
+    <div class="section-card">
+      <div class="section-title">📋 내 분석 요약</div>
+      <div id="my-report"></div>
+    </div>
+
+    <!-- 짝꿍 링크 공유 -->
+    <div class="section-card">
+      <div class="section-title">💌 짝꿍에게 링크 공유하기</div>
+      <p style="font-size:.8rem;color:var(--text-soft);font-family:var(--soft);line-height:1.6;margin-bottom:14px">
+        짝꿍이 링크를 열어 본인 정보를 입력하면<br>합산 결과를 같이 볼 수 있어요 💑
+      </p>
+      <div class="share-link-box" id="couple-link-box">링크 생성 중...</div>
+      <div class="share-area">
+        <button class="share-btn btn-kakao" onclick="shareCoupleKakao()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+          카카오톡으로 링크 보내기
+        </button>
+        <button class="share-btn btn-copy" onclick="copyLink()">
+          🔗 링크 복사하기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 짝꿍 탭 -->
+<div class="container" id="page-partner" style="display:none">
+
+  <!-- 봉인 상태 -->
+  <div id="partner-lock">
+    <span class="lock-emoji">🔒</span>
+    <div class="lock-title">짝꿍 아직 입력 안 했어요</div>
+    <div class="lock-sub">
+      내 분석을 완료하고 짝꿍에게 링크를 보내면<br>
+      짝꿍이 정보를 입력한 후 합산 결과를 볼 수 있어요!
+    </div>
+    <div class="lock-steps">
+      <div class="lock-step-item">
+        <div class="lock-step-num">1</div>
+        <div>나 탭에서 내 정보 입력 후 분석하기</div>
+      </div>
+      <div class="lock-step-item">
+        <div class="lock-step-num">2</div>
+        <div>짝꿍에게 카카오톡으로 링크 전송</div>
+      </div>
+      <div class="lock-step-item">
+        <div class="lock-step-num">3</div>
+        <div>짝꿍이 링크 열고 본인 정보 입력</div>
+      </div>
+      <div class="lock-step-item">
+        <div class="lock-step-num">4</div>
+        <div>여기서 합산 결과 확인! 💑</div>
+      </div>
+    </div>
+    <button class="analyze-btn" onclick="switchTab('me')" style="margin-bottom:0">← 나 먼저 분석하기</button>
+  </div>
+
+  <!-- 합산 결과 (짝꿍 입력 완료 후) -->
+  <div id="couple-result-section" style="display:none">
+    <div class="couple-result fadeUp">
+      <div style="font-size:.78rem;color:var(--text-soft);font-family:var(--soft);margin-bottom:16px;text-align:center">💑 커플 합산 결과</div>
+      <div class="couple-compare">
+        <div class="compare-box">
+          <div class="compare-label">혼자라면</div>
+          <div class="compare-years" id="cr-solo">—</div>
+          <div style="font-size:.65rem;color:var(--text-soft);margin-top:2px">년 후</div>
+        </div>
+        <div class="compare-vs">→</div>
+        <div class="compare-box" style="background:rgba(255,107,157,.15);border:1.5px solid rgba(255,107,157,.3)">
+          <div class="compare-label" style="color:var(--pink)">둘이 합치면</div>
+          <div class="compare-years" id="cr-couple" style="color:var(--pink)">—</div>
+          <div style="font-size:.65rem;color:var(--pink);margin-top:2px">년 후</div>
+        </div>
+      </div>
+      <div class="couple-save">
+        <div class="save-num" id="cr-saved">—년 단축! 🎉</div>
+        <div class="save-label">혼자보다 이만큼 빨리 살 수 있어요</div>
+      </div>
+      <div style="font-size:.8rem;color:var(--text-soft);font-family:var(--soft);text-align:center;line-height:1.6" id="cr-detail"></div>
+    </div>
+
+    <!-- 합산 차트 -->
+    <div class="chart-wrap">
+      <div class="chart-title">📈 커플 합산 자산 흐름</div>
+      <canvas id="couple-chart" height="200"></canvas>
+    </div>
+
+    <!-- 합산 리포트 -->
+    <div class="section-card">
+      <div class="section-title">📋 커플 합산 요약</div>
+      <div id="couple-report"></div>
+    </div>
+
+    <!-- 공유 -->
+    <div class="section-card">
+      <div class="section-title">💕 결과 공유하기</div>
+      <div class="share-area">
+        <button class="share-btn btn-kakao" onclick="shareCoupleResult()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+          카카오톡으로 결과 공유
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ━━ Supabase ━━
+const SUPABASE_URL='https://zvgcekyknwoffffxgoib.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+if(window.Kakao&&!Kakao.isInitialized()) Kakao.init('b3a8d118868373f29970b5c5568200c4');
+
+// ━━ 상태 ━━
+const S={
+  region:'seoul', size:'mid', investRate:5, living:150,
+  myResult:null, partnerData:null, coupleCode:null, sessionId:null,
+  isPartner:false  // 짝꿍 링크로 들어온 경우
+};
+const LS_KEY='braint_couple';
+
+// ━━ 상수 ━━
+const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
+const fmt=v=>v>=10000?(v/10000).toFixed(1)+'억원':v.toLocaleString()+'만원';
+const fmtM=v=>v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';
+
+// ━━ 계산 함수 ━━
+function calcTakehome(gross){
+  let r;
+  if(gross<=3000)r=.88;else if(gross<=4000)r=.855;else if(gross<=5000)r=.835;
+  else if(gross<=6000)r=.82;else if(gross<=7000)r=.805;else if(gross<=8000)r=.79;
+  else if(gross<=10000)r=.775;else if(gross<=12000)r=.755;else if(gross<=15000)r=.73;else r=.70;
+  return Math.round(gross*r/12);
+}
+
+function simulate(salary, asset, livingCost, investRate, targetPrice){
+  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
+  const netMonthly=calcTakehome(salary);
+  let cur=asset;
+  for(let m=0;m<360;m++){
+    // 연봉 3% 인상 (1월)
+    if(m>0&&m%12===0) {
+      const newNet=Math.round(calcTakehome(salary*(1+0.03)**(Math.floor(m/12))));
+      cur=cur*(1+monthlyR)+(newNet-livingCost);
+    } else {
+      cur=cur*(1+monthlyR)+(netMonthly-livingCost);
+    }
+    if(cur>=targetPrice) return{years:Math.ceil((m+1)/12),months:m+1,assetData:null};
+  }
+  return{years:null,months:null};
+}
+
+function simulateFull(salary, asset, livingCost, investRate, targetPrice, months=120){
+  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
+  let cur=asset, data=[];
+  for(let m=0;m<months;m++){
+    const yr=Math.floor(m/12);
+    const netM=calcTakehome(salary*(1+0.03)**yr);
+    cur=cur*(1+monthlyR)+(netM-livingCost);
+    if(m%12===0) data.push(Math.round(cur));
+    if(cur>=targetPrice&&data[data.length-1]<0) break;
+  }
+  return data;
+}
+
+// ━━ 프리미엄 게이트 ━━
+function checkPremiumGate(){
+  const isPremium=localStorage.getItem('bfhc_premium')==='true';
+  if(isPremium){
+    document.getElementById('premium-gate').style.display='none';
+  } else {
+    // BF 프리미엄 안내
+    if(confirm('BF 분석기에서 프리미엄을 구매하면 커플 계산기를 이용할 수 있어요!\n\n지금 바로 이동할까요?')){
+      location.href='/bf-home/';
+    }
+  }
+}
+function goToBF(){ location.href='/bf-home/'; }
+
+// 짝꿍 링크로 들어온 경우 게이트 스킵
+function initGate(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('couple');
+  if(code){
+    // 짝꿍 링크면 게이트 없이 진입
+    document.getElementById('premium-gate').style.display='none';
+    S.isPartner=true;
+    S.coupleCode=code;
+    loadPartnerSession(code);
+    return;
+  }
+  // 일반 진입: 프리미엄 체크
+  const isPremium=localStorage.getItem('bfhc_premium')==='true';
+  if(isPremium){
+    document.getElementById('premium-gate').style.display='none';
+  }
+  // 저장된 데이터 복원
+  restoreData();
+}
+
+// ━━ 파트너 세션 로드 ━━
+async function loadPartnerSession(code){
+  try{
+    const{data,error}=await sb.from('couple_sessions').select('*').eq('session_code',code).single();
+    if(error||!data) throw new Error('세션 없음');
+    S.partnerData=data.host_data;
+    S.sessionId=data.id;
+    // 배너 표시
+    document.getElementById('partner-banner').style.display='flex';
+    document.getElementById('joined-notice').style.display='block';
+    // URL 정리
+    window.history.replaceState({},'',location.pathname);
+    showToast('💌 짝꿍이 공유한 링크예요! 내 정보를 입력해주세요');
+  }catch(e){
+    showToast('링크가 만료됐거나 올바르지 않아요');
+  }
+}
+
+// ━━ 탭 전환 ━━
+function switchTab(tab){
+  document.getElementById('page-me').style.display=tab==='me'?'block':'none';
+  document.getElementById('page-partner').style.display=tab==='partner'?'block':'none';
+  document.getElementById('tab-me').classList.toggle('active',tab==='me');
+  document.getElementById('tab-partner').classList.toggle('active',tab==='partner');
+}
+
+// ━━ 입력 핸들러 ━━
+function onSalaryInput(){
+  const v=parseInt(document.getElementById('my-salary').value)||0;
+  const el=document.getElementById('my-takehome');
+  el.textContent=v>0?`→ 세후 월 실수령 약 ${calcTakehome(v).toLocaleString()}만원`:'';
+}
+function onAssetInput(){
+  const v=parseInt(document.getElementById('my-asset').value)||0;
+  const el=document.getElementById('my-asset-hint');
+  el.textContent=v>0?`→ ${fmtM(v)} 보유 중`:v===0?'자산 없이 시작':'';
+}
+function selectOpt(btn,key,val){
+  btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S[key]=val;
+}
+function selectLiving(btn,val){
+  btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.living=val;
+}
+
+// ━━ 내 분석 ━━
+async function analyzeMe(){
+  const salary=parseInt(document.getElementById('my-salary').value);
+  const asset=parseInt(document.getElementById('my-asset').value)||0;
+  if(!salary||salary<500){showToast('연봉을 입력해주세요!');return;}
+
+  const targetPrice=PRICES[S.region][S.size];
+  const result=simulate(salary,asset,S.living,S.investRate,targetPrice);
+  const netMonthly=calcTakehome(salary);
+  const monthlySave=netMonthly-S.living;
+
+  S.myResult={salary,asset,region:S.region,size:S.size,living:S.living,investRate:S.investRate,targetPrice,years:result.years,netMonthly,monthlySave};
+
+  // 결과 표시
+  const yearsEl=document.getElementById('my-years-display');
+  yearsEl.textContent=result.years?`${result.years}년 후 🏠`:'30년 내 어려워요 😢';
+  document.getElementById('my-result-label').textContent='혼자라면';
+  document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표 · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
+
+  // 리포트
+  const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
+  const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
+  document.getElementById('my-report').innerHTML=[
+    ['세전 연봉',fmt(salary)],
+    ['월 실수령',`${netMonthly.toLocaleString()}만원`],
+    ['현재 자산',fmt(asset)],
+    ['목표 지역',rN[S.region]],
+    ['희망 평수',sN[S.size]],
+    ['목표 집값',fmt(targetPrice)],
+    ['월 생활비',`${S.living.toLocaleString()}만원`],
+    ['월 순저축',`${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족 😢'}`],
+  ].map(([l,v])=>`<div class="report-row"><span class="report-label">${l}</span><span class="report-val">${v}</span></div>`).join('');
+
+  document.getElementById('my-result').style.display='block';
+  setTimeout(()=>document.getElementById('my-result').scrollIntoView({behavior:'smooth',block:'start'}),100);
+
+  // 저장
+  saveData();
+
+  // Supabase 커플 세션 생성
+  await createCoupleSession();
+
+  // 짝꿍이 이미 입력했으면 합산 결과 표시
+  if(S.partnerData) renderCoupleResult();
+}
+
+// ━━ 커플 세션 생성 ━━
+async function createCoupleSession(){
+  try{
+    const code=Math.random().toString(36).substring(2,8).toUpperCase();
+    const{data,error}=await sb.from('couple_sessions').insert({
+      session_code:code,
+      host_data:S.myResult,
+      status:'waiting',
+      expires_at:new Date(Date.now()+24*60*60*1000).toISOString()
+    }).select().single();
+    if(error)throw error;
+    S.coupleCode=code;
+    S.sessionId=data.id;
+    const link=`${location.origin}${location.pathname}?couple=${code}`;
+    document.getElementById('couple-link-box').textContent=link;
+    document.getElementById('couple-link-box').dataset.link=link;
+  }catch(e){
+    // 폴백: URL 인코딩 방식
+    const link=`${location.origin}${location.pathname}?p=${btoa(JSON.stringify(S.myResult))}`;
+    document.getElementById('couple-link-box').textContent=link;
+    document.getElementById('couple-link-box').dataset.link=link;
+  }
+}
+
+// ━━ 합산 결과 렌더링 ━━
+function renderCoupleResult(){
+  const me=S.myResult;
+  const partner=S.partnerData;
+  if(!me||!partner)return;
+
+  // 합산 계산
+  const combinedSalary=(me.salary||0)+(partner.salary||0);
+  const combinedAsset=(me.asset||0)+(partner.asset||0);
+  const combinedLiving=(me.living||150)+(partner.living||150);
+  const targetPrice=me.targetPrice||PRICES[me.region||'seoul'][me.size||'mid'];
+  const investRate=me.investRate||5;
+
+  const soloResult=simulate(me.salary,me.asset,me.living,investRate,targetPrice);
+  const coupleResult=simulate(combinedSalary,combinedAsset,combinedLiving,investRate,targetPrice);
+
+  const soloYears=soloResult.years||30;
+  const coupleYears=coupleResult.years||30;
+  const saved=soloYears-coupleYears;
+
+  // UI 업데이트
+  document.getElementById('cr-solo').textContent=soloYears<=0?'즉시':soloYears;
+  document.getElementById('cr-couple').textContent=coupleYears<=0?'즉시':coupleYears;
+  document.getElementById('cr-saved').textContent=saved>0?`${saved}년 단축! 🎉`:'혼자가 더 빠를 수도 있어요';
+  document.getElementById('cr-detail').textContent=
+    `합산 연봉 ${fmt(combinedSalary)} · 합산 자산 ${fmt(combinedAsset)} · 목표 ${fmt(targetPrice)}`;
+
+  // 리포트
+  const combinedNet=calcTakehome(me.salary)+calcTakehome(partner.salary);
+  document.getElementById('couple-report').innerHTML=[
+    ['합산 연봉',fmt(combinedSalary)],
+    ['합산 자산',fmt(combinedAsset)],
+    ['합산 실수령',`${combinedNet.toLocaleString()}만원/월`],
+    ['합산 생활비',`${combinedLiving.toLocaleString()}만원/월`],
+    ['합산 순저축',`${(combinedNet-combinedLiving).toLocaleString()}만원/월`],
+    ['목표 집값',fmt(targetPrice)],
+    ['혼자라면',`${soloYears}년 후`],
+    ['둘이라면',`${coupleYears}년 후`],
+  ].map(([l,v])=>`<div class="report-row"><span class="report-label">${l}</span><span class="report-val pink">${v}</span></div>`).join('');
+
+  // 차트
+  renderCoupleChart(me,combinedSalary,combinedAsset,combinedLiving,investRate,targetPrice);
+
+  // 짝꿍 탭 잠금 해제
+  document.getElementById('partner-lock').style.display='none';
+  document.getElementById('couple-result-section').style.display='block';
+  document.getElementById('partner-tab-icon').textContent='💑';
+  switchTab('partner');
+}
+
+// ━━ 차트 ━━
+let coupleChart=null;
+function renderCoupleChart(me,combinedSalary,combinedAsset,combinedLiving,investRate,targetPrice){
+  const months=Math.min((me.years||20)*12+24,180);
+  const soloData=simulateFull(me.salary,me.asset,me.living,investRate,targetPrice,months);
+  const coupleData=simulateFull(combinedSalary,combinedAsset,combinedLiving,investRate,targetPrice,months);
+  const labels=soloData.map((_,i)=>`${i+1}년`);
+  const targetArr=Array(soloData.length).fill(+(targetPrice/10000).toFixed(1));
+
+  if(coupleChart)coupleChart.destroy();
+  const ctx=document.getElementById('couple-chart').getContext('2d');
+  coupleChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'둘이',data:coupleData.map(v=>+(v/10000).toFixed(1)),borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true},
+        {label:'나 혼자',data:soloData.map(v=>+(v/10000).toFixed(1)),borderColor:'#C8A8E9',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3,borderDash:[5,3]},
+        {label:'목표',data:targetArr,borderColor:'rgba(61,184,138,.6)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{font:{size:11},boxWidth:16}}},
+      scales:{
+        x:{ticks:{font:{size:9},color:'#9B7B8A'},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(255,179,204,.2)'}}
+      }
+    }
+  });
+}
+
+// ━━ 공유 ━━
+function shareCoupleKakao(){
+  const link=document.getElementById('couple-link-box').dataset.link||document.getElementById('couple-link-box').textContent;
+  if(window.Kakao&&Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title:'💑 커플 집 계산기 같이 해봐!',
+        description:'둘이 합치면 얼마나 빨리 집 살 수 있는지 나와 같이 확인해봐 🏠',
+        imageUrl:'https://braint.net/og-couple.png',
+        link:{mobileWebUrl:link,webUrl:link},
+      },
+      buttons:[{title:'같이 계산하기',link:{mobileWebUrl:link,webUrl:link}}],
+    });
+  } else {
+    copyLink();
+  }
+}
+function shareCoupleResult(){
+  const me=S.myResult;
+  const partner=S.partnerData;
+  const combinedSalary=(me?.salary||0)+(partner?.salary||0);
+  const targetPrice=me?.targetPrice||0;
+  const coupleYears=document.getElementById('cr-couple').textContent;
+  const saved=document.getElementById('cr-saved').textContent;
+  if(window.Kakao&&Kakao.isInitialized()){
+    Kakao.Share.sendDefault({
+      objectType:'feed',
+      content:{
+        title:`💑 우리 커플 ${coupleYears} 후 집 살 수 있어!`,
+        description:`${saved} · 합산 연봉 ${fmt(combinedSalary)} · 목표 ${fmt(targetPrice)}`,
+        imageUrl:'https://braint.net/og-couple.png',
+        link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'},
+      },
+      buttons:[{title:'나도 계산하기',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}}],
+    });
+  }
+}
+function copyLink(){
+  const link=document.getElementById('couple-link-box').dataset.link||document.getElementById('couple-link-box').textContent;
+  navigator.clipboard?.writeText(link).then(()=>showToast('🔗 링크 복사 완료!'));
+}
+
+// ━━ 데이터 저장/복원 ━━
+function saveData(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify({
+      salary:document.getElementById('my-salary').value,
+      asset:document.getElementById('my-asset').value,
+      region:S.region,size:S.size,investRate:S.investRate,living:S.living
+    }));
+  }catch(e){}
+}
+function restoreData(){
+  try{
+    // BF 데이터 우선 로드 (bfhc_my_data)
+    const bfRaw=localStorage.getItem('bfhc_my_data');
+    const coupleRaw=localStorage.getItem(LS_KEY);
+
+    // BF 데이터가 있으면 우선 사용
+    const d = bfRaw ? JSON.parse(bfRaw) : (coupleRaw ? JSON.parse(coupleRaw) : null);
+    if(!d) return;
+
+    // 연봉
+    if(d.salary){
+      document.getElementById('my-salary').value=d.salary;
+      onSalaryInput();
+    }
+    // 자산 (BF는 asset에 myAsset 가산 안 함 → 순수 asset만)
+    if(d.asset!==undefined){
+      document.getElementById('my-asset').value=d.asset;
+      onAssetInput();
+    }
+    // 지역
+    if(d.region) applyOpt('region-opts',d.region,'region');
+    // 평수
+    if(d.size) applyOpt('size-opts',d.size,'size');
+    // 투자수익률
+    if(d.investRate) applyInvest(d.investRate);
+    // 생활비
+    if(d.living) applyLivingVal(d.living);
+
+    // BF 데이터 불러왔으면 안내
+    if(bfRaw){
+      const notice=document.getElementById('bf-loaded-notice');
+      if(notice) notice.style.display='block';
+    }
+
+  }catch(e){}
+}
+
+function applyOpt(gridId, val, stateKey){
+  const btns=document.querySelectorAll(`#${gridId} .opt-btn`);
+  btns.forEach(b=>{
+    const match=b.getAttribute('onclick')?.includes(`'${val}'`)||b.getAttribute('onclick')?.includes(`"${val}"`);
+    b.classList.toggle('active',!!match);
+  });
+  S[stateKey]=val;
+}
+
+function applyInvest(rate){
+  const btns=document.querySelectorAll('#invest-opts .opt-btn');
+  let matched=false;
+  btns.forEach(b=>{
+    const match=b.getAttribute('onclick')?.includes(`,${rate})`);
+    b.classList.toggle('active',!!match);
+    if(match) matched=true;
+  });
+  // 정확히 맞는 버튼 없으면 가장 가까운 것 선택
+  if(!matched){
+    const rates=[3,5,7];
+    const closest=rates.reduce((a,b)=>Math.abs(b-rate)<Math.abs(a-rate)?b:a);
+    applyInvest(closest);
+    return;
+  }
+  S.investRate=rate;
+}
+
+function applyLivingVal(val){
+  const btns=document.querySelectorAll('#living-opts .opt-btn');
+  let matched=false;
+  btns.forEach(b=>{
+    const match=b.getAttribute('onclick')?.includes(`,${val})`);
+    b.classList.toggle('active',!!match);
+    if(match) matched=true;
+  });
+  // 정확히 맞는 버튼 없으면 가장 가까운 것 선택
+  if(!matched){
+    const levels=[80,150,250];
+    const closest=levels.reduce((a,b)=>Math.abs(b-val)<Math.abs(a-val)?b:a);
+    btns.forEach(b=>{
+      const match=b.getAttribute('onclick')?.includes(`,${closest})`);
+      b.classList.toggle('active',!!match);
+    });
+    S.living=closest;
+    return;
+  }
+  S.living=val;
+}
+
+// ━━ 짝꿍으로 입력 완료 후 Supabase 저장 ━━
+async function saveGuestAndRender(){
+  if(!S.myResult||!S.partnerData)return;
+  try{
+    if(S.sessionId){
+      await sb.from('couple_sessions').update({
+        guest_data:S.myResult,
+        status:'joined'
+      }).eq('id',S.sessionId);
+    }
+  }catch(e){}
+  renderCoupleResult();
+}
+
+// ━━ 토스트 ━━
+function showToast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#3D2C35;color:#fff;padding:10px 20px;border-radius:99px;font-size:.82rem;font-weight:700;z-index:9999;font-family:"Noto Sans KR",sans-serif;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
+}
+
+// ━━ 초기화 ━━
+window.addEventListener('load', async()=>{
+  initGate();
+
+  // 짝꿍이 입력 완료하면 분석하기 → saveGuestAndRender 호출
+  if(S.isPartner){
+    // 분석하기 버튼을 짝꿍용으로 교체
+    const btn=document.querySelector('.analyze-btn');
+    if(btn) btn.onclick=async()=>{
+      await analyzeMe();
+      if(S.partnerData) await saveGuestAndRender();
+    };
+  }
+});
+</script>
+</body>
+</html>

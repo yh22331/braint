@@ -97,7 +97,7 @@
   .push-title{font-size:0.95rem;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .push-sub{font-size:0.78rem;color:var(--text-soft);margin-bottom:16px;font-family:'Gowun Dodum',sans-serif;line-height:1.5}
   .push-message{background:linear-gradient(135deg,#FFF0F8,#F8F0FF);border-radius:16px;padding:16px;border:1.5px dashed var(--pink-light);font-size:0.85rem;line-height:1.7;color:var(--text);margin-bottom:14px;font-family:'Gowun Dodum',sans-serif;white-space:pre-wrap}
-  .share-buttons{display:flex;flex-direction:column;gap:10px}
+  .share-buttons{display:flex;flex-direction:column;gap:14px}
   .btn-share{padding:14px 20px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
   .btn-insta{background:linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);color:white;box-shadow:0 6px 20px rgba(220,39,67,0.35)}
   .btn-kakao{background:#FEE500;color:#3C1E1E;box-shadow:0 6px 20px rgba(254,229,0,0.4)}
@@ -401,7 +401,6 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
           카카오톡으로 공유
         </button>
-        <button class="btn-share btn-copy" onclick="copyMessage()">📋 메시지 복사하기</button>
       </div>
       <div class="tooltip">* 인스타: 이미지 저장 후 스토리에 직접 올려주세요 📸</div>
     </div>
@@ -702,8 +701,15 @@
           </div>
           <div id="pdf-rows"></div>
         </div>
-        <button class="btn-pdf" onclick="downloadPDF()">📥 PDF 저장하기</button>
-        <button class="btn-share btn-copy" style="width:100%" onclick="shareResultUrl()">🔗 결과 링크 공유하기</button>
+        <button class="btn-share btn-insta" style="width:100%" onclick="openInstaModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          인스타 스토리로 공유
+        </button>
+        <div style="margin-top:10px"></div>
+        <button class="btn-share btn-kakao" style="width:100%" onclick="shareKakao()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.7 1.68 5.1 4.2 6.6-.18.66-.66 2.4-.72 2.76 0 0 0 .12.06.18.06.06.18.06.24 0 .3-.06 3.54-2.34 4.14-2.76.36.06.72.06 1.08.06 5.52 0 10-3.48 10-7.8S17.52 3 12 3z"/></svg>
+          카카오톡으로 공유
+        </button>
       </div>
 
       <!-- ⑤ 커플 합산 (오픈 예정) -->
@@ -945,8 +951,7 @@ const fmt=v=>{
 
 // ━━ 초기화 ━━
 (function init(){
-  const params=new URLSearchParams(location.search),encoded=params.get('p');
-  if(encoded){try{localStorage.setItem(LS_PARTNER,JSON.stringify(JSON.parse(atob(encoded))));document.getElementById('partner-banner').style.display='flex';window.history.replaceState({},'',location.pathname)}catch(e){}}
+  handleCoupleEntry();
   const raw=localStorage.getItem(LS_MY);
   if(raw){try{const my=JSON.parse(raw);
     if(my.salary){const s=document.getElementById('salary');s.value=my.salary;updateSalary(s)}
@@ -1385,7 +1390,7 @@ function calculate(){
   else if(yearsNeeded<=15){emoji='😰';verdict=`${yearsNeeded}년...? 😱`;sub='현실이 좀 차갑네요 🧊\n남친한테 긴급 연봉 협상 요청을 보낼 시간이에요!';color=['#fa709a','#fee140']}
   else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n부동산보다 남친 업그레이드가 빠를 수도...? 농담이에요 💕';color=['#a18cd1','#fbc2eb']}
   calcResult={emoji,verdict,sub,targetPrice,totalAsset,yearsNeeded,ratio,pct,color,salary,annualSavings,asset,myAsset,region:state.region,size:state.size,myAssetKey:state.myAsset,age,grossSalary,netSalary,monthlyTakehome};
-  localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age}));
+  localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age,living:monthlyLivingCost,investRate:getInvestRate()}));
   // Supabase 분석 저장 + 횟수 추적
   trackAnalysis();
   saveAnalysis({age,grossSalary,totalAsset,region:state.region,size:state.size,targetPrice,yearsNeeded:calcResult.yearsNeeded,verdict:calcResult.verdict});
@@ -1411,8 +1416,13 @@ function calculate(){
   document.getElementById('result-section').style.display='block';
   setTimeout(()=>document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
   if(yearsNeeded<=3)launchConfetti();
-  // 결제한 경우 프리미엄 컨텐츠 표시만 (calcAll은 버튼 클릭 시)
-  if(isPremium) showPremiumContent();
+  // 프리미엄 열려있으면 표시만 하고 스크롤은 결과 상단으로 유지
+  if(isPremium){
+    document.getElementById('premium-locked').style.display='none';
+    document.getElementById('premium-content').style.display='block';
+    updatePremiumTabLabel();
+    // 스크롤은 result-section 상단으로만 (프리미엄까지 내려가지 않음)
+  }
   checkPartnerData();
 }
 
@@ -1468,7 +1478,36 @@ function renderScenarioGrid(gridId, scenarios, yearsNeeded, salary, totalAsset, 
 }
 
 // ━━ ② 커플 ━━
-function checkPartnerData(){const raw=localStorage.getItem(LS_PARTNER);if(!raw||!calcResult.salary)return;try{renderCoupleResult(JSON.parse(raw))}catch(e){}}
+async function checkPartnerData(){
+  const raw=localStorage.getItem(LS_PARTNER);
+  if(!raw||!calcResult.salary)return;
+  try{
+    const partnerData=JSON.parse(raw);
+    renderCoupleResult(partnerData);
+
+    // Supabase에 guest 데이터 업데이트
+    const sessionId=localStorage.getItem('bfhc_couple_session_id');
+    const code=localStorage.getItem('bfhc_couple_code');
+    if(sessionId&&code){
+      const guestData={
+        salary:calcResult.salary,
+        asset:calcResult.asset||0,
+        region:calcResult.region,
+        size:calcResult.size,
+        years:calcResult.yearsNeeded,
+        targetPrice:calcResult.targetPrice
+      };
+      await sb.from('couple_sessions').update({
+        guest_data: guestData,
+        status: 'joined',
+        combined_result: {
+          hostYears: partnerData.years,
+          guestYears: calcResult.yearsNeeded,
+        }
+      }).eq('id',sessionId);
+    }
+  }catch(e){}
+}
 function renderCoupleResult(partner){
   const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
   const pS=partner.salary||0,pA=partner.asset||0;
@@ -1479,9 +1518,90 @@ function renderCoupleResult(partner){
   document.getElementById('couple-status-sub').textContent=`파트너 연봉 ${fmt(pS)} 반영 완료`;
   document.getElementById('couple-result-content').innerHTML=`<div style="font-size:1.3rem;font-weight:900;color:var(--text);margin-bottom:4px">둘이 합치면</div><span style="color:var(--pink);font-size:1.6rem;font-weight:900;display:block;margin:6px 0">${cY<=0?'지금 바로! 🎉':cY+'년'}</span><div style="font-size:.78rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.5">합산 연봉 ${fmt(cS)} · 합산 자산 ${fmt(cA)}<br>혼자보다 <strong style="color:var(--pink)">${saved}년 단축</strong>! ${saved>=5?'💥':saved>=3?'🥰':'👍'}</div>`;
 }
-function generateCoupleLink(){const{salary,asset,region,size,myAssetKey}=calcResult;return`${location.origin+location.pathname}?p=${btoa(JSON.stringify({salary,asset,region,size,myAsset:myAssetKey}))}`}
-function openCoupleModal(){if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return}document.getElementById('couple-link-box').textContent=generateCoupleLink();document.getElementById('couple-modal').classList.add('show')}
-function copyCoupleLink(){navigator.clipboard?.writeText(generateCoupleLink()).then(()=>showToast('🔗 링크 복사 완료!'))}
+// ━━ 커플 합산 - Supabase 방식 ━━
+function genCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+
+async function openCoupleModal(){
+  if(!calcResult.salary){showToast('먼저 분석하기를 눌러주세요!');return;}
+  const linkBox=document.getElementById('couple-link-box');
+  linkBox.textContent='링크 생성 중...';
+  document.getElementById('couple-modal').classList.add('show');
+
+  try{
+    const code=genCode();
+    const hostData={
+      salary:calcResult.salary,
+      asset:calcResult.asset||0,
+      region:calcResult.region,
+      size:calcResult.size,
+      myAsset:calcResult.myAssetKey||'none',
+      years:calcResult.yearsNeeded,
+      targetPrice:calcResult.targetPrice
+    };
+    // Supabase couple_sessions에 저장
+    const{data,error}=await sb.from('couple_sessions').insert({
+      session_code: code,
+      host_data: hostData,
+      status: 'waiting',
+      expires_at: new Date(Date.now()+24*60*60*1000).toISOString()
+    }).select().single();
+
+    if(error) throw error;
+
+    const link=`${location.origin+location.pathname}?couple=${code}`;
+    linkBox.textContent=link;
+    document.getElementById('couple-link-box').dataset.link=link;
+    document.getElementById('couple-link-box').dataset.code=code;
+  } catch(e){
+    console.error(e);
+    // 폴백: URL 파라미터 방식
+    const{salary,asset,region,size,myAssetKey}=calcResult;
+    const link=`${location.origin+location.pathname}?p=${btoa(JSON.stringify({salary,asset,region,size,myAsset:myAssetKey}))}`;
+    linkBox.textContent=link;
+  }
+}
+
+function copyCoupleLink(){
+  const link=document.getElementById('couple-link-box').dataset.link||document.getElementById('couple-link-box').textContent;
+  navigator.clipboard?.writeText(link).then(()=>showToast('🔗 링크 복사 완료!'));
+}
+
+function generateCoupleLink(){
+  const link=document.getElementById('couple-link-box').dataset.link;
+  return link||location.href;
+}
+
+// ━━ 파트너 링크 접속 처리 ━━
+async function handleCoupleEntry(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('couple');
+  const legacy=params.get('p');
+
+  if(code){
+    // Supabase에서 host 데이터 가져오기
+    try{
+      const{data,error}=await sb.from('couple_sessions')
+        .select('*').eq('session_code',code).single();
+      if(error||!data) throw error;
+      if(data.host_data){
+        localStorage.setItem(LS_PARTNER,JSON.stringify(data.host_data));
+        localStorage.setItem('bfhc_couple_code',code);
+        localStorage.setItem('bfhc_couple_session_id',data.id);
+        document.getElementById('partner-banner').style.display='flex';
+        window.history.replaceState({},'',location.pathname);
+      }
+    } catch(e){
+      showToast('링크가 만료되었거나 올바르지 않아요');
+    }
+  } else if(legacy){
+    // 기존 URL 파라미터 방식 폴백
+    try{
+      localStorage.setItem(LS_PARTNER,JSON.stringify(JSON.parse(atob(legacy))));
+      document.getElementById('partner-banner').style.display='flex';
+      window.history.replaceState({},'',location.pathname);
+    } catch(e){}
+  }
+}
 function shareCoupleKakao(){
   const link = generateCoupleLink();
   if(window.Kakao && Kakao.isInitialized()){
@@ -1491,6 +1611,8 @@ function shareCoupleKakao(){
         title:'💌 집 계산기 같이 해봐!',
         description:'둘이 합치면 얼마나 빨리 살 수 있는지 나와 🏠',
         imageUrl:'https://braint.net/og-image.png',
+        imageWidth: 800,
+        imageHeight: 800,
         link:{
           mobileWebUrl: link,
           webUrl: link,
@@ -2378,6 +2500,8 @@ function shareKakao(){
         title:'우리 남친 연봉으로 집 살 수 있을까? 🏠',
         description: verdict + (pushMsg ? '\n' + pushMsg : ''),
         imageUrl:'https://braint.net/og-image.png',
+        imageWidth: 800,
+        imageHeight: 800,
         link:{
           mobileWebUrl:'https://braint.net/bf-home/',
           webUrl:'https://braint.net/bf-home/',
@@ -2432,6 +2556,53 @@ function showToast(msg){const t=document.createElement('div');t.textContent=msg;
 // 초기화
 updateSalary(document.getElementById('salary'));
 updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));
+</script>
+<!-- 임시 개발용 프리미엄 열기 버튼 (토스 연동 후 제거) -->
+<button
+  id="dev-premium-btn"
+  onclick="devUnlockPremium()"
+  style="
+    position:fixed;bottom:90px;right:12px;z-index:999;
+    background:rgba(61,44,53,.7);color:rgba(255,255,255,.5);
+    border:1px dashed rgba(255,255,255,.2);border-radius:99px;
+    padding:5px 12px;font-size:.65rem;font-family:'Gowun Dodum',sans-serif;
+    cursor:pointer;backdrop-filter:blur(4px);
+    transition:all .2s;letter-spacing:.3px;
+  "
+  onmouseover="this.style.opacity='1';this.style.color='#fff'"
+  onmouseout="this.style.opacity='.7';this.style.color='rgba(255,255,255,.5)'"
+>
+  🔧 dev
+</button>
+
+<script>
+function devUnlockPremium(){
+  if(isPremium){
+    // 프리미엄 닫기
+    isPremium=false;
+    localStorage.removeItem('bfhc_premium');
+    document.getElementById('premium-locked').style.display='block';
+    document.getElementById('premium-content').style.display='none';
+    document.getElementById('dev-premium-btn').textContent='🔧 dev';
+    updatePremiumTabLabel();
+    showToast('🔒 프리미엄 닫힘 (개발용)');
+  } else {
+    // 프리미엄 열기
+    if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
+    isPremium=true;
+    localStorage.setItem('bfhc_premium','true');
+    document.getElementById('premium-locked').style.display='none';
+    document.getElementById('premium-content').style.display='block';
+    updatePremiumTabLabel();
+    calcAll();
+    document.getElementById('dev-premium-btn').textContent='🔓 dev';
+    showToast('🔓 프리미엄 열림 (개발용)');
+  }
+}
+// 초기 상태 반영
+window.addEventListener('load',()=>{
+  if(isPremium) document.getElementById('dev-premium-btn').textContent='🔓 dev';
+});
 </script>
 </body>
 </html>
