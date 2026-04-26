@@ -1282,14 +1282,9 @@ function goToBF(){location.href='/bf-home/';}
 function initGate(){
   const params=new URLSearchParams(location.search);
   const code=params.get('couple');
-  if(code){document.getElementById('premium-gate').style.display='none';S.isPartner=true;S.coupleCode=code;loadPartnerSession(code);return;}
-  const isPremium=localStorage.getItem('bfhc_premium')==='true';
-  // 개발용: URL에 ?dev=1 이면 게이트 스킵
-  const isDev=new URLSearchParams(location.search).get('dev')==='1';
-  if(isPremium||isDev){
-    document.getElementById('premium-gate').style.display='none';
-    if(isDev) localStorage.setItem('bfhc_premium','true'); // dev 모드면 프리미엄 설정
-  }
+  // 항상 게이트 숨김 (프리미엄 게이트는 결제 연동 후 활성화)
+  document.getElementById('premium-gate').style.display='none';
+  if(code){S.isPartner=true;S.coupleCode=code;loadPartnerSession(code);return;}
   restoreData();
 }
 
