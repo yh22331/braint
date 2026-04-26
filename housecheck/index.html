@@ -1177,9 +1177,42 @@ function showResult(){
   setTimeout(()=>{loading.classList.remove('visible');renderResult();},1800);
 }
 
-function renderResult(){
-  const sim=simulateMonthly();
-  window._lastSim=sim;
+async function renderResult(){
+  // ━━ API 호출 ━━
+  let apiResult=null;
+  try{
+    const res=await fetch('/api/simulate-housecheck',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        age:S.age, salary:S.salary, asset:S.asset,
+        housePrice:S.housePrice,
+        living:S.livingCost,
+        investRate:S.investRate||5,
+        raiseMode:S.raisePromo?'promo':'fixed',
+        raisePct:S.raisePct||3,
+        loan:S.loan||false,
+        weddingOn:document.getElementById('ev-wedding')?.checked||false,
+        weddingCost:parseInt(document.getElementById('cost-wedding')?.value)||5000,
+        weddingAge:parseInt(document.getElementById('age-wedding')?.textContent?.replace('세',''))||33,
+        babyOn:document.getElementById('ev-baby')?.checked||false,
+        babyCost:parseInt(document.getElementById('cost-baby-yr')?.value)||500,
+        babyAge:parseInt(document.getElementById('age-baby')?.textContent?.replace('세',''))||35,
+        carOn:document.getElementById('ev-car')?.checked||false,
+        carType:window._carType||'domestic',
+        carCost:parseInt(document.getElementById('cost-car')?.value)||3500,
+        carAge:parseInt(document.getElementById('age-car')?.textContent?.replace('세',''))||30,
+      })
+    });
+    apiResult=await res.json();
+    if(!res.ok) throw new Error(apiResult.error);
+  }catch(e){
+    console.error('HouseCheck API 오류, 로컬 폴백:', e);
+  }
+
+  // 로컬 폴백
+  const sim=apiResult?null:simulateMonthly();
+  if(!apiResult) window._lastSim=sim;
 
   document.getElementById('input-section').style.display='none';
   document.getElementById('hero-section').style.display='none';
@@ -1187,14 +1220,21 @@ function renderResult(){
   rs.classList.add('visible');
   rs.scrollIntoView({behavior:'smooth',block:'start'});
 
-  // ━━ Supabase 트래킹 (에러 나도 결과 표시) ━━
-  const yrsCalc = sim.reachedMonth>=0 ? Math.ceil(sim.reachedMonth/12) : null;
-  try{ if(typeof trackHCAnalysis==='function') trackHCAnalysis(); }catch(e){}
-  try{ if(typeof saveHCAnalysis==='function') saveHCAnalysis({
-    age: S.age, salary: S.salary, asset: S.asset,
-    housePrice: S.housePrice, years: yrsCalc,
-    verdict: yrsCalc===0 ? '즉시가능' : yrsCalc ? yrsCalc+'년후' : '30년초과'
-  }); }catch(e){}
+  // ━━ Supabase 트래킹 ━━
+  const yrsCalc=apiResult?.years||(sim?.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null);
+  try{if(typeof trackHCAnalysis==='function')trackHCAnalysis();}catch(e){}
+  try{if(typeof saveHCAnalysis==='function')saveHCAnalysis({
+    age:S.age,salary:S.salary,asset:S.asset,
+    housePrice:S.housePrice,years:yrsCalc,
+    verdict:yrsCalc===0?'즉시가능':yrsCalc?yrsCalc+'년후':'30년초과'
+  });}catch(e){}
+
+  // ━━ 결과 표시 (API or 로컬) ━━
+  const yrs=apiResult?.years||(sim?.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null);
+  const achieveAge=yrs!=null?S.age+yrs:null;
+  const loanAmt=apiResult?.loanAmt||(sim?.loanAmt||0);
+  const monthlySave=apiResult?apiResult.monthlySave:Math.round(S.takeHome-S.livingCost-(sim?.monthlyLoan||0));
+  const saveRate=apiResult?.savingRate||Math.max(0,Math.round(monthlySave/S.takeHome*100));
 
   // 기간
   const yrs=sim.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null;
@@ -1211,9 +1251,6 @@ function renderResult(){
     `${achieveAge?achieveAge+'세 예상 · ':""}목표 ${fmt(S.housePrice)}${sim.loanAmt>0?' · 대출 '+fmt(sim.loanAmt)+' 활용':''}`;
 
   // 지표
-  const lastResult=sim.results[sim.results.length-1];
-  const monthlySave=Math.round(S.takeHome-S.livingCost-(sim.monthlyLoan||0));
-  const saveRate=Math.max(0,Math.round(monthlySave/S.takeHome*100));
   const el=document.getElementById('r-save');
   el.textContent=`${Math.max(0,monthlySave).toLocaleString()}만원`;
   el.className='metric-val '+(monthlySave<0?'warn':monthlySave>200?'':'neutral');
