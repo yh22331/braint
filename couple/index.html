@@ -1288,7 +1288,12 @@ function initGate(){
   const code=params.get('couple');
   if(code){document.getElementById('premium-gate').style.display='none';S.isPartner=true;S.coupleCode=code;loadPartnerSession(code);return;}
   const isPremium=localStorage.getItem('bfhc_premium')==='true';
-  if(isPremium)document.getElementById('premium-gate').style.display='none';
+  // 개발용: URL에 ?dev=1 이면 게이트 스킵
+  const isDev=new URLSearchParams(location.search).get('dev')==='1';
+  if(isPremium||isDev){
+    document.getElementById('premium-gate').style.display='none';
+    if(isDev) localStorage.setItem('bfhc_premium','true'); // dev 모드면 프리미엄 설정
+  }
   restoreData();
 }
 
@@ -1323,5 +1328,12 @@ function devFillPartner(){
   showToast('🔧 짝꿍 dev: 연봉 4,500만 / 자산 2,500만');
 }
 </script>
+<!-- 개발용 짝꿍 버튼 -->
+<button
+  id="dev-partner-btn"
+  onclick="devFillPartner()"
+  style="position:fixed;bottom:90px;right:12px;z-index:999;background:rgba(61,44,53,.7);color:rgba(255,255,255,.6);border:1px dashed rgba(255,255,255,.2);border-radius:99px;padding:5px 12px;font-size:.65rem;font-family:'Gowun Dodum',sans-serif;cursor:pointer;backdrop-filter:blur(4px);">
+  🔧 짝꿍 dev
+</button>
 </body>
 </html>
