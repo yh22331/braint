@@ -1021,7 +1021,9 @@ function switchTab(tab){
 // ━━ 내 분석 결과 렌더링 ━━
 let myChartInstance=null;
 function renderMyResult(result, inputs){
-  const {years,netMonthly,monthlySave,savingRate,monthlyInvest,totalIncome,carMonthly,totalMonthlyExpense,chartData,eventMarkers,targetPrice,weddingCost,babyTotal,carCost,totalEventCost}=result;
+  const {years,netMonthly,monthlySave,savingRate,monthlyInvest,totalIncome,carMonthly,chartData,eventMarkers,targetPrice,weddingCost,babyTotal,carCost,totalEventCost}=result;
+  const babyMonthlyAvg = inputs.babyOn ? Math.round(babyTotal/26/12) : 0;
+  const totalMonthlyExpense = inputs.living + babyMonthlyAvg + (carMonthly||0);
 
   // 헤더 결과
   document.getElementById('my-years-display').textContent=years<=0?'지금 바로 가능! 🎉':years?`${years}년 후 🏠`:'30년 내 어려워요 😢';
