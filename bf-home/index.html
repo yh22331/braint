@@ -273,6 +273,21 @@
   .floating-tab-analyze:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,157,.55)}
   .floating-tab-analyze.dirty{background:linear-gradient(135deg,#C850C0,#FF6B9D);animation:float-pulse 1.8s ease-in-out infinite}
   @keyframes float-pulse{0%,100%{box-shadow:0 6px 20px rgba(200,80,192,.45)}50%{box-shadow:0 8px 32px rgba(200,80,192,.7),0 0 0 5px rgba(200,80,192,.15)}}
+
+  /* ━━ 대화형 플로우 CSS ━━ */
+  .chat-bubble-wrap{display:flex;gap:10px;margin-bottom:12px;align-items:flex-end}
+  .chat-bubble-wrap.bot-wrap{flex-direction:row}
+  .chat-bubble-wrap.user-wrap{flex-direction:row-reverse}
+  .chat-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#FFB3CC,#FF6B9D);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+  .chat-bubble{max-width:78%;padding:12px 16px;border-radius:18px;font-size:.85rem;line-height:1.6;font-family:'Gowun Dodum',sans-serif;animation:chatPop .3s cubic-bezier(.34,1.56,.64,1)}
+  .chat-bubble.bot{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+  .chat-bubble.user{background:linear-gradient(135deg,#FF6B9D,#FF9EC4);color:#fff;border-bottom-right-radius:4px;font-weight:700}
+  .chat-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding-left:42px;animation:chatPop .3s ease}
+  .chat-opt{padding:10px 14px;border:1.5px solid var(--border);border-radius:14px;background:var(--card);font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center;line-height:1.4;color:var(--text)}
+  .chat-opt:hover{border-color:var(--pink);background:var(--pink-light);transform:translateY(-2px)}
+  .chat-opt.selected{border-color:var(--pink);background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink)}
+  .chat-opt small{display:block;font-weight:400;opacity:.7;font-size:.68rem;margin-top:2px}
+  @keyframes chatPop{from{opacity:0;transform:translateY(8px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 </head>
 <body>
@@ -405,60 +420,104 @@
       <div class="tooltip">* 인스타: 이미지 저장 후 스토리에 직접 올려주세요 📸</div>
     </div>
 
-    <!-- 유료 잠금 CTA (결제 전) -->
+    <!-- 대화형 프리미엄 플로우 -->
     <div id="premium-locked">
-      <div class="premium-divider"><span class="premium-divider-text">✨ 더 궁금하다면?</span></div>
-      <div class="premium-section" style="margin-bottom:16px">
-        <div class="premium-header">
-          <div class="premium-badge">💎 PREMIUM</div>
-          <div class="premium-header-title">남친 재력 정밀 분석 4종</div>
-          <div class="premium-header-sub">연봉 올리면? 둘이 합치면? 실제로 얼마나 달라질까 👀</div>
-        </div>
-        <div class="premium-cards">
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-pink">📈</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">연봉 인상률 시뮬레이션 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">연봉 3%·5%·8% 올랐을 때 몇 년 단축되는지 비교</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" id="preview-years">-3년</div><div class="premium-preview-label">단축 기간</div></div>
-          </div>
-          <div class="premium-card-item" style="opacity:.6;cursor:default">
-            <div class="premium-icon-wrap icon-purple">❤️</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">💑 커플 합산 계산 <span class="lock-badge" style="background:linear-gradient(135deg,#3DB88A,#2EA87A);color:#fff;border:none">✅ 오픈</span></div>
-              <div class="premium-card-desc">파트너와 합산 소득으로 목표 달성 기간 계산</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" style="font-size:1rem">준비중</div><div class="premium-preview-label">곧 오픈</div></div>
-          </div>
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-mint">🎉</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">결혼·출산·차량 이벤트 반영 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">현실적인 지출 반영 후 재계산</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" style="filter:blur(5px)">현실판</div><div class="premium-preview-label">시나리오</div></div>
-          </div>
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-peach">📄</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">PDF 리포트 다운로드 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">분석 결과를 PDF로 저장·공유</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" style="filter:none;font-size:1.4rem">📎</div><div class="premium-preview-label">저장 가능</div></div>
+      <div class="premium-divider"><span class="premium-divider-text">✨ 더 정확하게 계산해볼까요?</span></div>
+
+      <!-- 대화형 카드 컨테이너 -->
+      <div id="chat-flow" style="margin-bottom:16px">
+
+        <!-- 봇 인트로 -->
+        <div class="chat-bubble-wrap" id="chat-intro">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">
+            기본 분석이 끝났어요!<br>
+            <strong>현실적인 변수</strong>를 몇 가지 더 넣으면<br>
+            훨씬 정확한 결과가 나와요 💡<br><br>
+            잠깐만요, 몇 가지만 물어볼게요 😊
           </div>
         </div>
-      </div>
-      <div class="premium-cta-wrap">
-        <div class="price-tag">⚡ 990원으로 평생 이용</div>
-        <div style="margin-bottom:16px">
-          <div class="price-main">990<span>원</span></div>
-          <div class="price-sub">평생 이용 · 기기 무관 · 14일 환불 보장</div>
+
+        <!-- Q1: 생활비 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q1" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">남친 월 생활비가 어느 정도 될까요?</div>
         </div>
-        <button class="btn-premium btn-premium-gold btn-pulse" onclick="openPayModal()">🔓 990원으로 남친 완전 분석하기</button>
-        <div class="premium-guarantee">
-          <span>🔒 안전 결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
+        <div class="chat-options" id="chat-q1-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q1','절약형 💸','living',100)">💸 절약형<br><small>월 100만원</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q1','직장인 평균 🏙️','living',200)">🏙️ 평균<br><small>월 200만원</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q1','여유롭게 ✨','living',300)">✨ 여유<br><small>월 300만원+</small></button>
         </div>
+
+        <!-- Q2: 투자 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q2" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">저축한 돈은 어떻게 굴리고 있어요?</div>
+        </div>
+        <div class="chat-options" id="chat-q2-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q2','예적금 🏦','invest','deposit')">🏦 예적금<br><small>연 3%</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q2','주식 포함 📈','invest','mixed')">📈 주식 포함<br><small>연 5~7%</small></button>
+        </div>
+
+        <!-- Q3: 연봉 인상 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q3" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">연봉 인상은 어떻게 될 것 같아요?</div>
+        </div>
+        <div class="chat-options" id="chat-q3-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q3','매년 3% 📊','raise','fixed3')">📊 매년 3%<br><small>물가 수준</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q3','3%+진급 🎖️','raise','promo5')">🎖️ 3%+진급<br><small>5년마다 +10%</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q3','고성장 🚀','raise','high7')">🚀 연 7%+<br><small>고성장</small></button>
+        </div>
+
+        <!-- Q4: 결혼 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q4" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">💍 결혼 계획이 있나요?<br><small style="opacity:.7">결혼 비용이 자산에 꽤 영향을 줘요</small></div>
+        </div>
+        <div class="chat-options" id="chat-q4-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q4','있어요 💍','wedding',true)">💍 있어요<br><small>비용 반영</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q4','없어요 🙅','wedding',false)">🙅 없어요</button>
+        </div>
+
+        <!-- Q5: 출산 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q5" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">👶 아이 계획은요?<br><small style="opacity:.7">육아비는 꽤 오래, 꽤 많이 들어요</small></div>
+        </div>
+        <div class="chat-options" id="chat-q5-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q5','있어요 👶','baby',true)">👶 있어요<br><small>육아비 반영</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q5','없어요 🙅','baby',false)">🙅 없어요</button>
+        </div>
+
+        <!-- Q6: 차량 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-q6" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot">🚗 차량 구매 계획은요?<br><small style="opacity:.7">차량 유지비도 집 마련에 영향을 줘요</small></div>
+        </div>
+        <div class="chat-options" id="chat-q6-opts" style="display:none">
+          <button class="chat-opt" onclick="chatAnswer('q6','있어요 🚗','car',true)">🚗 있어요<br><small>구매+유지비 반영</small></button>
+          <button class="chat-opt" onclick="chatAnswer('q6','없어요 🚌','car',false)">🚌 없어요</button>
+        </div>
+
+        <!-- 마지막: 결제 유도 -->
+        <div class="chat-bubble-wrap bot-wrap" id="chat-final" style="display:none">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-bubble bot" id="chat-final-text">
+            다 됐어요! 🎉<br>
+            현실적인 변수들을 다 넣었어요.<br><br>
+            <strong>정밀 분석 결과</strong>를 보시겠어요?
+          </div>
+        </div>
+        <div id="chat-pay-btn" style="display:none;margin-top:12px;text-align:center">
+          <button class="btn-premium btn-premium-gold btn-pulse" onclick="openPayModal()" style="width:100%;padding:18px;font-size:1rem">
+            📊 결과 보기 · 990원
+          </button>
+          <div class="premium-guarantee" style="margin-top:10px">
+            <span>🔒 안전 결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1715,7 +1774,6 @@ async function calcAll(){
     document.getElementById('er-years').style.color=addedYears>0?'#FF6B6B':addedYears<0?'#3DB88A':'var(--text)';
     window._lastSimResult=monthlySimResult;window._lastEffectiveTarget=effectiveTarget;
     try{renderChart(monthlySimResult,effectiveTarget,totalAsset,salary,investRate);}catch(e){}
-    const{totalExtra}=getEventDataWithLabels();
     updateLoanBox();
     document.getElementById('er-base').textContent=fmt(targetPrice);
     document.getElementById('er-loan').textContent=loanAmt>0?`-${fmt(loanAmt)}`:'미사용';
@@ -2366,6 +2424,124 @@ function updatePremiumTabLabel(){
     document.getElementById('ftab-analyze')?.classList.remove('dirty');
   }
 }
+
+// ━━ 대화형 플로우 ━━
+const chatAnswers = {};
+const chatFlow = ['q1','q2','q3','q4','q5','q6'];
+let chatStep = 0;
+
+function startChatFlow(){
+  chatStep = 0;
+  chatAnswers.living = 200;
+  chatAnswers.invest = 'deposit';
+  chatAnswers.raise  = 'promo5';
+  chatAnswers.wedding = false;
+  chatAnswers.baby   = false;
+  chatAnswers.car    = false;
+  // 인트로 표시 후 첫 질문
+  setTimeout(()=>showChatStep('q1'), 600);
+}
+
+function showChatStep(step){
+  const q = document.getElementById('chat-'+step);
+  const opts = document.getElementById('chat-'+step+'-opts');
+  if(q){ q.style.display='flex'; q.style.animation='chatPop .35s ease'; }
+  if(opts) setTimeout(()=>{ opts.style.display='flex'; }, 400);
+}
+
+function chatAnswer(step, label, key, value){
+  // 선택 버튼 표시
+  const opts = document.getElementById('chat-'+step+'-opts');
+  if(opts) opts.querySelectorAll('.chat-opt').forEach(b=>b.classList.remove('selected'));
+  const clicked = event?.target?.closest('.chat-opt');
+  if(clicked) clicked.classList.add('selected');
+
+  // 사용자 말풍선 추가
+  setTimeout(()=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-bubble-wrap user-wrap';
+    wrap.innerHTML = `<div class="chat-bubble user">${label}</div>`;
+    opts.parentNode.insertBefore(wrap, opts.nextSibling);
+    opts.style.pointerEvents = 'none';
+    opts.style.opacity = '.5';
+  }, 100);
+
+  // 값 저장 + 프리미엄 설정 반영
+  chatAnswers[key] = value;
+  applyChatAnswer(key, value);
+
+  // 다음 질문 또는 마지막
+  const idx = chatFlow.indexOf(step);
+  setTimeout(()=>{
+    if(idx < chatFlow.length - 1){
+      showChatStep(chatFlow[idx+1]);
+    } else {
+      showChatFinal();
+    }
+    // 스크롤
+    setTimeout(()=>document.getElementById('chat-'+step)?.scrollIntoView({behavior:'smooth',block:'nearest'}), 200);
+  }, 500);
+}
+
+function applyChatAnswer(key, value){
+  if(key==='living'){
+    monthlyLivingCost = value;
+    // 생활비 버튼 싱크
+    document.querySelectorAll('#living-options .raise-opt').forEach(function(b){
+      const onclick = b.getAttribute('onclick')||'';
+      const isMatch = onclick.includes(','+value+')');
+      b.classList.toggle('active', isMatch);
+    });
+    document.getElementById('custom-living').value = value;
+  }
+  if(key==='invest'){
+    state.investMode = value==='deposit'?'deposit':'mixed';
+    if(value==='mixed'){
+      // 주식 포함 → 7%로 설정
+      document.getElementById('custom-rate').value = 7;
+    }
+  }
+  if(key==='raise'){
+    if(value==='fixed3')      { raiseState.mode='fixed3'; raiseState.rate=3; raiseState.promo=false; }
+    else if(value==='promo5') { raiseState.mode='promo5'; raiseState.rate=3; raiseState.promo=true; }
+    else if(value==='high7')  { raiseState.mode='high7'; raiseState.rate=7; raiseState.promo=false; }
+  }
+  if(key==='wedding'){
+    const cb = document.getElementById('ev-wedding');
+    if(cb){ cb.checked=value; toggleEventDetail('wedding',cb); }
+  }
+  if(key==='baby'){
+    const cb = document.getElementById('ev-baby');
+    if(cb){ cb.checked=value; toggleEventDetail('baby',cb); }
+  }
+  if(key==='car'){
+    const cb = document.getElementById('ev-car');
+    if(cb){ cb.checked=value; toggleEventDetail('car',cb); }
+  }
+}
+
+function showChatFinal(){
+  // 요약 메시지
+  const parts = [];
+  parts.push(`생활비 월 ${chatAnswers.living}만원`);
+  parts.push(chatAnswers.invest==='deposit'?'예적금 운용':'주식 포함 운용');
+  parts.push(chatAnswers.raise==='fixed3'?'연봉 3% 고정':chatAnswers.raise==='promo5'?'연봉 3%+진급':'연봉 7%+');
+  if(chatAnswers.wedding) parts.push('💍 결혼 반영');
+  if(chatAnswers.baby)    parts.push('👶 육아 반영');
+  if(chatAnswers.car)     parts.push('🚗 차량 반영');
+
+  const finalText = document.getElementById('chat-final-text');
+  if(finalText){
+    finalText.innerHTML = `다 됐어요! 🎉<br><br>
+      <span style="font-size:.78rem;opacity:.8">${parts.join(' · ')}</span><br><br>
+      <strong>현실 시나리오 정밀 분석 결과</strong>를 보시겠어요?`;
+  }
+  const final = document.getElementById('chat-final');
+  const payBtn = document.getElementById('chat-pay-btn');
+  if(final){ final.style.display='flex'; }
+  setTimeout(()=>{ if(payBtn){ payBtn.style.display='block'; payBtn.scrollIntoView({behavior:'smooth',block:'nearest'}); }}, 400);
+}
+
 // ━━ dirty 상태 관리 ━━
 function markDirty(){
   if(!isPremium) return;
@@ -2609,6 +2785,7 @@ function showToast(msg){const t=document.createElement('div');t.textContent=msg;
 // 초기화
 updateSalary(document.getElementById('salary'));
 updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));
+
 </script>
 <!-- 임시 개발용 프리미엄 열기 버튼 (토스 연동 후 제거) -->
 <button
@@ -2627,7 +2804,6 @@ updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).
 >
   🔧 dev
 </button>
-
 <script>
 function devUnlockPremium(){
   if(isPremium){
@@ -2635,6 +2811,8 @@ function devUnlockPremium(){
     isPremium=false;
     localStorage.removeItem('bfhc_premium');
     document.getElementById('premium-locked').style.display='block';
+  // 대화형 플로우 시작
+  setTimeout(()=>startChatFlow(), 800);
     document.getElementById('premium-content').style.display='none';
     document.getElementById('dev-premium-btn').textContent='🔧 dev';
     updatePremiumTabLabel();

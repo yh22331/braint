@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
 <style>
 :root{
@@ -664,19 +663,281 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
 </div>
 
 <script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// couple-api-client.js
+// 커플 계산기 HTML에 <script src> 로 포함
+// 모든 계산은 API에 위임, HTML은 UI만 담당
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-// ━━ BF 공용 변수 ━━
+const API = {
+  simulate: '/api/simulate',
+  couple:   '/api/simulate-couple',
+  session:  '/api/session',
+};
+
+// ── API 호출 헬퍼
+async function callAPI(url, method='GET', body=null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error || 'API 오류');
+  return data;
+}
+
+// ── 내 분석 호출
+async function apiAnalyzeMe(inputs) {
+  return callAPI(API.simulate, 'POST', inputs);
+}
+
+// ── 커플 합산 분석 호출
+async function apiAnalyzeCouple(me, partner) {
+  return callAPI(API.couple, 'POST', { me, partner });
+}
+
+// ── 세션 생성
+async function apiCreateSession(hostData) {
+  return callAPI(`${API.session}?action=create`, 'POST', { hostData });
+}
+
+// ── 세션 조회 (짝꿍 링크 접속)
+async function apiGetSession(code) {
+  return callAPI(`${API.session}?action=get&code=${code}`);
+}
+
+// ── 짝꿍 데이터 저장
+async function apiJoinSession(sessionId, guestData) {
+  return callAPI(`${API.session}?action=join&id=${sessionId}`, 'PATCH', { guestData });
+}
+
+// ── 폴링: 짝꿍 입력 여부
+async function apiPollSession(sessionId) {
+  return callAPI(`${API.session}?action=poll&id=${sessionId}`);
+}
+
+// ── 입력값 수집 (나 탭)
+function collectMyInputs() {
+  const salary = parseInt(document.getElementById('my-salary').value);
+  const asset  = parseInt(document.getElementById('my-asset').value) || 0;
+  if(!salary || salary < 500) throw new Error('연봉을 입력해주세요!');
+  return {
+    salary, asset,
+    region: S.region || 'seoul',
+    size:   S.size   || 'mid',
+    living: monthlyLivingCost || 200,
+    investRate: getInvestRate(),
+    age:    parseInt(document.getElementById('my-salary').dataset.age) || 30,
+    raisePct:   raiseState.rate   || 3,
+    promoRaise: raiseState.promo  || true,
+    maxSalary:  raiseState.maxSalary || 999999,
+    // 이벤트
+    weddingOn:  document.getElementById('ev-wedding')?.checked || false,
+    weddingCost:parseInt(document.getElementById('cost-wedding')?.value)   || 5000,
+    weddingAge: parseInt(document.getElementById('age-wedding')?.textContent?.replace('세','')) || 33,
+    babyOn:     document.getElementById('ev-baby')?.checked || false,
+    babyCost:   parseInt(document.getElementById('cost-baby-yr')?.value)   || 500,
+    babyAge:    parseInt(document.getElementById('age-baby')?.textContent?.replace('세',''))    || 35,
+    carOn:      document.getElementById('ev-car')?.checked  || false,
+    carCost:    parseInt(document.getElementById('cost-car')?.value)        || 3500,
+    carAge:     parseInt(document.getElementById('c-age-car-val')?.value)   || 30,
+  };
+}
+
+// ── 짝꿍 이벤트 객체 변환 (partner.events 형태로)
+function buildPartnerEvents(partner) {
+  return {
+    weddingOn:  partner.weddingOn  || false,
+    weddingCost:partner.weddingCost|| 5000,
+    weddingAge: partner.weddingAge || 33,
+    babyOn:     partner.babyOn     || false,
+    babyCost:   partner.babyCost   || 500,
+    babyAge:    partner.babyAge    || 35,
+    carOn:      partner.carOn      || false,
+    carCost:    partner.carCost    || 3500,
+    carAge:     partner.carAge     || 30,
+  };
+}
+
+// ── analyzeMe (API 버전)
+async function analyzeMe() {
+  try {
+    const inputs = collectMyInputs();
+    showToast('분석 중...', 1000);
+
+    const result = await apiAnalyzeMe(inputs);
+
+    // 결과 저장
+    S.myResult = { ...inputs, ...result };
+    S.myInputs = inputs;
+
+    // UI 렌더
+    renderMyResult(result, inputs);
+
+    // 세션 생성 (최초 1회)
+    if(!S.sessionId && !S.isPartner) {
+      const session = await apiCreateSession(S.myResult);
+      S.sessionId = session.sessionId;
+      S.coupleCode = session.code;
+      const link = `${location.origin}${location.pathname}?couple=${session.code}`;
+      document.getElementById('couple-link-box').textContent = link;
+      document.getElementById('couple-link-box').dataset.link = link;
+      startPolling();
+      const wb = document.getElementById('waiting-banner');
+      if(wb) wb.style.display = 'block';
+    }
+
+    // 짝꿍 있으면 합산
+    if(S.partnerData) {
+      const onMeTab = document.getElementById('page-me').style.display !== 'none';
+      S._suppressTabSwitch = onMeTab;
+      await renderCoupleResult();
+    }
+  } catch(e) {
+    console.error('analyzeMe 에러:', e);
+    showToast(e.message || '분석 중 오류가 발생했어요');
+  }
+}
+
+// ── renderCoupleResult (API 버전)
+async function renderCoupleResult() {
+  const me      = S.myResult;
+  const partner = S.partnerData;
+  if(!me || !partner) return;
+
+  try {
+    // 짝꿍 events 객체 구성
+    const pEvents = buildPartnerEvents(partner);
+    const meForAPI = {
+      ...S.myInputs,
+      events: {
+        weddingOn:  S.myInputs.weddingOn,
+        weddingCost:S.myInputs.weddingCost,
+        weddingAge: S.myInputs.weddingAge,
+        babyOn:     S.myInputs.babyOn,
+        babyCost:   S.myInputs.babyCost,
+        babyAge:    S.myInputs.babyAge,
+        carOn:      S.myInputs.carOn,
+        carCost:    S.myInputs.carCost,
+        carAge:     S.myInputs.carAge,
+      },
+    };
+    const pForAPI = {
+      salary:     partner.salary,
+      asset:      partner.asset     || 0,
+      region:     partner.region    || me.region,
+      size:       partner.size      || me.size,
+      living:     partner.living    || 200,
+      investRate: partner.investRate|| 3,
+      age:        partner.age       || 30,
+      raisePct:   partner.raisePct  || 3,
+      promoRaise: partner.promoRaise|| false,
+      maxSalary:  partner.maxSalary || 999999,
+      events:     pEvents,
+    };
+
+    const result = await apiAnalyzeCouple(meForAPI, pForAPI);
+
+    // UI 렌더
+    renderCoupleUI(result, meForAPI, pForAPI);
+
+    if(!S._suppressTabSwitch) switchTab('partner');
+    S._suppressTabSwitch = false;
+  } catch(e) {
+    console.error('합산 분석 오류:', e);
+    showToast('합산 분석 중 오류가 발생했어요');
+  }
+}
+
+// ── 폴링 (API 버전)
+let pollTimer = null;
+function startPolling() {
+  if(!S.sessionId || pollTimer) return;
+  pollTimer = setInterval(async()=>{
+    try {
+      const data = await apiPollSession(S.sessionId);
+      if(data.hasGuest && data.guestData) {
+        clearInterval(pollTimer); pollTimer = null;
+        S.partnerData = data.guestData;
+        const banner = document.getElementById('waiting-banner');
+        if(banner) banner.style.display = 'none';
+        document.getElementById('partner-tab-icon').textContent = '💑';
+        document.getElementById('tab-partner-sub').textContent = '합산 결과 완성! 🎉';
+        showToast('🎉 짝꿍이 데이터를 입력했어요!');
+        S._suppressTabSwitch = false;
+        if(S.myResult) await renderCoupleResult();
+      }
+    } catch(e) { /* 폴링 실패 무시 */ }
+  }, 10000);
+}
+
+// ── 짝꿍 링크 진입 시 세션 로드
+async function loadPartnerSession(code) {
+  try {
+    const row = await apiGetSession(code);
+    S.partnerData = row.host_data;   // 호스트 데이터가 "짝꿍"
+    S.sessionId   = row.id;
+    document.getElementById('joined-notice').style.display = 'block';
+    window.history.replaceState({}, '', location.pathname);
+    showToast('💌 짝꿍이 공유한 링크예요! 내 정보를 입력해주세요');
+  } catch(e) {
+    showToast('링크가 만료됐거나 올바르지 않아요');
+  }
+}
+
+// ── 짝꿍 입력 완료 후 저장
+async function saveGuestAndRender() {
+  if(!S.myResult || !S.partnerData) return;
+  try {
+    await apiJoinSession(S.sessionId, S.myResult);
+    await renderCoupleResult();
+  } catch(e) {
+    console.error('짝꿍 저장 오류:', e);
+    await renderCoupleResult(); // 실패해도 UI는 표시
+  }
+}
+
+// ━━ 상수 (UI용) ━━
+const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
+const fmt=v=>v>=10000?(v/10000).toFixed(1)+'억원':v.toLocaleString()+'만원';
+
+// ━━ 상태 ━━
+const PS={region:'seoul',size:'mid',living:200,investRate:3,raisePct:3,promoRaise:true,maxSalary:15000,carOn:true,carCost:3500,carAge:30,weddingOn:true,weddingCost:5000,weddingAge:33,babyOn:true,babyCost:500,babyAge:35};
+const S={region:'seoul',size:'mid',investRate:3,myResult:null,myInputs:null,partnerData:null,coupleCode:null,sessionId:null,isPartner:false,_suppressTabSwitch:false};
+const LS_KEY='braint_couple';
+
+// ━━ UI 상태 변수 ━━
 const raiseState={mode:'promo5',rate:3,promo:true,maxSalary:15000};
 let monthlyLivingCost=200;
-const CAR_MAINTENANCE={
-  domestic:{fuel:15,insure:10,repair:5},
-  foreign:{fuel:25,insure:20,repair:15},
-  super:{fuel:50,insure:50,repair:50},
-};
 let carType='domestic';
 let cState={investMode:'deposit'};
+const CAR_MAINTENANCE={domestic:{fuel:15,insure:10,repair:5},foreign:{fuel:25,insure:20,repair:15},super:{fuel:50,insure:50,repair:50}};
 
-// ━━ BF 공용 함수 ━━
+// ━━ UI 헬퍼 함수 ━━
+function calcTakehome(gross){ // 로컬 표시용
+  let rate;
+  if(gross<=3000)rate=0.88;else if(gross<=4000)rate=0.855;else if(gross<=5000)rate=0.835;
+  else if(gross<=6000)rate=0.82;else if(gross<=7000)rate=0.805;else if(gross<=8000)rate=0.79;
+  else if(gross<=10000)rate=0.775;else if(gross<=12000)rate=0.755;else if(gross<=15000)rate=0.73;else rate=0.70;
+  return Math.round(gross*rate/12);
+}
+
+// ━━ UI 인풋 핸들러 ━━
+function onSalaryInput(){
+  const v=parseInt(document.getElementById('my-salary').value)||0;
+  const net=calcTakehome(v);
+  const el=document.getElementById('my-takehome');
+  if(el) el.textContent=v>0?`월 실수령 약 ${net.toLocaleString()}만원`:'';
+}
+function onAssetInput(){
+  const v=parseInt(document.getElementById('my-asset').value)||0;
+  const el=document.getElementById('my-asset-hint');
+  if(el) el.textContent=v>0?`${fmt(v)} 보유 중`:'';
+}
+function selectOpt(btn,key,val){
+  btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S[key]=val;
+}
 function selectInvest(mode,el){
   document.querySelectorAll('.opt-btn[onclick*="selectInvest"]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
@@ -686,20 +947,17 @@ function selectInvest(mode,el){
   const badge=document.getElementById('invest-selected-badge');
   if(badge) badge.textContent=mode==='deposit'?'✓ 예적금 3% 적용 중':'✓ 내 주식 수익률 적용 중';
 }
-function getInvestRate(){
-  return cState.investMode==='deposit'?3:Math.max(0,parseFloat(document.getElementById('custom-rate')?.value)||7);
-}
+function getInvestRate(){return cState.investMode==='deposit'?3:Math.max(0,parseFloat(document.getElementById('custom-rate')?.value)||7);}
 function applyCustomRate(){
   const rate=Math.max(0,parseFloat(document.getElementById('custom-rate')?.value)||7);
   const badge=document.getElementById('invest-selected-badge');
   if(badge) badge.textContent=`✓ 주식 ${rate}% 적용 중`;
 }
-function selectLiving(el, cost){
+function selectLiving(el,cost){
   document.querySelectorAll('#living-options .opt-btn').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   monthlyLivingCost=cost;
-  const inp=document.getElementById('custom-living');
-  if(inp) inp.value=cost;
+  document.getElementById('custom-living').value=cost;
   updateLivingBadge();
 }
 function applyLiving(){
@@ -709,12 +967,8 @@ function applyLiving(){
   document.querySelectorAll('#living-options .opt-btn').forEach(o=>o.classList.remove('active'));
   updateLivingBadge();
 }
-function updateLivingBadge(){
-  const b=document.getElementById('living-selected-badge');
-  if(b) b.textContent=`✓ 월 ${monthlyLivingCost.toLocaleString()}만원 적용 중`;
-}
+function updateLivingBadge(){const b=document.getElementById('living-selected-badge');if(b)b.textContent=`✓ 월 ${monthlyLivingCost.toLocaleString()}만원 적용 중`;}
 function selectRaise(el,mode,rate,promo){
-  // raise-opt 또는 opt-btn 둘 다 처리
   el.closest('div').querySelectorAll('.raise-opt,.opt-btn').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   raiseState.mode=mode;raiseState.rate=rate;raiseState.promo=promo;
@@ -723,11 +977,7 @@ function selectRaise(el,mode,rate,promo){
 function updateMaxSalaryBadge(){
   const v=parseInt(document.getElementById('max-salary')?.value)||15000;
   const badge=document.getElementById('raise-selected-badge');
-  if(badge){
-    const labels={fixed3:'연 3% 인상',promo5:'연 3% + 5년마다 진급',high7:'연 7% 이상 고성장'};
-    const maxLabel=v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';
-    badge.textContent=`✓ ${labels[raiseState.mode]||''} · MAX ${maxLabel}원`;
-  }
+  if(badge){const labels={fixed3:'연 3% 인상',promo5:'연 3%+진급',high7:'연 7%+'};const maxLabel=v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';badge.textContent=`✓ ${labels[raiseState.mode]||''} · MAX ${maxLabel}원`;}
 }
 function applyMaxSalary(){
   const v=Math.max(3000,parseInt(document.getElementById('max-salary')?.value)||15000);
@@ -735,503 +985,28 @@ function applyMaxSalary(){
   raiseState.maxSalary=v;
   updateMaxSalaryBadge();
 }
-function calcCarMonthly(carPrice){
-  const basePrice={domestic:3500,foreign:8000,super:30000};
-  const base=CAR_MAINTENANCE[carType];
-  const ratio=Math.max(0.5,Math.min(3,carPrice/basePrice[carType]));
-  const fuel=Math.round(base.fuel*Math.sqrt(ratio));
-  const insure=Math.round(base.insure*ratio);
-  const repair=Math.round(base.repair*Math.sqrt(ratio));
-  const deprecMonth=Math.round(carPrice*0.10/12);
-  const total=fuel+insure+repair+deprecMonth;
-  return{fuel,insure,repair,deprecMonth,total};
-}
 function updateCarMaintenance(){
   const carPrice=parseInt(document.getElementById('cost-car')?.value)||3500;
-  const{fuel,insure,repair,deprecMonth,total}=calcCarMonthly(carPrice);
+  const base=CAR_MAINTENANCE[carType];
+  const ratio=Math.max(0.5,Math.min(3,carPrice/{domestic:3500,foreign:8000,super:30000}[carType]));
+  const fuel=Math.round(base.fuel*Math.sqrt(ratio)),insure=Math.round(base.insure*ratio),repair=Math.round(base.repair*Math.sqrt(ratio));
+  const deprecMonth=Math.round(carPrice*0.10/12),total=fuel+insure+repair+deprecMonth;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('car-fuel',`월 ${fuel}만원`);
-  set('car-insure',`월 ${insure}만원`);
-  set('car-repair',`월 ${repair}만원`);
-  set('car-depreciation',`월 약 ${deprecMonth}만원`);
-  set('car-total-monthly',`월 약 ${total}만원`);
+  set('car-fuel',`월 ${fuel}만원`);set('car-insure',`월 ${insure}만원`);set('car-repair',`월 ${repair}만원`);set('car-depreciation',`월 약 ${deprecMonth}만원`);set('car-total-monthly',`월 약 ${total}만원`);
 }
 function selectCar(el,type,cost){
   document.querySelectorAll('.car-opt').forEach(o=>o.classList.remove('active'));
-  el.classList.add('active');
-  carType=type;
+  el.classList.add('active');carType=type;
   document.getElementById('cost-car').value=cost;
-  const notes={domestic:`국산차 기준 약 ${(cost/10000).toFixed(1)}억 · 평균 30세`,foreign:`외제차 기준 약 ${(cost/10000).toFixed(1)}억 · 평균 30세`,super:`슈퍼카 3억+ · 평균 30세`};
-  const noteEl=document.getElementById('car-cost-note');
-  if(noteEl) noteEl.textContent=notes[type];
+  const notes={domestic:`국산차 기준 약 ${(cost/10000).toFixed(1)}억`,foreign:`외제차 기준 약 ${(cost/10000).toFixed(1)}억`,super:'슈퍼카 3억+'};
+  const n=document.getElementById('car-cost-note');if(n)n.textContent=notes[type];
   updateCarMaintenance();
 }
-function toggleEventDetail(name,cb){
-  const d=document.getElementById('detail-'+name);
-  if(d) d.classList.toggle('show',cb.checked);
-}
+function toggleEventDetail(name,cb){const d=document.getElementById('detail-'+name);if(d)d.classList.toggle('show',cb.checked);}
 function updateBabyTotal(){
   const startCost=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
-  let total=0;
-  for(let i=0;i<26;i++) total+=Math.min(Math.round(startCost*Math.pow(1.03,i)),2000);
-  const el=document.getElementById('baby-total-cost');
-  if(el) el.textContent=total>=10000?(total/10000).toFixed(1)+'억원':total.toLocaleString()+'만원';
-}
-function calcBabyByYear(startCost){
-  const byYear={};let total=0;
-  for(let i=0;i<26;i++){const c=Math.min(Math.round(startCost*Math.pow(1.03,i)),2000);byYear[i]=c;total+=c;}
-  return{byYear,total};
-}
-
-// ━━ Supabase ━━
-const SUPABASE_URL='https://zvgcekyknwoffffxgoib.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z2Nla3lrbndvZmZmZnhnb2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjM2MTgsImV4cCI6MjA5MjY5OTYxOH0.7_71K903NDRNYpvJu-xFzNr6VOV8BigTdyW8UWmoUAU';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-if(window.Kakao&&!Kakao.isInitialized()) Kakao.init('b3a8d118868373f29970b5c5568200c4');
-
-// ━━ 상태 ━━
-// ━━ 짝꿍 전용 설정 (링크 접속 시 별도 관리) ━━
-const PS={ // Partner Settings
-  region:'seoul', size:'mid',
-  living:200, investRate:3,
-  raiseMode:'promo5', raisePct:3, promoRaise:true, maxSalary:15000,
-  carOn:true, carCost:3500, carAge:30,
-  weddingOn:true, weddingCost:5000, weddingAge:33,
-  babyOn:true, babyCost:500, babyAge:35,
-};
-
-const S={
-  region:'seoul', size:'mid', investRate:5, living:200,
-  raiseMode:'promo5', raisePct:3, promoRaise:true,
-  myResult:null, partnerData:null, coupleCode:null, sessionId:null,
-  isPartner:false  // 짝꿍 링크로 들어온 경우
-};
-const LS_KEY='braint_couple';
-
-// ━━ 상수 ━━
-const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
-const fmt=v=>v>=10000?(v/10000).toFixed(1)+'억원':v.toLocaleString()+'만원';
-const fmtM=v=>v>=10000?(v/10000).toFixed(1)+'억':v.toLocaleString()+'만';
-
-// ━━ 계산 함수 ━━
-function calcTakehome(gross){
-  let r;
-  if(gross<=3000)r=.88;else if(gross<=4000)r=.855;else if(gross<=5000)r=.835;
-  else if(gross<=6000)r=.82;else if(gross<=7000)r=.805;else if(gross<=8000)r=.79;
-  else if(gross<=10000)r=.775;else if(gross<=12000)r=.755;else if(gross<=15000)r=.73;else r=.70;
-  return Math.round(gross*r/12);
-}
-
-// ━━ 연봉인상 선택 ━━
-function selectRaiseC(btn, mode, pct, promo){
-  btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  S.raiseMode=mode; S.raisePct=pct; S.promoRaise=promo;
-}
-function markDirtyC(){ /* 재계산 필요 플래그 */ }
-
-// ━━ 이벤트 데이터 수집 ━━
-function getEventData(age){
-  const extraByYear={};
-  const monthlyBabyByYr={};
-  let carMonthly=0;
-
-  // 결혼
-  if(document.getElementById('ev-wedding')?.checked){
-    const cost=parseInt(document.getElementById('cost-wedding')?.value)||5000;
-    const weddingAge=parseInt(document.getElementById('c-age-wedding-val')?.value||33);
-    const yr=weddingAge-age;
-    if(yr>=0) extraByYear[yr]=(extraByYear[yr]||0)+cost;
-  }
-
-  // 출산·육아
-  if(document.getElementById('ev-baby')?.checked){
-    const initCost=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
-    const babyAge=parseInt(document.getElementById('c-age-baby-val')?.value||35);
-    const startYr=Math.max(0,babyAge-age);
-    for(let i=0;i<26;i++){
-      const yr=startYr+i;
-      const yearlyCost=Math.min(Math.round(initCost*Math.pow(1.03,i)),2000);
-      monthlyBabyByYr[yr]=(monthlyBabyByYr[yr]||0)+Math.round(yearlyCost/12);
-    }
-  }
-
-  // 차량
-  if(document.getElementById('ev-car')?.checked){
-    const carCost=parseInt(document.getElementById('cost-car')?.value)||3500;
-    const carAge=parseInt(document.getElementById('c-age-car-val')?.value||30);
-    const yr=carAge-age;
-    if(yr>=0) extraByYear[yr]=(extraByYear[yr]||0)+carCost;
-    // 유지비: 차량가의 약 2%/월 (보험+연료+정비)
-    carMonthly=Math.round(Math.max(carCost*0.015, 30));
-    
-  }
-
-  return{extraByYear, monthlyBabyByYr, carMonthly};
-}
-
-// ━━ 이벤트 포함 시뮬레이션 ━━
-function simulateWithEvents(salary, asset, livingCost, investRate, targetPrice, age, raisePct, promoRaise){
-  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
-  const {extraByYear, monthlyBabyByYr, carMonthly}=getEventData(age);
-  let cur=asset;
-  let carStarted=false;
-  const carAge=parseInt(document.getElementById('c-age-car-val')?.value||30);
-
-  for(let m=0;m<360;m++){
-    const yr=Math.floor(m/12);
-    const curAge=age+yr;
-
-    // 연봉 인상
-    let salaryThisYr=salary*(1+raisePct/100)**yr;
-    if(promoRaise&&yr>0&&yr%5===0) salaryThisYr*=1.10;
-    const netM=calcTakehome(Math.round(salaryThisYr));
-
-    // 차량 유지비
-    const carM=(curAge>=carAge&&document.getElementById('ev-car')?.checked)?carMonthly:0;
-    // 육아비
-    const babyM=monthlyBabyByYr[yr]||0;
-    // 이벤트 일시금 (해당 연도 1월)
-    const eventCost=m%12===0?(extraByYear[yr]||0):0;
-
-    cur=Math.max(0,cur)*(1+monthlyR)+(netM-livingCost-carM-babyM)-eventCost;
-    if(cur>=targetPrice) return{years:Math.ceil((m+1)/12),months:m+1};
-  }
-  return{years:null,months:null};
-}
-
-// ━━ 이벤트 포함 차트 데이터 ━━
-function simulateFullWithEvents(salary, asset, livingCost, investRate, targetPrice, age, raisePct, promoRaise, months=120){
-  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
-  const {extraByYear, monthlyBabyByYr, carMonthly}=getEventData(age);
-  const carAge=parseInt(document.getElementById('c-age-car-val')?.value||30);
-  let cur=asset; const data=[];
-
-  for(let m=0;m<months;m++){
-    const yr=Math.floor(m/12);
-    const curAge=age+yr;
-    let salaryThisYr=salary*(1+raisePct/100)**yr;
-    if(promoRaise&&yr>0&&yr%5===0) salaryThisYr*=1.10;
-    const netM=calcTakehome(Math.round(salaryThisYr));
-    const carM=(curAge>=carAge&&document.getElementById('ev-car')?.checked)?carMonthly:0;
-    const babyM=monthlyBabyByYr[yr]||0;
-    const eventCost=m%12===0?(extraByYear[yr]||0):0;
-    cur=Math.max(0,cur)*(1+monthlyR)+(netM-livingCost-carM-babyM)-eventCost;
-    if(m%12===0) data.push(Math.round(cur));
-  }
-  return data;
-}
-
-// 내 자산 흐름 차트
-let myChartInstance=null;
-function renderMyChart(salary, asset, livingCost, investRate, targetPrice, years){
-  const age=parseInt(document.getElementById('my-salary').dataset.age)||30;
-  const wOn=document.getElementById('ev-wedding')?.checked;
-  const bOn=document.getElementById('ev-baby')?.checked;
-  const cOn=document.getElementById('ev-car')?.checked;
-  const wAge=parseInt(document.getElementById('age-wedding')?.textContent?.replace('세',''))||33;
-  const bAge=parseInt(document.getElementById('age-baby')?.textContent?.replace('세',''))||35;
-  const cAge=parseInt(document.getElementById('c-age-car-val')?.value)||30;
-
-  // 이벤트 데이터 (일시금 + 월비용)
-  const events=getEventData(age);
-  const {extraByYear, monthlyBabyByYr, carMonthly}=events;
-  const carMonthlyMaint=cOn?carMonthly:0;
-
-  // 월별 시뮬 (이벤트 일시금 차감 포함)
-  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
-  const maxM=Math.min(Math.max((years||20)+3,23)*12, 360);
-  const results=[];
-  let cur=asset;
-  for(let m=0;m<=maxM;m++){
-    const yr=Math.floor(m/12);
-    const curAge=age+yr;
-    let sal=salary*(1+raiseState.rate/100)**yr;
-    if(raiseState.promo&&yr>0&&yr%5===0) sal*=1.10;
-    sal=Math.min(sal,raiseState.maxSalary||999999);
-    const netM=calcTakehome(Math.round(sal));
-    const carM=(curAge>=cAge&&cOn)?carMonthlyMaint:0;
-    const babyM=monthlyBabyByYr[yr]||0;
-    // 이벤트 일시금은 해당 연도 1월(m%12===0)에 차감
-    const eventCost=m%12===0?(extraByYear[yr]||0):0;
-    cur=cur*(1+monthlyR)+(netM-monthlyLivingCost-carM-babyM)-eventCost;
-    results.push({month:m, asset:Math.round(cur), netMonthly:netM, curAge});
-  }
-
-  // 집 구매 달성 월
-  const homeMonth=results.findIndex(r=>r.asset>=targetPrice);
-
-  // 이벤트 마커 (월 단위)
-  const eventAnnotations={};
-  if(wOn){const m=(wAge-age)*12;if(m>=0&&m<=maxM){eventAnnotations[m]=['💍결혼'];}}
-  if(bOn){const m=(bAge-age)*12;if(m>=0&&m<=maxM){eventAnnotations[m]?(eventAnnotations[m].push('👶출산')):(eventAnnotations[m]=['👶출산']);}}
-  if(cOn){const m=(cAge-age)*12;if(m>=0&&m<=maxM){eventAnnotations[m]?(eventAnnotations[m].push('🚗차량')):(eventAnnotations[m]=['🚗차량']);}}
-
-  // X축 나이 라벨 (이벤트/집구매/시작/끝만)
-  const labelAges=new Set([age, age+Math.floor(maxM/12)]);
-  if(homeMonth>=0) labelAges.add(age+Math.floor(homeMonth/12));
-  Object.keys(eventAnnotations).forEach(m=>labelAges.add(age+Math.floor(Number(m)/12)));
-
-  // 데이터 배열
-  const labels=[], evArr=[], costArr=[], incomeArr=[], targetLine=[];
-  for(let m=0;m<=maxM;m++){
-    const r=results[m];
-    const yr=Math.floor(m/12), curAge=age+yr;
-    labels.push(m%12===0&&labelAges.has(curAge)?`${curAge}세`:'');
-    evArr.push(+((r.asset)/10000).toFixed(2));
-    targetLine.push(+(targetPrice/10000).toFixed(2));
-    const carM=(curAge>=cAge&&cOn)?carMonthlyMaint:0;
-    const babyM=monthlyBabyByYr[yr]||0;
-    incomeArr.push(r.netMonthly);
-    costArr.push(monthlyLivingCost+carM+babyM);
-  }
-
-  // 마커 플러그인 (BF 동일)
-  const markerPlugin={
-    id:'markerPlugin',
-    afterDraw(chart){
-      const{ctx:c,scales:{x,y}}=chart;
-      // 이벤트 수직선
-      Object.entries(eventAnnotations).forEach(([m,evLabels])=>{
-        const xPos=x.getPixelForValue(Number(m));
-        c.save();c.strokeStyle='rgba(255,107,157,0.5)';c.lineWidth=1.5;c.setLineDash([3,3]);
-        c.beginPath();c.moveTo(xPos,y.top);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
-        c.save();c.fillStyle='#FF6B9D';
-        c.beginPath();c.arc(xPos,y.bottom,4,0,Math.PI*2);c.fill();
-        c.font='bold 9px sans-serif';c.textAlign='center';
-        c.fillStyle='#FF6B9D';
-        c.fillText(evLabels.join(' '),xPos,y.bottom+14);c.restore();
-      });
-      // 집구매 플래그
-      if(homeMonth>=0&&homeMonth<=maxM){
-        const xPos=x.getPixelForValue(homeMonth);
-        const homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
-        c.save();c.strokeStyle='rgba(61,184,138,0.8)';c.lineWidth=2;c.setLineDash([]);
-        c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
-        c.save();
-        const bw=80,bh=26,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-8,y.top+2);
-        c.fillStyle='#3DB88A';c.beginPath();c.roundRect(bx,by,bw,bh,6);c.fill();
-        c.fillStyle='white';c.font='bold 10px sans-serif';c.textAlign='center';
-        c.fillText('🏠 집구매 가능!',bx+bw/2,by+16);c.restore();
-        c.save();c.fillStyle='#3DB88A';c.beginPath();c.arc(xPos,homeY,5,0,Math.PI*2);c.fill();
-        c.strokeStyle='white';c.lineWidth=2;c.stroke();c.restore();
-      }
-    }
-  };
-
-  if(myChartInstance) myChartInstance.destroy();
-  const ctx=document.getElementById('my-chart').getContext('2d');
-  myChartInstance=new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[
-      {label:'자산',data:evArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true,yAxisID:'y'},
-      {label:'목표 집값',data:targetLine,borderColor:'#3DB88A',borderWidth:1.5,pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
-      {label:'월 지출',data:costArr,borderColor:'#FF9966',borderWidth:1.8,pointRadius:0,tension:.1,fill:false,borderDash:[3,2],yAxisID:'yFlow'},
-      {label:'월 수익',data:incomeArr,borderColor:'#6CB4E4',borderWidth:1.8,pointRadius:0,tension:.3,fill:false,borderDash:[5,2],yAxisID:'yFlow'},
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:true,animation:{duration:600},
-      layout:{padding:{bottom:20}},
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{
-          title:items=>{
-            const m=items[0].dataIndex;
-            const evs=eventAnnotations[m];
-            const home=m===homeMonth?'🏠 집구매 가능!':'';
-            return [`${age+Math.floor(m/12)}세 ${m%12+1}월`,evs?evs.join(' '):'',home].filter(Boolean).join('  ');
-          },
-          label:c=>{
-            if(c.dataset.label==='월 지출') return `월 지출: ${c.parsed.y.toLocaleString()}만원`;
-            if(c.dataset.label==='월 수익') return `월 수익: ${c.parsed.y.toLocaleString()}만원`;
-            return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`;
-          }
-        }}
-      },
-      scales:{
-        x:{ticks:{font:{size:10},color:'#9B7B8A',maxRotation:0,autoSkip:false,callback(v,i){return labels[i]||''}},grid:{display:false}},
-        y:{position:'left',ticks:{font:{size:10},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(0,0,0,.04)'}},
-        yFlow:{position:'right',ticks:{font:{size:9},color:'#9B7B8A',callback:v=>`${v}만`,maxTicksLimit:5},grid:{display:false},
-          title:{display:true,text:'월 수익·지출',color:'#9B7B8A',font:{size:8}}}
-      }
-    },
-    plugins:[markerPlugin]
-  });
-}
-
-function simulate(salary, asset, livingCost, investRate, targetPrice){
-  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
-  const netMonthly=calcTakehome(salary);
-  let cur=asset;
-  for(let m=0;m<360;m++){
-    // 연봉 3% 인상 (1월)
-    if(m>0&&m%12===0) {
-      const newNet=Math.round(calcTakehome(salary*(1+0.03)**(Math.floor(m/12))));
-      cur=cur*(1+monthlyR)+(newNet-livingCost);
-    } else {
-      cur=cur*(1+monthlyR)+(netMonthly-livingCost);
-    }
-    if(cur>=targetPrice) return{years:Math.ceil((m+1)/12),months:m+1,assetData:null};
-  }
-  return{years:null,months:null};
-}
-
-function simulateFull(salary, asset, livingCost, investRate, targetPrice, months=120){
-  const monthlyR=Math.pow(1+investRate/100,1/12)-1;
-  let cur=asset, data=[];
-  for(let m=0;m<months;m++){
-    const yr=Math.floor(m/12);
-    const netM=calcTakehome(salary*(1+0.03)**yr);
-    cur=cur*(1+monthlyR)+(netM-livingCost);
-    if(m%12===0) data.push(Math.round(cur));
-    if(cur>=targetPrice&&data[data.length-1]<0) break;
-  }
-  return data;
-}
-
-// ━━ 분리 시뮬레이션 엔진 (각자 CF 계산 후 합산) ━━
-function getEventDataFor(cfg, age){
-  // cfg: {weddingOn, weddingCost, weddingAge, babyOn, babyCost, babyAge, carOn, carCost, carAge}
-  const extraByYear={}, monthlyBabyByYr={};
-  let carMonthly=0;
-
-  if(cfg.weddingOn){
-    const yr=Math.max(0,(cfg.weddingAge||33)-age);
-    extraByYear[yr]=(extraByYear[yr]||0)+(cfg.weddingCost||5000);
-  }
-  if(cfg.babyOn){
-    const startYr=Math.max(0,(cfg.babyAge||35)-age);
-    const initCost=cfg.babyCost||500;
-    for(let i=0;i<26;i++){
-      const yr=startYr+i;
-      const c=Math.min(Math.round(initCost*Math.pow(1.03,i)),2000);
-      monthlyBabyByYr[yr]=(monthlyBabyByYr[yr]||0)+Math.round(c/12);
-    }
-  }
-  if(cfg.carOn){
-    const yr=Math.max(0,(cfg.carAge||30)-age);
-    extraByYear[yr]=(extraByYear[yr]||0)+(cfg.carCost||3500);
-    carMonthly=Math.round(Math.max((cfg.carCost||3500)*0.015,30));
-  }
-  return{extraByYear, monthlyBabyByYr, carMonthly};
-}
-
-// ━━ 합산 시뮬레이션 원칙 ━━
-// 투자수익률: (나% + 짝꿍%) / 2 → 합산 자산에 적용
-// 연봉인상률: 각자 계산 후 합산 실수령 사용
-// 목표집값:   (나 목표 + 짝꿍 목표) / 2
-// 결혼/육아:  공동비용 1회 (반반 부담이지만 합산이라 그냥 1회)
-// 차량유지비: 나 + 짝꿍 각각 합산
-function simulateCoupled({
-  meSalary, meAsset, meLiving, meInvestRate, meRaisePct, mePromo, meMaxSalary,
-  meEvents, meAge,
-  pSalary, pAsset, pLiving, pInvestRate, pRaisePct, pPromo, pMaxSalary,
-  pEvents, targetPrice, maxMonths
-}){
-  // 합산 자산에 적용할 평균 투자수익률
-  const avgInvestRate=(meInvestRate+pInvestRate)/2;
-  const monthlyR=Math.pow(1+avgInvestRate/100,1/12)-1;
-
-  let totalAsset=meAsset+pAsset;
-  const results=[];
-
-  for(let m=0;m<(maxMonths||360);m++){
-    const yr=Math.floor(m/12);
-    const curAge=meAge+yr;
-
-    // ── 각자 연봉 (각자 인상률 적용) → 합산 실수령
-    let meSal=meSalary*(1+meRaisePct/100)**yr;
-    if(mePromo&&yr>0&&yr%5===0) meSal*=1.10;
-    meSal=Math.min(meSal, meMaxSalary||999999);
-
-    let pSal=pSalary*(1+pRaisePct/100)**yr;
-    if(pPromo&&yr>0&&yr%5===0) pSal*=1.10;
-    pSal=Math.min(pSal, pMaxSalary||999999);
-
-    const meNet=calcTakehome(Math.round(meSal));
-    const pNet=calcTakehome(Math.round(pSal));
-    const totalNet=meNet+pNet;
-
-    // ── 합산 지출
-    const totalLiving=meLiving+pLiving;
-
-    // 차량 유지비: 각자 합산
-    const meCarM=(curAge>=(meEvents.carAge||30)&&meEvents.carOn)?meEvents.carMonthly:0;
-    const pCarM=(curAge>=(pEvents.carAge||30)&&pEvents.carOn)?pEvents.carMonthly:0;
-    const totalCarM=meCarM+pCarM;
-
-    // 육아비: 공동 1회 (meEvents 기준, 합산)
-    const totalBabyM=(meEvents.monthlyBabyByYr[yr]||0)+(pEvents.monthlyBabyByYr[yr]||0);
-
-    // 일시금: 결혼 1회 + 차량 각자
-    let totalEventCostM=0;
-    if(m%12===0){
-      // 결혼: meEvents에만 있음 (반반 처리된 값 × 2 = 원래값 → 합산에선 1회)
-      // getEventDataFor에서 /2 처리했으므로 me+p 더하면 원래 금액
-      totalEventCostM=(meEvents.extraByYear[yr]||0)+(pEvents.extraByYear[yr]||0);
-    }
-
-    // ── 합산 자산 갱신 (평균 투자수익률)
-    totalAsset=Math.max(0,totalAsset)*(1+monthlyR)+(totalNet-totalLiving-totalCarM-totalBabyM)-totalEventCostM;
-
-    results.push({month:m, total:Math.round(totalAsset), meNet, pNet});
-    if(totalAsset>=targetPrice) return{results, reachedMonth:m, years:Math.ceil((m+1)/12)};
-  }
-  return{results, reachedMonth:-1, years:null};
-}
-
-// ━━ 프리미엄 게이트 ━━
-function checkPremiumGate(){
-  const isPremium=localStorage.getItem('bfhc_premium')==='true';
-  if(isPremium){
-    document.getElementById('premium-gate').style.display='none';
-  } else {
-    document.getElementById('premium-gate').style.display='flex';
-    if(confirm('BF 분석기에서 프리미엄을 구매하면 커플 계산기를 이용할 수 있어요!\n\n지금 바로 이동할까요?')){
-      location.href='/bf-home/';
-    }
-  }
-}
-function goToBF(){ location.href='/bf-home/'; }
-
-// 짝꿍 링크로 들어온 경우 게이트 스킵
-function initGate(){
-  const params=new URLSearchParams(location.search);
-  const code=params.get('couple');
-  if(code){
-    // 짝꿍 링크면 게이트 없이 진입
-    document.getElementById('premium-gate').style.display='none';
-    S.isPartner=true;
-    S.coupleCode=code;
-    loadPartnerSession(code);
-    return;
-  }
-  // 일반 진입: 프리미엄 체크
-  const isPremium=localStorage.getItem('bfhc_premium')==='true';
-  if(isPremium){
-    document.getElementById('premium-gate').style.display='none';
-  }
-  // 저장된 데이터 복원
-  restoreData();
-}
-
-// ━━ 파트너 세션 로드 ━━
-async function loadPartnerSession(code){
-  try{
-    const{data,error}=await sb.from('couple_sessions').select('*').eq('session_code',code).single();
-    if(error||!data) throw new Error('세션 없음');
-    S.partnerData=data.host_data;
-    S.sessionId=data.id;
-    // 배너 표시
-    document.getElementById('partner-banner').style.display='flex';
-    document.getElementById('joined-notice').style.display='block';
-    // URL 정리
-    window.history.replaceState({},'',location.pathname);
-    showToast('💌 짝꿍이 공유한 링크예요! 내 정보를 입력해주세요');
-  }catch(e){
-    showToast('링크가 만료됐거나 올바르지 않아요');
-  }
+  let total=0;for(let i=0;i<26;i++)total+=Math.min(Math.round(startCost*Math.pow(1.03,i)),2000);
+  const el=document.getElementById('baby-total-cost');if(el)el.textContent=total>=10000?(total/10000).toFixed(1)+'억원':total.toLocaleString()+'만원';
 }
 
 // ━━ 탭 전환 ━━
@@ -1240,49 +1015,16 @@ function switchTab(tab){
   document.getElementById('page-partner').style.display=tab==='partner'?'block':'none';
   document.getElementById('tab-me').classList.toggle('active',tab==='me');
   document.getElementById('tab-partner').classList.toggle('active',tab==='partner');
-  // 나 탭으로 돌아올 때 분석하기 버튼 명시적으로 활성화
-  if(tab==='me'){
-    const btn=document.getElementById('page-me')?.querySelector('.analyze-btn');
-    if(btn){btn.disabled=false;btn.style.pointerEvents='auto';btn.style.opacity='1';}
-  }
+  if(tab==='me'){const btn=document.getElementById('page-me')?.querySelector('.analyze-btn');if(btn){btn.disabled=false;btn.style.pointerEvents='auto';btn.style.opacity='1';}}
 }
 
-// ━━ 입력 핸들러 ━━
-function onSalaryInput(){
-  const v=parseInt(document.getElementById('my-salary').value)||0;
-  const el=document.getElementById('my-takehome');
-  el.textContent=v>0?`→ 세후 월 실수령 약 ${calcTakehome(v).toLocaleString()}만원`:'';
-}
-function onAssetInput(){
-  const v=parseInt(document.getElementById('my-asset').value)||0;
-  const el=document.getElementById('my-asset-hint');
-  el.textContent=v>0?`→ ${fmtM(v)} 보유 중`:v===0?'자산 없이 시작':'';
-}
-function selectOpt(btn,key,val){
-  btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  S[key]=val;
-}
-// ━━ 내 분석 ━━
-async function analyzeMe(){
-  try{
-  const salary=parseInt(document.getElementById('my-salary').value);
-  const asset=parseInt(document.getElementById('my-asset').value)||0;
-  if(!salary||salary<500){showToast('연봉을 입력해주세요!');return;}
+// ━━ 내 분석 결과 렌더링 ━━
+let myChartInstance=null;
+function renderMyResult(result, inputs){
+  const {years,netMonthly,monthlySave,savingRate,monthlyInvest,totalIncome,carMonthly,totalMonthlyExpense,chartData,eventMarkers,targetPrice,weddingCost,babyTotal,carCost,totalEventCost}=result;
 
-  const targetPrice=PRICES[S.region][S.size];
-  const age=parseInt(document.getElementById('my-salary').dataset.age)||30;
-  const investRate=getInvestRate();
-  const result=simulateWithEvents(salary,asset,monthlyLivingCost,investRate,targetPrice,age,raiseState.rate,raiseState.promo);
-  const netMonthly=calcTakehome(salary);
-  const monthlySave=netMonthly-monthlyLivingCost;
-  const savingRate=netMonthly>0?Math.round(monthlySave/netMonthly*100):0;
-
-  S.myResult={salary,asset,region:S.region,size:S.size,living:monthlyLivingCost,investRate:investRate,targetPrice,years:result.years,netMonthly,monthlySave};
-
-  // 결과 표시
-  const yearsEl=document.getElementById('my-years-display');
-  yearsEl.textContent=result.years<=0?'지금 바로 가능! 🎉':result.years?`${result.years}년 후 🏠`:'30년 내 어려워요 😢';
+  // 헤더 결과
+  document.getElementById('my-years-display').textContent=years<=0?'지금 바로 가능! 🎉':years?`${years}년 후 🏠`:'30년 내 어려워요 😢';
   document.getElementById('my-result-label').textContent='혼자라면';
   document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표 · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
 
@@ -1291,729 +1033,298 @@ async function analyzeMe(){
   document.getElementById('stat-save').textContent=monthlySave>0?`${monthlySave.toLocaleString()}만`:'부족';
   document.getElementById('stat-rate').textContent=`${savingRate}%`;
 
-  // 내 자산 흐름 차트
-  renderMyChart(salary, asset, monthlyLivingCost, investRate, targetPrice, result.years);
+  // 차트
+  renderMyChart(chartData, eventMarkers, targetPrice, years);
 
   // 리포트
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
-  const myAge=parseInt(document.getElementById('my-salary').dataset.age)||30;
-  const events=getEventData(myAge);
-  const totalEventCost=Object.values(events.extraByYear).reduce((s,v)=>s+v,0);
-  const weddingOn=document.getElementById('ev-wedding')?.checked;
-  const babyOn=document.getElementById('ev-baby')?.checked;
-  const carOn=document.getElementById('ev-car')?.checked;
-  const weddingCost=weddingOn?(parseInt(document.getElementById('cost-wedding')?.value)||5000):0;
-  const babyCost=babyOn?(parseInt(document.getElementById('cost-baby-yr')?.value)||500):0;
-  const carCost=carOn?(parseInt(document.getElementById('cost-car')?.value)||3500):0;
-  const carMonthly=events.carMonthly||0;
-  const totalMonthlyExpense=monthlyLivingCost+carMonthly;
-
-  // 월 투자수익 계산
-  const monthlyInvest=Math.round(asset*(Math.pow(1+investRate/100,1/12)-1));
-  const totalIncome=netMonthly+monthlyInvest;
-  const babyStartCost=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
-  const babyTotal=babyOn?(()=>{let t=0;for(let i=0;i<26;i++)t+=Math.min(Math.round(babyStartCost*Math.pow(1.03,i)),2000);return t;})():0;
-  const babyMonthly=babyOn?Math.round(babyTotal/26/12):0;
-  const totalExpense=monthlyLivingCost+babyMonthly+carMonthly;
-  const netCashflow=totalIncome-totalExpense;
-
   const sections=[
-    {title:'🏠 목표',rows:[
-      ['지역',rN[S.region]],
-      ['평수',sN[S.size]],
-      ['목표 집값',fmt(targetPrice)],
-    ]},
+    {title:'🏠 목표',rows:[['지역',rN[inputs.region]],['평수',sN[inputs.size]],['목표 집값',fmt(targetPrice)]]},
     {title:'💰 수익',rows:[
-      ['현재 자산',fmt(asset)],
-      ['연봉 (세전)',fmt(salary)],
+      ['현재 자산',fmt(inputs.asset)],['연봉 (세전)',fmt(inputs.salary)],
       ['월 실수령',`약 ${netMonthly.toLocaleString()}만원`],
-      [`월 투자수익 (${investRate}%/년)`,`약 ${monthlyInvest.toLocaleString()}만원`],
-      ['연봉 인상',raiseState.promo?`연 ${raiseState.rate}% + 5년마다 진급`:`연 ${raiseState.rate}% 인상`],
+      [`월 투자수익 (${inputs.investRate}%/년)`,`약 ${monthlyInvest.toLocaleString()}만원`],
+      ['연봉 인상',inputs.promoRaise?`연 ${inputs.raisePct}% + 5년마다 진급`:`연 ${inputs.raisePct}% 인상`],
       ['📥 월 수익 합계',`약 ${totalIncome.toLocaleString()}만원`],
     ]},
     {title:'💸 지출',rows:[
-      ['월 생활비',`${monthlyLivingCost.toLocaleString()}만원`],
-      ['월 육아비',babyOn?`약 ${babyMonthly.toLocaleString()}만원 (월평균·26년)`:'미반영'],
-      ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원 (구매 후 매월)`:'미반영'],
-      ['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`],
+      ['월 생활비',`${inputs.living.toLocaleString()}만원`],
+      ['월 육아비',inputs.babyOn?`약 ${Math.round(babyTotal/26/12).toLocaleString()}만원 (월평균·26년)`:'미반영'],
+      ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원`:'미반영'],
+      ['📤 월 지출 합계',`약 ${totalMonthlyExpense.toLocaleString()}만원`],
     ]},
-
     {title:'📊 결과',rows:[
-      ['집 구매 가능',result.years>=31?'30년 내 어려워요':result.years<=0?'지금 바로! 🎉':`약 ${result.years}년 후`],
-      ['월 순수익',`약 ${netCashflow.toLocaleString()}만원`],
+      ['집 구매 가능',years>=31?'30년 내 어려워요':years<=0?'지금 바로! 🎉':`약 ${years}년 후`],
+      ['월 순수익',`약 ${(totalIncome-totalMonthlyExpense).toLocaleString()}만원`],
       ['저축률',`${savingRate}%`],
     ]},
   ];
-
   document.getElementById('my-report').innerHTML=sections.map(sec=>`
-    <div>
-      <div class="report-section-title">${sec.title}</div>
-      ${sec.rows.map(([l,v])=>`<div class="pdf-row"><span class="pdf-row-label">${l}</span><span class="pdf-row-val">${v}</span></div>`).join('')}
+    <div><div class="report-section-title">${sec.title}</div>
+    ${sec.rows.map(([l,v])=>`<div class="pdf-row"><span class="pdf-row-label">${l}</span><span class="pdf-row-val">${v}</span></div>`).join('')}
     </div>`).join('');
 
   document.getElementById('my-result').style.display='block';
   setTimeout(()=>document.getElementById('my-result').scrollIntoView({behavior:'smooth',block:'start'}),100);
-
-  // 저장
   saveData();
-
-  // Supabase 커플 세션 생성 (최초 1회만)
-  if(!S.sessionId&&!S.isPartner) await createCoupleSession();
-
-  // 짝꿍 데이터 있으면 합산 결과 갱신 (나 탭에 있으면 탭 이동 안 함)
-  if(S.partnerData){
-    const onMeTab=document.getElementById('page-me').style.display!=='none';
-    S._suppressTabSwitch=onMeTab;
-    renderCoupleResult();
-  }
-  }catch(e){
-    console.error('analyzeMe 에러:', e);
-    showToast('분석 중 오류가 발생했어요. 다시 시도해주세요.');
-  }
 }
 
-// ━━ 커플 세션 생성 ━━
-async function createCoupleSession(){
-  try{
-    const code=Math.random().toString(36).substring(2,8).toUpperCase();
-    const{data,error}=await sb.from('couple_sessions').insert({
-      session_code:code,
-      host_data:S.myResult,
-      status:'waiting',
-      expires_at:new Date(Date.now()+24*60*60*1000).toISOString()
-    }).select().single();
-    if(error)throw error;
-    S.coupleCode=code;
-    S.sessionId=data.id;
-    const link=`${location.origin}${location.pathname}?couple=${code}`;
-    document.getElementById('couple-link-box').textContent=link;
-    document.getElementById('couple-link-box').dataset.link=link;
-    // 폴링 시작 + 대기 배너 표시
-    startPolling();
-    const wb=document.getElementById('waiting-banner');
-    if(wb) wb.style.display='block';
-  }catch(e){
-    // 폴백: URL 인코딩 방식
-    const link=`${location.origin}${location.pathname}?p=${btoa(JSON.stringify(S.myResult))}`;
-    document.getElementById('couple-link-box').textContent=link;
-    document.getElementById('couple-link-box').dataset.link=link;
-  }
+// ━━ 내 차트 렌더링 ━━
+function renderMyChart(chartData, eventMarkers, targetPrice, years){
+  const labels=chartData.map(d=>`${d.age}세`);
+  const assetArr=chartData.map(d=>+(d.asset/10000).toFixed(2));
+  const targetArr=chartData.map(()=>+(targetPrice/10000).toFixed(2));
+  const incomeArr=chartData.map(d=>d.netMonthly);
+  const expenseArr=chartData.map(d=>d.monthlyExpense);
+  const homeIdx=years>0&&years<chartData.length?years-1:chartData.findIndex(d=>d.asset>=targetPrice);
+
+  const eventAnnotations={};
+  if(eventMarkers.wedding){const idx=eventMarkers.wedding.year;if(idx<chartData.length)eventAnnotations[idx]=['💍결혼'];}
+  if(eventMarkers.baby){const idx=eventMarkers.baby.year;if(idx<chartData.length){eventAnnotations[idx]?eventAnnotations[idx].push('👶출산'):(eventAnnotations[idx]=['👶출산']);}}
+  if(eventMarkers.car){const idx=eventMarkers.car.year;if(idx<chartData.length){eventAnnotations[idx]?eventAnnotations[idx].push('🚗차량'):(eventAnnotations[idx]=['🚗차량']);}}
+
+  const markerPlugin={id:'myMarker',afterDraw(chart){
+    const{ctx:c,scales:{x,y}}=chart;
+    Object.entries(eventAnnotations).forEach(([idx,evs])=>{
+      const xPos=x.getPixelForValue(Number(idx));
+      c.save();c.strokeStyle='rgba(255,107,157,0.5)';c.lineWidth=1.5;c.setLineDash([3,3]);
+      c.beginPath();c.moveTo(xPos,y.top);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
+      c.save();c.fillStyle='#FF6B9D';c.beginPath();c.arc(xPos,y.bottom,4,0,Math.PI*2);c.fill();
+      c.font='bold 9px sans-serif';c.textAlign='center';c.fillStyle='#FF6B9D';
+      c.fillText(evs.join(' '),xPos,y.bottom+14);c.restore();
+    });
+    if(homeIdx>=0&&homeIdx<chartData.length){
+      const xPos=x.getPixelForValue(homeIdx),homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
+      c.save();c.strokeStyle='rgba(61,184,138,0.8)';c.lineWidth=2;c.setLineDash([]);
+      c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
+      c.save();const bw=80,bh=26,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-8,y.top+2);
+      c.fillStyle='#3DB88A';c.beginPath();c.roundRect(bx,by,bw,bh,6);c.fill();
+      c.fillStyle='white';c.font='bold 10px sans-serif';c.textAlign='center';c.fillText('🏠 집구매 가능!',bx+bw/2,by+16);c.restore();
+    }
+  }};
+
+  if(myChartInstance)myChartInstance.destroy();
+  const ctx=document.getElementById('my-chart').getContext('2d');
+  myChartInstance=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'자산',data:assetArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true,yAxisID:'y'},
+    {label:'목표',data:targetArr,borderColor:'#3DB88A',borderWidth:1.5,pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
+    {label:'월 지출',data:expenseArr,borderColor:'#FF9966',borderWidth:1.8,pointRadius:0,tension:.1,fill:false,borderDash:[3,2],yAxisID:'yFlow'},
+    {label:'월 수익',data:incomeArr,borderColor:'#6CB4E4',borderWidth:1.8,pointRadius:0,tension:.3,fill:false,borderDash:[5,2],yAxisID:'yFlow'},
+  ]},options:{responsive:true,maintainAspectRatio:true,animation:{duration:600},layout:{padding:{bottom:20}},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='yFlow'?`${c.dataset.label}: ${c.parsed.y.toLocaleString()}만원`:`${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`}}},
+    scales:{
+      x:{ticks:{font:{size:10},color:'#9B7B8A',maxRotation:0},grid:{display:false}},
+      y:{position:'left',ticks:{font:{size:10},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(0,0,0,.04)'}},
+      yFlow:{position:'right',ticks:{font:{size:9},color:'#9B7B8A',callback:v=>`${v}만`,maxTicksLimit:5},grid:{display:false},title:{display:true,text:'월 수익·지출',color:'#9B7B8A',font:{size:8}}}
+    }
+  },plugins:[markerPlugin]});
 }
 
-// ━━ 합산 결과 렌더링 ━━
-function renderCoupleResult(){
-  const me=S.myResult;
-  const partner=S.partnerData;
-  if(!me||!partner)return;
+// ━━ 합산 결과 UI 렌더링 ━━
+let coupleChart=null;
+function renderCoupleUI(result, me, partner){
+  const{coupleYears,soloYears,saved,targetPrice,avgInvestRate,report,coupleChart:cData,soloChart:sData}=result;
+  const{meNet,pNet,meSalary,pSalary,meAsset,pAsset,meLiving,pLiving,meCarMonthly,pCarMonthly,meCarCost,pCarCost,
+        combinedMonthlyInvest,totalIncome,totalExpense,weddingCost,babyTotal,babyMonthlyAvg,totalEventCost,
+        meRaisePct,mePromo,pRaisePct,pPromo}=report;
 
-  // ── 기본값 ──
-  const meSalary=me.salary||0;
-  const partnerSalary=partner.salary||0;
-  const combinedSalary=meSalary+partnerSalary;
-  const meAge=me.age||30;
-
-  // 나 설정
-  const meLiving=me.living||monthlyLivingCost||200;
-  const meInvestRate=me.investRate||getInvestRate()||3;
-  const meRaisePct=raiseState.rate||3;
-  const mePromo=raiseState.promo||true;
-  const meMaxSalary=raiseState.maxSalary||999999;
-
-  // 짝꿍 설정 (저장된 데이터 or 현재 PS 설정)
-  const partnerLiving=partner.living||PS.living||200;
-  const pInvestRate=partner.investRate||PS.investRate||3;
-  const pRaisePct=partner.raisePct||PS.raisePct||3;
-  const pPromo=partner.promoRaise!==undefined?partner.promoRaise:(PS.promoRaise||true);
-  const pMaxSalary=partner.maxSalary||PS.maxSalary||999999;
-
-  // 목표 집값: 지역 다를 때 평균
-  const meRegion=me.region||'seoul';
-  const pRegion=partner.region||me.region||'seoul';
-  const meSize=me.size||'mid';
-  const pSize=partner.size||me.size||'mid';
-  const meTargetPrice=PRICES[meRegion][meSize];
-  const pTargetPrice=PRICES[pRegion][pSize];
-  const targetPrice=meRegion===pRegion&&meSize===pSize
-    ? meTargetPrice
-    : Math.round((meTargetPrice+pTargetPrice)/2);
-
-  // 나 이벤트 설정
-  const meEvCfg={
-    weddingOn:document.getElementById('ev-wedding')?.checked,
-    weddingCost:parseInt(document.getElementById('cost-wedding')?.value)||5000,
-    weddingAge:parseInt(document.getElementById('age-wedding')?.textContent?.replace('세',''))||33,
-    babyOn:document.getElementById('ev-baby')?.checked,
-    babyCost:parseInt(document.getElementById('cost-baby-yr')?.value)||500,
-    babyAge:parseInt(document.getElementById('age-baby')?.textContent?.replace('세',''))||35,
-    carOn:document.getElementById('ev-car')?.checked,
-    carCost:parseInt(document.getElementById('cost-car')?.value)||3500,
-    carAge:parseInt(document.getElementById('c-age-car-val')?.value)||30,
-  };
-
-  // 짝꿍 이벤트 설정
-  const pEvCfg={
-    weddingOn:partner.weddingOn!==undefined?partner.weddingOn:meEvCfg.weddingOn,
-    weddingCost:partner.weddingCost||meEvCfg.weddingCost,
-    weddingAge:meEvCfg.weddingAge, // 결혼 나이는 동일
-    babyOn:partner.babyOn!==undefined?partner.babyOn:meEvCfg.babyOn,
-    babyCost:partner.babyCost||meEvCfg.babyCost,
-    babyAge:meEvCfg.babyAge, // 출산 나이 동일
-    carOn:partner.carOn!==undefined?partner.carOn:meEvCfg.carOn,
-    carCost:partner.carCost||meEvCfg.carCost,
-    carAge:partner.carAge||PS.carAge||30,
-  };
-
-  // 이벤트 데이터 계산
-  // 결혼/육아: 반반 부담 → 각자 cfg에서 비용 /2 적용
-  const meEvCfgSplit={...meEvCfg,
-    weddingCost:meEvCfg.weddingOn?Math.round(meEvCfg.weddingCost/2):0,
-    babyCost:meEvCfg.babyOn?Math.round(meEvCfg.babyCost/2):0,
-  };
-  const pEvCfgSplit={...pEvCfg,
-    weddingCost:pEvCfg.weddingOn?Math.round(pEvCfg.weddingCost/2):0,
-    babyCost:pEvCfg.babyOn?Math.round(pEvCfg.babyCost/2):0,
-  };
-  const meEvents={...getEventDataFor(meEvCfgSplit, meAge), carAge:meEvCfg.carAge, carOn:meEvCfg.carOn};
-  const pEvents={...getEventDataFor(pEvCfgSplit, meAge), carAge:pEvCfg.carAge, carOn:pEvCfg.carOn};
-
-  // 총 이벤트 비용 (리포트용)
-  const totalEventCost=
-    (meEvCfg.weddingOn?meEvCfg.weddingCost:0)+
-    (meEvCfg.babyOn?(()=>{let t=0;const bc=meEvCfg.babyCost;for(let i=0;i<26;i++)t+=Math.min(Math.round(bc*Math.pow(1.03,i)),2000);return t;})():0)+
-    (meEvCfg.carOn?meEvCfg.carCost:0)+
-    (pEvCfg.carOn?pEvCfg.carCost:0);
-
-  // ── 분리 시뮬레이션 ──
-  const coupleSimResult=simulateCoupled({
-    meSalary,meAsset:me.asset||0,meLiving,meInvestRate,meRaisePct,mePromo,meMaxSalary,
-    meEvents,meAge,
-    pSalary:partnerSalary,pAsset:partner.asset||0,pLiving:partnerLiving,
-    pInvestRate,pRaisePct,pPromo,pMaxSalary,pEvents,
-    sharedWeddingCost:0, sharedBabyCost:0, // 이미 각자 cfg에서 반반 처리
-    targetPrice,maxMonths:360
-  });
-
-  // 혼자 시뮬 (나 기준, 이벤트 포함)
-  const soloResult=simulateWithEvents(meSalary,me.asset||0,meLiving,meInvestRate,targetPrice,meAge,meRaisePct,mePromo);
-
-  const soloYears=soloResult.years||31;
-  const coupleYears=coupleSimResult.years||31;
-  const saved=soloYears-coupleYears;
-
-  // 개인별 실수령 (리포트용)
-  const meNet=calcTakehome(meSalary);
-  const partnerNet=calcTakehome(partnerSalary);
-  const combinedNet=meNet+partnerNet;
-  const combinedAsset=(me.asset||0)+(partner.asset||0);
-  const combinedLiving=meLiving+partnerLiving;
-  const carMonthlyCost=(meEvents.carMonthly||0)+(pEvents.carMonthly||0); // 나+짝꿍 차량 합산
-  const meSave=meNet-meLiving-(meEvents.carMonthly||0);
-  const partnerSave=partnerNet-partnerLiving-(pEvents.carMonthly||0);
-  const combinedSave=meSave+partnerSave;
-  const investRate=meInvestRate;
-
-  // ── UI 업데이트 ──
+  // 혼자/둘이 비교카드
   document.getElementById('cr-solo').textContent=soloYears>=31?'30년+':soloYears<=0?'즉시':soloYears;
   document.getElementById('cr-couple').textContent=coupleYears>=31?'30년+':coupleYears<=0?'즉시':coupleYears;
   document.getElementById('cr-saved').textContent=saved>0?`${saved}년 단축! 🎉`:saved===0?'비슷해요':'혼자가 더 빠를 수도';
-  document.getElementById('cr-detail').textContent=
-    `합산 연봉 ${fmt(combinedSalary)} · 합산 자산 ${fmt(combinedAsset)} · 목표 ${fmt(targetPrice)}`;
+  document.getElementById('cr-detail').textContent=`합산 연봉 ${fmt(meSalary+pSalary)} · 합산 자산 ${fmt(meAsset+pAsset)} · 목표 ${fmt(targetPrice)}`;
 
-  // ── 개인별 리포트 ──
-  document.getElementById('report-me-salary').textContent=`연봉 ${fmt(meSalary)}`;
-  document.getElementById('report-me-asset').textContent=`자산 ${fmt(me.asset||0)}`;
-  document.getElementById('report-me-save').textContent=`월 저축 ${meSave>0?meSave.toLocaleString()+'만':'부족'}`;
-  document.getElementById('report-partner-salary').textContent=`연봉 ${fmt(partnerSalary)}`;
-  document.getElementById('report-partner-asset').textContent=`자산 ${fmt(partner.asset||0)}`;
-  document.getElementById('report-partner-save').textContent=`월 저축 ${partnerSave>0?partnerSave.toLocaleString()+'만':'부족'}`;
-
-  // ── 합산 리포트 ──
-  const weddingOn=document.getElementById('ev-wedding')?.checked;
-  const babyOn=document.getElementById('ev-baby')?.checked;
-  const carOn=document.getElementById('ev-car')?.checked;
-  const weddingCost=weddingOn?(parseInt(document.getElementById('cost-wedding')?.value)||5000):0;
-  const babyCost=babyOn?(parseInt(document.getElementById('cost-baby-yr')?.value)||500):0;
-  const carCost=carOn?(parseInt(document.getElementById('cost-car')?.value)||3500):0;
-
-  // 나/짝꿍 분리 표기 헬퍼
+  // 개인별 카드
   const fmtV=v=>v>=10000?`${(v/10000).toFixed(1)}억`:`${v.toLocaleString()}만원`;
-  const fmtPairV=(a,b)=>
-    `<span style="color:#FF6B9D;font-weight:700">${fmtV(a)}</span>`+
-    `<span style="color:var(--text-soft);font-size:.85em"> + </span>`+
-    `<span style="color:#9B7BCC;font-weight:700">${fmtV(b)}</span>`;
+  const fmtPairV=(a,b)=>`<span style="color:#FF6B9D;font-weight:700">${fmtV(a)}</span><span style="color:var(--text-soft);font-size:.85em"> + </span><span style="color:#9B7BCC;font-weight:700">${fmtV(b)}</span>`;
 
-  // 합산 계산 (평균 투자수익률 적용)
-  const avgInvestRate=(meInvestRate+pInvestRate)/2;
-  const combinedMonthlyInvest=Math.round(combinedAsset*(Math.pow(1+avgInvestRate/100,1/12)-1));
-  const combinedTotalIncome=combinedNet+combinedMonthlyInvest;
-  let babyTotalCost=0;
-  if(babyOn){const bc=parseInt(document.getElementById('cost-baby-yr')?.value)||500;for(let i=0;i<26;i++)babyTotalCost+=Math.min(Math.round(bc*Math.pow(1.03,i)),2000);}
-  const babyMonthlyAvg=babyOn?Math.round(babyTotalCost/26/12):0;
-  const combinedTotalExpense=combinedLiving+babyMonthlyAvg+carMonthlyCost; // 생활비+육아+나차량+짝꿍차량
-  const combinedNetCashflow=combinedTotalIncome-combinedTotalExpense;
-  const combinedSavingRate=combinedNet>0?Math.round(combinedSave/combinedNet*100):0;
+  document.getElementById('report-me-salary').textContent=`연봉 ${fmt(meSalary)}`;
+  document.getElementById('report-me-asset').textContent=`자산 ${fmt(meAsset)}`;
+  document.getElementById('report-me-save').textContent=`월 저축 ${(meNet-meLiving-meCarMonthly)>0?(meNet-meLiving-meCarMonthly).toLocaleString()+'만':'부족'}`;
+  document.getElementById('report-partner-salary').textContent=`연봉 ${fmt(pSalary)}`;
+  document.getElementById('report-partner-asset').textContent=`자산 ${fmt(pAsset)}`;
+  document.getElementById('report-partner-save').textContent=`월 저축 ${(pNet-pLiving-pCarMonthly)>0?(pNet-pLiving-pCarMonthly).toLocaleString()+'만':'부족'}`;
+
+  // 합산 리포트
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
-
   const coupleSections=[
-    {title:'🏠 목표',rows:[
-      ['지역',rN[me.region||'seoul']],
-      ['평수',sN[me.size||'mid']],
-      ['목표 집값',fmt(targetPrice)],
-    ]},
+    {title:'🏠 목표',rows:[['지역',rN[me.region||'seoul']],['평수',sN[me.size||'mid']],['목표 집값',fmt(targetPrice)]]},
     {title:'💰 수익',rows:[
-      ['현재 자산',fmtPairV(me.asset||0,partner.asset||0)],
-      ['연봉 (세전)',fmtPairV(meSalary,partnerSalary)],
-      ['월 실수령',fmtPairV(meNet,partnerNet)],
+      ['현재 자산',fmtPairV(meAsset,pAsset)],
+      ['연봉 (세전)',fmtPairV(meSalary,pSalary)],
+      ['월 실수령',fmtPairV(meNet,pNet)],
       [`월 투자수익 (평균${avgInvestRate.toFixed(1)}%/년)`,`약 ${combinedMonthlyInvest.toLocaleString()}만원`],
-      ['연봉 인상',raiseState.promo?`연 ${raiseState.rate}% + 5년마다 진급`:`연 ${raiseState.rate}% 인상`],
-      ['📥 합산 월 수익',`약 ${combinedTotalIncome.toLocaleString()}만원`],
+      ['연봉 인상',`나 ${meRaisePct}%${mePromo?'+진급':''} / 짝꿍 ${pRaisePct}%${pPromo?'+진급':''}`],
+      ['📥 합산 월 수익',`약 ${totalIncome.toLocaleString()}만원`],
     ]},
     {title:'💸 지출',rows:[
-      ['월 생활비',fmtPairV(meLiving,partnerLiving)],
-      ['월 육아비',babyOn?`약 ${babyMonthlyAvg.toLocaleString()}만원 (월평균·26년)`:'미반영'],
-      ['월 차량 유지비',
-        (meEvents.carMonthly||0)>0||(pEvents.carMonthly||0)>0
-          ? fmtPairV(meEvents.carMonthly||0, pEvents.carMonthly||0)
-          : '미반영'
-      ],
-      ['📤 합산 월 지출',`약 ${combinedTotalExpense.toLocaleString()}만원`],
+      ['월 생활비',fmtPairV(meLiving,pLiving)],
+      ['월 육아비',babyMonthlyAvg>0?`약 ${babyMonthlyAvg.toLocaleString()}만원 (월평균·26년)`:'미반영'],
+      ['월 차량 유지비',meCarMonthly+pCarMonthly>0?fmtPairV(meCarMonthly,pCarMonthly):'미반영'],
+      ['📤 합산 월 지출',`약 ${totalExpense.toLocaleString()}만원`],
     ]},
     {title:'🎯 이벤트 비용',rows:[
-      ['💍 결혼',weddingOn?fmt(weddingCost):'미반영'],
-      ['👶 육아 총비용',babyOn?fmt(babyTotalCost):'미반영'],
-      ['🚗 차량 구매',
-        meEvCfg.carOn||pEvCfg.carOn
-          ? fmtPairV(meEvCfg.carOn?meEvCfg.carCost:0, pEvCfg.carOn?pEvCfg.carCost:0)
-          : '미반영'
-      ],
+      ['💍 결혼',weddingCost>0?fmt(weddingCost):'미반영'],
+      ['👶 육아 총비용',babyTotal>0?fmt(babyTotal):'미반영'],
+      ['🚗 차량 구매',meCarCost+pCarCost>0?fmtPairV(meCarCost,pCarCost):'미반영'],
       ['총 이벤트 비용',fmt(totalEventCost)],
     ]},
     {title:'📊 결과',rows:[
       ['혼자라면',soloYears>=31?'30년 내 어려워요':`${soloYears}년 후`],
       ['💑 둘이라면',coupleYears>=31?'30년 내 어려워요':coupleYears<=0?'지금 바로! 🎉':`${coupleYears}년 후`],
-      ['합산 월 순수익',`약 ${combinedNetCashflow.toLocaleString()}만원`],
-      ['합산 저축률',`${combinedSavingRate}%`],
+      ['합산 월 순수익',`약 ${(totalIncome-totalExpense).toLocaleString()}만원`],
       saved>0?['⚡ 단축 기간',`${saved}년 빠름! 🎉`]:null,
     ]},
   ];
-
   document.getElementById('couple-report').innerHTML=coupleSections.map(sec=>`
-    <div>
-      <div class="report-section-title">${sec.title}</div>
-      ${sec.rows.filter(Boolean).map(([l,v])=>`
-        <div class="pdf-row">
-          <span class="pdf-row-label">${l}</span>
-          <span class="pdf-row-val" style="${l.includes('둘이')||l.includes('⚡')?'color:var(--pink);font-weight:900':''}">${v}</span>
-        </div>`).join('')}
+    <div><div class="report-section-title">${sec.title}</div>
+    ${sec.rows.filter(Boolean).map(([l,v])=>`<div class="pdf-row"><span class="pdf-row-label">${l}</span><span class="pdf-row-val" style="${l.includes('둘이')||l.includes('⚡')?'color:var(--pink);font-weight:900':''}">${v}</span></div>`).join('')}
     </div>`).join('');
 
-  // ── 차트 ──
-  renderCoupleChart({
-    me, partner, targetPrice,
-    meLiving, partnerLiving,
-    meInvestRate, pInvestRate,
-    meRaisePct, mePromo, meMaxSalary,
-    pRaisePct, pPromo, pMaxSalary,
-    meEvents, pEvents,
-    soloYears, coupleYears, meAge
-  });
+  // 합산 차트
+  renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloYears);
 
-  // ── 짝꿍 탭 잠금 해제 ──
+  // 잠금 해제
   document.getElementById('partner-lock').style.display='none';
   document.getElementById('couple-result-section').style.display='block';
   document.getElementById('partner-tab-icon').textContent='💑';
   document.getElementById('tab-partner-sub').textContent='합산 결과 완성! 🎉';
   document.getElementById('tab-me-sub').textContent='분석 완료 ✅';
-
-  // 탭 이동: 억제 플래그 없으면 짝꿍 탭으로
-  if(!S._suppressTabSwitch){
-    switchTab('partner');
-  }
-  S._suppressTabSwitch=false;
 }
 
-// ━━ 차트 ━━
-let coupleChart=null;
-function renderCoupleChart({
-  me, partner, targetPrice,
-  meLiving, partnerLiving,
-  meInvestRate, pInvestRate,
-  meRaisePct, mePromo, meMaxSalary,
-  pRaisePct, pPromo, pMaxSalary,
-  meEvents, pEvents,
-  soloYears, coupleYears, meAge
-}){
-  // meAge, meEvents, pEvents 등은 파라미터로 전달받음
-  // 차트용 시뮬 (simulateCoupled 원칙 동일)
-  const maxM=Math.min(Math.max(soloYears,coupleYears,20)*12+24,360);
-  const avgInvRate=(meInvestRate+pInvestRate)/2;
-  const monthlyR=Math.pow(1+avgInvRate/100,1/12)-1;
-  const meMonthlyR=Math.pow(1+meInvestRate/100,1/12)-1;
+// ━━ 합산 차트 렌더링 ━━
+function renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloYears){
+  const labels=cData.map(d=>`${d.age}세`);
+  const coupleArr=cData.map(d=>+(d.asset/10000).toFixed(2));
+  const soloArr=sData.map(d=>+(d.asset/10000).toFixed(2));
+  const targetLine=cData.map(()=>+(targetPrice/10000).toFixed(2));
+  const coupleHomeIdx=coupleYears>0&&coupleYears<cData.length?coupleYears-1:-1;
+  const soloHomeIdx=soloYears>0&&soloYears<sData.length?soloYears-1:-1;
 
-  // 혼자(나) 시뮬
-  const soloResults=[];
-  {
-    let cur=me.asset||0;
-    for(let m=0;m<=maxM;m++){
-      const yr=Math.floor(m/12),curAge=meAge+yr;
-      let sal=me.salary*(1+meRaisePct/100)**yr;
-      if(mePromo&&yr>0&&yr%5===0) sal*=1.10;
-      sal=Math.min(sal,meMaxSalary||999999);
-      const netM=calcTakehome(Math.round(sal));
-      const carMnt=(curAge>=meEvents.carAge&&meEvents.carOn)?meEvents.carMonthly:0;
-      const babyM=meEvents.monthlyBabyByYr[yr]||0;
-      const evCost=m%12===0?(meEvents.extraByYear[yr]||0):0;
-      cur=Math.max(0,cur)*(1+meMonthlyR)+(netM-meLiving-carMnt-babyM)-evCost;
-      soloResults.push({month:m,asset:Math.round(cur)});
+  const markerPlugin={id:'coupleMarker',afterDraw(chart){
+    const{ctx:c,scales:{x,y}}=chart;
+    if(coupleHomeIdx>=0){
+      const xPos=x.getPixelForValue(coupleHomeIdx),homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
+      c.save();c.strokeStyle='rgba(255,107,157,0.8)';c.lineWidth=2;c.setLineDash([]);
+      c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
+      c.save();const bw=82,bh=26,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-8,y.top+2);
+      c.fillStyle='#FF6B9D';c.beginPath();c.roundRect(bx,by,bw,bh,6);c.fill();
+      c.fillStyle='white';c.font='bold 10px sans-serif';c.textAlign='center';c.fillText('💑 커플 구매!',bx+bw/2,by+16);c.restore();
+      c.save();c.fillStyle='#FF6B9D';c.beginPath();c.arc(xPos,homeY,5,0,Math.PI*2);c.fill();c.strokeStyle='white';c.lineWidth=2;c.stroke();c.restore();
     }
-  }
-
-  // 커플 합산 시뮬 (평균 투자수익률 적용)
-  const coupleResults=[];
-  {
-    let totalA=(me.asset||0)+(partner.asset||0);
-    for(let m=0;m<=maxM;m++){
-      const yr=Math.floor(m/12),curAge=meAge+yr;
-      // 각자 연봉인상률로 실수령 계산
-      let meSal=me.salary*(1+meRaisePct/100)**yr;
-      if(mePromo&&yr>0&&yr%5===0) meSal*=1.10;
-      meSal=Math.min(meSal,meMaxSalary||999999);
-      let pSal=partner.salary*(1+pRaisePct/100)**yr;
-      if(pPromo&&yr>0&&yr%5===0) pSal*=1.10;
-      pSal=Math.min(pSal,pMaxSalary||999999);
-      const totalNet=calcTakehome(Math.round(meSal))+calcTakehome(Math.round(pSal));
-      // 지출 합산
-      const meCarM=(curAge>=meEvents.carAge&&meEvents.carOn)?meEvents.carMonthly:0;
-      const pCarM=(curAge>=pEvents.carAge&&pEvents.carOn)?pEvents.carMonthly:0;
-      const totalLiving=meLiving+partnerLiving;
-      const totalCarM=meCarM+pCarM;
-      const totalBabyM=(meEvents.monthlyBabyByYr[yr]||0)+(pEvents.monthlyBabyByYr[yr]||0);
-      const totalEvCost=m%12===0?((meEvents.extraByYear[yr]||0)+(pEvents.extraByYear[yr]||0)):0;
-      // 평균 투자수익률로 합산 자산 복리
-      totalA=totalA*(1+monthlyR)+(totalNet-totalLiving-totalCarM-totalBabyM)-totalEvCost;
-      coupleResults.push({month:m,asset:Math.round(totalA)});
+    if(soloHomeIdx>=0&&soloHomeIdx!==coupleHomeIdx){
+      const xPos=x.getPixelForValue(soloHomeIdx),homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
+      const yOff=coupleHomeIdx>=0&&Math.abs(soloHomeIdx-coupleHomeIdx)<12?36:8;
+      c.save();c.strokeStyle='rgba(200,168,233,0.7)';c.lineWidth=1.5;c.setLineDash([4,3]);
+      c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
+      c.save();const bw=74,bh=22,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-yOff,y.top+2);
+      c.fillStyle='#C8A8E9';c.beginPath();c.roundRect(bx,by,bw,bh,5);c.fill();
+      c.fillStyle='white';c.font='bold 9px sans-serif';c.textAlign='center';c.fillText('👤 혼자 구매',bx+bw/2,by+14);c.restore();
     }
-  }
-
-  const soloHomeM=soloResults.findIndex(r=>r.asset>=targetPrice);
-  const coupleHomeM=coupleResults.findIndex(r=>r.asset>=targetPrice);
-
-  // 이벤트 마커 (meEvCfg 대신 meEvents 파라미터 기반)
-  const wOn=document.getElementById('ev-wedding')?.checked;
-  const bOn=document.getElementById('ev-baby')?.checked;
-  const wAge=parseInt(document.getElementById('age-wedding')?.textContent?.replace('세',''))||33;
-  const bAge=parseInt(document.getElementById('age-baby')?.textContent?.replace('세',''))||35;
-  const eventAnnotations={};
-  if(wOn){const m=(wAge-meAge)*12;if(m>=0&&m<=maxM)eventAnnotations[m]=['💍결혼'];}
-  if(bOn){const m=(bAge-meAge)*12;if(m>=0&&m<=maxM){eventAnnotations[m]?eventAnnotations[m].push('👶출산'):(eventAnnotations[m]=['👶출산']);}}
-  // 차량: 나/짝꿍 각각
-  if(meEvents.carOn){const m=(meEvents.carAge-meAge)*12;if(m>=0&&m<=maxM){eventAnnotations[m]?eventAnnotations[m].push('🚗나'):(eventAnnotations[m]=['🚗나']);}}
-  if(pEvents.carOn){const m=(pEvents.carAge-meAge)*12;if(m>=0&&m<=maxM){eventAnnotations[m]?eventAnnotations[m].push('🚗짝꿍'):(eventAnnotations[m]=['🚗짝꿍']);}}
-
-  // X축 라벨 (시작/끝/집구매 시점만)
-  const labelAges=new Set([meAge,meAge+Math.floor(maxM/12)]);
-  if(soloHomeM>=0) labelAges.add(meAge+Math.floor(soloHomeM/12));
-  if(coupleHomeM>=0) labelAges.add(meAge+Math.floor(coupleHomeM/12));
-
-  // 데이터 배열
-  const labels=[], soloArr=[], coupleArr=[], targetLine=[];
-  for(let m=0;m<=maxM;m++){
-    const curAge=meAge+Math.floor(m/12);
-    labels.push(m%12===0&&labelAges.has(curAge)?`${curAge}세`:'');
-    soloArr.push(+((soloResults[m]?.asset||soloResults[soloResults.length-1]?.asset||0)/10000).toFixed(2));
-    coupleArr.push(+((coupleResults[m]?.asset||coupleResults[coupleResults.length-1]?.asset||0)/10000).toFixed(2));
-    targetLine.push(+(targetPrice/10000).toFixed(2));
-  }
-
-  // 마커 플러그인 (집구매 플래그만, 이벤트 마커 제거)
-  const markerPlugin={
-    id:'coupleMarker',
-    afterDraw(chart){
-      const{ctx:c,scales:{x,y}}=chart;
-      // 커플 집구매 플래그
-      if(coupleHomeM>=0&&coupleHomeM<=maxM){
-        const xPos=x.getPixelForValue(coupleHomeM);
-        const homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
-        c.save();c.strokeStyle='rgba(255,107,157,0.8)';c.lineWidth=2;c.setLineDash([]);
-        c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
-        c.save();
-        const bw=82,bh=26,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-8,y.top+2);
-        c.fillStyle='#FF6B9D';c.beginPath();c.roundRect(bx,by,bw,bh,6);c.fill();
-        c.fillStyle='white';c.font='bold 10px sans-serif';c.textAlign='center';
-        c.fillText('💑 커플 구매!',bx+bw/2,by+16);c.restore();
-        // 교차점 점
-        c.save();c.fillStyle='#FF6B9D';
-        c.beginPath();c.arc(xPos,homeY,5,0,Math.PI*2);c.fill();
-        c.strokeStyle='white';c.lineWidth=2;c.stroke();c.restore();
-      }
-      // 혼자 집구매 플래그 (커플이랑 겹치지 않게 Y 위치 분리)
-      if(soloHomeM>=0&&soloHomeM<=maxM&&soloHomeM!==coupleHomeM){
-        const xPos=x.getPixelForValue(soloHomeM);
-        const homeY=y.getPixelForValue(+(targetPrice/10000).toFixed(2));
-        // 커플과 겹치면 위로 올림
-        const yOffset=coupleHomeM>=0&&Math.abs(soloHomeM-coupleHomeM)<24?36:8;
-        c.save();c.strokeStyle='rgba(200,168,233,0.7)';c.lineWidth=1.5;c.setLineDash([4,3]);
-        c.beginPath();c.moveTo(xPos,homeY);c.lineTo(xPos,y.bottom);c.stroke();c.restore();
-        c.save();
-        const bw=74,bh=22,bx=Math.min(Math.max(xPos-bw/2,x.left+2),x.right-bw-2),by=Math.max(homeY-bh-yOffset,y.top+2);
-        c.fillStyle='#C8A8E9';c.beginPath();c.roundRect(bx,by,bw,bh,5);c.fill();
-        c.fillStyle='white';c.font='bold 9px sans-serif';c.textAlign='center';
-        c.fillText('👤 혼자 구매',bx+bw/2,by+14);c.restore();
-        // 교차점 점
-        c.save();c.fillStyle='#C8A8E9';
-        c.beginPath();c.arc(xPos,homeY,4,0,Math.PI*2);c.fill();
-        c.strokeStyle='white';c.lineWidth=2;c.stroke();c.restore();
-      }
-    }
-  };
+  }};
 
   if(coupleChart)coupleChart.destroy();
   const ctx=document.getElementById('couple-chart').getContext('2d');
-  coupleChart=new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[
-      {label:'💑 둘이',data:coupleArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true},
-      {label:'👤 혼자',data:soloArr,borderColor:'#C8A8E9',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3,borderDash:[5,3]},
-      {label:'🏠 목표',data:targetLine,borderColor:'rgba(61,184,138,.7)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:true,animation:{duration:600},
-      layout:{padding:{bottom:20}},
-      plugins:{
-        legend:{labels:{font:{size:11},boxWidth:16}},
-        tooltip:{callbacks:{
-          title:items=>{
-            const m=items[0].dataIndex;
-            const evs=eventAnnotations[m];
-            const isCouple=m===coupleHomeM?'💑 커플 구매!':'';
-            const isSolo=m===soloHomeM?'👤 혼자 구매':'';
-            return [`${meAge+Math.floor(m/12)}세 ${m%12+1}월`,evs?evs.join(' '):'',isCouple,isSolo].filter(Boolean).join('  ');
-          },
-          label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`
-        }}
-      },
-      scales:{
-        x:{ticks:{font:{size:10},color:'#9B7B8A',maxRotation:0,autoSkip:false,callback(v,i){return labels[i]||''}},grid:{display:false}},
-        y:{ticks:{font:{size:10},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(255,179,204,.15)'}}
-      }
-    },
-    plugins:[markerPlugin]
-  });
+  coupleChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'💑 둘이',data:coupleArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true},
+    {label:'👤 혼자',data:soloArr,borderColor:'#C8A8E9',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3,borderDash:[5,3]},
+    {label:'🏠 목표',data:targetLine,borderColor:'rgba(61,184,138,.7)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:true,animation:{duration:600},layout:{padding:{bottom:20}},
+    plugins:{legend:{labels:{font:{size:11},boxWidth:16}}},
+    scales:{
+      x:{ticks:{font:{size:10},color:'#9B7B8A',maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{display:false}},
+      y:{ticks:{font:{size:10},color:'#9B7B8A',callback:v=>v+'억'},grid:{color:'rgba(255,179,204,.15)'}},
+    }
+  },plugins:[markerPlugin]});
 
-  // 플래그 텍스트
   const flagEl=document.getElementById('couple-chart-flag');
-  if(flagEl){
-    flagEl.innerHTML=coupleYears<soloYears
-      ?`💑 <strong style="color:var(--pink)">${coupleYears}년 후</strong> 구매 · 혼자보다 <strong style="color:var(--pink)">${soloYears-coupleYears}년 단축!</strong>`
-      :coupleYears===soloYears?`💑 혼자와 비슷한 ${coupleYears}년 후 구매`:`혼자: ${soloYears}년 · 둘이: ${coupleYears}년`;
-  }
+  if(flagEl){flagEl.innerHTML=coupleYears<soloYears?`💑 <strong style="color:var(--pink)">${coupleYears}년 후</strong> 구매 · 혼자보다 <strong style="color:var(--pink)">${soloYears-coupleYears}년 단축!</strong>`:coupleYears===soloYears?`둘이 ${coupleYears}년 후 구매`:`혼자: ${soloYears}년 · 둘이: ${coupleYears}년`;}
 }
 
 // ━━ 공유 ━━
 function shareCoupleKakao(){
   const link=document.getElementById('couple-link-box').dataset.link||document.getElementById('couple-link-box').textContent;
-  if(window.Kakao&&Kakao.isInitialized()){
-    Kakao.Share.sendDefault({
-      objectType:'feed',
-      content:{
-        title:'💑 커플 집 계산기 같이 해봐!',
-        description:'둘이 합치면 얼마나 빨리 집 살 수 있는지 나와 같이 확인해봐 🏠',
-        imageUrl:'https://braint.net/og-couple.png',
-        link:{mobileWebUrl:link,webUrl:link},
-      },
-      buttons:[{title:'같이 계산하기',link:{mobileWebUrl:link,webUrl:link}}],
-    });
-  } else {
-    copyLink();
-  }
-}
-function shareCoupleResult(){
-  const me=S.myResult;
-  const partner=S.partnerData;
-  const combinedSalary=(me?.salary||0)+(partner?.salary||0);
-  const targetPrice=me?.targetPrice||0;
-  const coupleYears=document.getElementById('cr-couple').textContent;
-  const saved=document.getElementById('cr-saved').textContent;
-  if(window.Kakao&&Kakao.isInitialized()){
-    Kakao.Share.sendDefault({
-      objectType:'feed',
-      content:{
-        title:`💑 우리 커플 ${coupleYears} 후 집 살 수 있어!`,
-        description:`${saved} · 합산 연봉 ${fmt(combinedSalary)} · 목표 ${fmt(targetPrice)}`,
-        imageUrl:'https://braint.net/og-couple.png',
-        link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'},
-      },
-      buttons:[{title:'나도 계산하기',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}}],
-    });
-  }
+  if(window.Kakao&&Kakao.isInitialized()){Kakao.Share.sendDefault({objectType:'feed',content:{title:'💑 커플 집 계산기 같이 해봐!',description:'둘이 합치면 얼마나 빨리 집 살 수 있는지 나와 같이 확인해봐 🏠',imageUrl:'https://braint.net/og-couple.png',link:{mobileWebUrl:link,webUrl:link}},buttons:[{title:'같이 계산하기',link:{mobileWebUrl:link,webUrl:link}}]});}else{copyLink();}
 }
 function copyLink(){
   const link=document.getElementById('couple-link-box').dataset.link||document.getElementById('couple-link-box').textContent;
   navigator.clipboard?.writeText(link).then(()=>showToast('🔗 링크 복사 완료!'));
 }
+function shareCoupleResult(){
+  const me=S.myResult,partner=S.partnerData;
+  const coupleYears=document.getElementById('cr-couple').textContent;
+  const saved=document.getElementById('cr-saved').textContent;
+  if(window.Kakao&&Kakao.isInitialized()){Kakao.Share.sendDefault({objectType:'feed',content:{title:`💑 우리 커플 ${coupleYears} 후 집 살 수 있어!`,description:`${saved} · 합산 연봉 ${fmt((me?.salary||0)+(partner?.salary||0))} · 목표 ${fmt(me?.targetPrice||0)}`,imageUrl:'https://braint.net/og-couple.png',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}},buttons:[{title:'나도 계산하기',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}}]});}
+}
 
 // ━━ 데이터 저장/복원 ━━
-function saveData(){
-  try{
-    localStorage.setItem(LS_KEY,JSON.stringify({
-      salary:document.getElementById('my-salary').value,
-      asset:document.getElementById('my-asset').value,
-      region:S.region,size:S.size,investRate:S.investRate,living:S.living
-    }));
-  }catch(e){}
-}
+function saveData(){try{localStorage.setItem(LS_KEY,JSON.stringify({salary:document.getElementById('my-salary').value,asset:document.getElementById('my-asset').value,region:S.region,size:S.size}));}catch(e){}}
 function restoreData(){
   try{
-    // 커플 계산기 전용 저장 데이터 복원
-    const raw=localStorage.getItem(LS_KEY);
-    if(!raw) return;
+    const raw=localStorage.getItem(LS_KEY);if(!raw)return;
     const d=JSON.parse(raw);
-
-    if(d.salary){ document.getElementById('my-salary').value=d.salary; onSalaryInput(); }
-    if(d.asset!==undefined){ document.getElementById('my-asset').value=d.asset; onAssetInput(); }
-    if(d.region) applyOpt('region-opts',d.region,'region');
-    if(d.size) applyOpt('size-opts',d.size,'size');
-    if(d.investRate) applyInvest(d.investRate);
-    if(d.living) applyLivingVal(d.living);
+    if(d.salary){document.getElementById('my-salary').value=d.salary;onSalaryInput();}
+    if(d.asset!==undefined){document.getElementById('my-asset').value=d.asset;onAssetInput();}
+    if(d.region){S.region=d.region;document.querySelectorAll('#region-opts .opt-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes(`'${d.region}'`)));}
+    if(d.size){S.size=d.size;document.querySelectorAll('#size-opts .opt-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes(`'${d.size}'`)));}
   }catch(e){}
 }
 
-// (applyOpt, applyInvest, applyLivingVal 제거됨 - BF 함수로 대체)
-
-// ━━ 짝꿍으로 입력 완료 후 Supabase 저장 ━━
-async function saveGuestAndRender(){
-  if(!S.myResult||!S.partnerData)return;
-  try{
-    if(S.sessionId){
-      await sb.from('couple_sessions').update({
-        guest_data:S.myResult,
-        status:'joined'
-      }).eq('id',S.sessionId);
-    }
-  }catch(e){}
-  renderCoupleResult();
+// ━━ 게이트 / 초기화 ━━
+function checkPremiumGate(){
+  const isPremium=localStorage.getItem('bfhc_premium')==='true';
+  if(isPremium){document.getElementById('premium-gate').style.display='none';}
+  else{document.getElementById('premium-gate').style.display='flex';if(confirm('BF 분석기에서 프리미엄을 구매하면 커플 계산기를 이용할 수 있어요!\n\n지금 바로 이동할까요?')){location.href='/bf-home/';}}
 }
-
-// ━━ 호스트: 짝꿍 입력 여부 폴링 (10초마다) ━━
-let pollTimer=null;
-function startPolling(){
-  if(!S.sessionId||pollTimer) return;
-  pollTimer=setInterval(async()=>{
-    try{
-      const{data}=await sb.from('couple_sessions')
-        .select('status,guest_data')
-        .eq('id',S.sessionId)
-        .single();
-      if(data?.status==='joined'&&data?.guest_data){
-        clearInterval(pollTimer); pollTimer=null;
-        S.partnerData=data.guest_data;
-        // 대기 배너 숨기기
-        const banner=document.getElementById('waiting-banner');
-        if(banner) banner.style.display='none';
-        // 탭 알림
-        document.getElementById('partner-tab-icon').textContent='💑';
-        document.getElementById('tab-partner-sub').textContent='합산 결과 완성! 🎉';
-        showToast('🎉 짝꿍이 데이터를 입력했어요! 합산 결과를 확인해보세요');
-        S._suppressTabSwitch=false;
-        if(S.myResult) renderCoupleResult();
-      }
-    }catch(e){}
-  },10000);
+function goToBF(){location.href='/bf-home/';}
+function initGate(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('couple');
+  // 항상 게이트 숨김 (프리미엄 게이트는 결제 연동 후 활성화)
+  document.getElementById('premium-gate').style.display='none';
+  if(code){S.isPartner=true;S.coupleCode=code;loadPartnerSession(code);return;}
+  restoreData();
 }
-function stopPolling(){ if(pollTimer){clearInterval(pollTimer);pollTimer=null;} }
 
 // ━━ 토스트 ━━
-function showToast(msg){
-  const t=document.createElement('div');
-  t.textContent=msg;
+function showToast(msg,duration=2200){
+  const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#3D2C35;color:#fff;padding:10px 20px;border-radius:99px;font-size:.82rem;font-weight:700;z-index:9999;font-family:sans-serif;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)';
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2200);
+  document.body.appendChild(t);setTimeout(()=>t.remove(),duration);
 }
 
 // ━━ 초기화 ━━
-window.addEventListener('DOMContentLoaded', async()=>{
+window.addEventListener('DOMContentLoaded',async()=>{
   initGate();
-
-  // 짝꿍이 입력 완료하면 분석하기 → saveGuestAndRender 호출
   if(S.isPartner){
-    // 분석하기 버튼을 짝꿍용으로 교체
-    const btn=document.querySelector('.analyze-btn');
-    if(btn) btn.onclick=async()=>{
-      await analyzeMe();
-      if(S.partnerData) await saveGuestAndRender();
-    };
+    const btn=document.querySelector('#page-me .analyze-btn');
+    if(btn)btn.onclick=async()=>{await analyzeMe();if(S.partnerData)await saveGuestAndRender();};
   }
+  if(window.Kakao&&!Kakao.isInitialized())Kakao.init('b3a8d118868373f29970b5c5568200c4');
 });
-</script>
-<!-- 임시 개발용: 짝꿍 데이터 자동 입력 -->
-<button
-  id="dev-partner-btn"
-  onclick="devFillPartner()"
-  style="
-    position:fixed;bottom:90px;right:12px;z-index:999;
-    background:rgba(61,44,53,.7);color:rgba(255,255,255,.5);
-    border:1px dashed rgba(255,255,255,.2);border-radius:99px;
-    padding:5px 12px;font-size:.65rem;font-family:'Gowun Dodum',sans-serif;
-    cursor:pointer;backdrop-filter:blur(4px);
-    transition:all .2s;letter-spacing:.3px;
-  "
-  onmouseover="this.style.opacity='1';this.style.color='#fff'"
-  onmouseout="this.style.opacity='.7';this.style.color='rgba(255,255,255,.5)'"
->
-  🔧 짝꿍 dev
-</button>
 
-<script>
-// 개발용: 짝꿍 데이터 디폴트로 채우기
+// ━━ 개발용 ━━
 function devFillPartner(){
-  // 내 분석 먼저 실행 (없으면)
   if(!S.myResult){
     document.getElementById('my-salary').value=document.getElementById('my-salary').value||5000;
     document.getElementById('my-asset').value=document.getElementById('my-asset').value||3000;
-    onSalaryInput(); onAssetInput();
-    analyzeMe().then(()=>{ if(S.myResult) devFillPartner(); });
-    return;
+    onSalaryInput();onAssetInput();
+    analyzeMe().then(()=>{if(S.myResult)devFillPartner();});return;
   }
-
-  const pSalary=4500;
-  const pAsset=2500;
-  const pLiving=monthlyLivingCost||200;
-  const pNet=calcTakehome(pSalary);
-  const tp=S.myResult?.targetPrice||PRICES['seoul']['mid'];
-
-  // 짝꿍 디폴트 데이터 (모든 설정 개별 적용)
-  S.partnerData={
-    salary:pSalary,
-    asset:pAsset,
-    region:'gyeonggi', // 지역 달리 설정 (테스트용)
-    size:S.size||'mid',
-    living:150,         // 생활비 달리 설정 (테스트용)
-    investRate:5,       // 투자수익률 달리 설정
-    netMonthly:pNet,
-    monthlySave:pNet-pLiving,
-    targetPrice:tp,
-    age:29,
-    // 연봉인상 (별도 설정)
-    raisePct:3,
-    promoRaise:false,
-    maxSalary:10000,
-    // 이벤트 (현재 설정 그대로)
-    weddingOn:document.getElementById('ev-wedding')?.checked,
-    weddingCost:parseInt(document.getElementById('cost-wedding')?.value)||5000,
-    babyOn:document.getElementById('ev-baby')?.checked,
-    babyCost:parseInt(document.getElementById('cost-baby-yr')?.value)||500,
-    carOn:true,
-    carCost:5000, // 짝꿍은 외제차
-    carAge:32,
-  };
-
+  S.partnerData={salary:4500,asset:2500,region:'gyeonggi',size:S.size||'mid',living:150,investRate:5,age:29,raisePct:3,promoRaise:false,maxSalary:10000,weddingOn:document.getElementById('ev-wedding')?.checked,weddingCost:parseInt(document.getElementById('cost-wedding')?.value)||5000,babyOn:document.getElementById('ev-baby')?.checked,babyCost:parseInt(document.getElementById('cost-baby-yr')?.value)||500,carOn:true,carCost:5000,carAge:32};
   S._suppressTabSwitch=false;
   renderCoupleResult();
-  showToast('🔧 짝꿍 dev: 연봉 4,500만 / 자산 2,500만 / 프리미엄설정 동일');
+  showToast('🔧 짝꿍 dev: 연봉 4,500만 / 자산 2,500만');
 }
 </script>
+<!-- 개발용 짝꿍 버튼 -->
+<button
+  id="dev-partner-btn"
+  onclick="devFillPartner()"
+  style="position:fixed;bottom:90px;right:12px;z-index:999;background:rgba(61,44,53,.7);color:rgba(255,255,255,.6);border:1px dashed rgba(255,255,255,.2);border-radius:99px;padding:5px 12px;font-size:.65rem;font-family:'Gowun Dodum',sans-serif;cursor:pointer;backdrop-filter:blur(4px);">
+  🔧 짝꿍 dev
+</button>
 </body>
 </html>
