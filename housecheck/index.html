@@ -355,6 +355,7 @@ input[type=range]::-webkit-slider-thumb{
 }
 </style>
 
+
 </head>
 <body>
 
@@ -597,15 +598,23 @@ input[type=range]::-webkit-slider-thumb{
         <!-- 결혼 -->
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
           <div class="toggle-row">
-            <span class="toggle-label">💍 결혼 비용 <span style="font-size:11px;color:var(--dim)">약 33세</span></span>
+            <span class="toggle-label">💍 결혼 비용</span>
             <div class="toggle-switch" id="wedding-toggle" onclick="toggleEvent('wedding')"></div>
           </div>
           <div id="wedding-detail" style="display:none">
             <div class="input-row" style="margin-top:8px">
               <div class="input-wrap">
-                <input type="number" class="input-field sm" id="wedding-cost" placeholder="5000" value="5000">
+                <input type="number" class="input-field sm" id="wedding-cost" placeholder="5000" value="5000" min="0">
               </div>
               <span class="input-unit">만원</span>
+            </div>
+            <div class="input-row" style="margin-top:8px">
+              <span style="font-size:12px;color:var(--muted);white-space:nowrap">지금으로부터</span>
+              <div class="input-wrap" style="max-width:80px;margin:0 8px">
+                <input type="number" class="input-field sm" id="wedding-years" placeholder="3" value="3" min="0" max="50">
+              </div>
+              <span class="input-unit">년 후</span>
+              <span style="font-size:11px;color:var(--dim);margin-left:6px" id="wedding-age-label"></span>
             </div>
           </div>
         </div>
@@ -620,9 +629,17 @@ input[type=range]::-webkit-slider-thumb{
             <div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px">초기 연 육아비 · 매년 3% 상승 · MAX 2,000만원</div>
             <div class="input-row">
               <div class="input-wrap">
-                <input type="number" class="input-field sm" id="baby-cost" placeholder="500" value="500">
+                <input type="number" class="input-field sm" id="baby-cost" placeholder="500" value="500" min="0">
               </div>
               <span class="input-unit">만원/년</span>
+            </div>
+            <div class="input-row" style="margin-top:8px">
+              <span style="font-size:12px;color:var(--muted);white-space:nowrap">지금으로부터</span>
+              <div class="input-wrap" style="max-width:80px;margin:0 8px">
+                <input type="number" class="input-field sm" id="baby-years" placeholder="5" value="5" min="0" max="50">
+              </div>
+              <span class="input-unit">년 후</span>
+              <span style="font-size:11px;color:var(--dim);margin-left:6px" id="baby-age-label"></span>
             </div>
           </div>
         </div>
@@ -630,22 +647,51 @@ input[type=range]::-webkit-slider-thumb{
         <!-- 차량 -->
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
           <div class="toggle-row">
-            <span class="toggle-label">🚗 차량 구매 <span style="font-size:11px;color:var(--dim)">약 30세</span></span>
+            <span class="toggle-label">🚗 차량</span>
             <div class="toggle-switch" id="car-toggle" onclick="toggleEvent('car')"></div>
           </div>
           <div id="car-detail" style="display:none">
-            <div class="choice-grid cols3" style="margin-bottom:10px" id="car-choices">
-              <button class="choice-btn" onclick="selectCar(this,3500,'domestic')"><span class="choice-label">🇰🇷 국산차</span><span class="choice-sub">~3,500만</span></button>
-              <button class="choice-btn" onclick="selectCar(this,8000,'foreign')"><span class="choice-label">🌍 외제차</span><span class="choice-sub">~8,000만</span></button>
-              <button class="choice-btn" onclick="selectCar(this,30000,'super')"><span class="choice-label">🏎️ 슈퍼카</span><span class="choice-sub">3억+</span></button>
+            <!-- 1단계: 이미 보유 vs 구매 예정 -->
+            <div class="choice-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px" id="car-choices">
+              <button class="choice-btn" onclick="selectCarOwn(this)"><span class="choice-label">✅ 이미 보유중</span><span class="choice-sub">구매비 없음</span></button>
+              <button class="choice-btn" onclick="selectCarBuy(this)"><span class="choice-label">🛒 구매 예정</span><span class="choice-sub">N년 후 구매</span></button>
             </div>
-            <div class="input-row">
-              <div class="input-wrap">
-                <input type="number" class="input-field sm" id="car-cost" placeholder="3500" value="3500" oninput="updateCarNote()">
+
+            <!-- 이미 보유중: 월 유지비 직접 입력 -->
+            <div id="car-own-section" style="display:none">
+              <div class="input-row">
+                <span style="font-size:12px;color:var(--muted);white-space:nowrap">월 유지비</span>
+                <div class="input-wrap" style="max-width:100px;margin:0 8px">
+                  <input type="number" class="input-field sm" id="car-own-maint" placeholder="50" value="50" min="0">
+                </div>
+                <span class="input-unit">만원/월</span>
               </div>
-              <span class="input-unit">만원</span>
+              <div style="font-size:11px;color:var(--dim);margin-top:4px">보험+유류+수리비 합산 입력</div>
             </div>
-            <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:var(--mono)" id="car-note">유지비 약 월 59만원 포함</div>
+
+            <!-- 구매 예정: 차종 + 구매비 + N년후 -->
+            <div id="car-buy-section" style="display:none">
+              <div class="choice-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px" id="car-type-choices">
+                <button class="choice-btn" onclick="selectCarType(this,3500,'domestic')"><span class="choice-label">🇰🇷 국산차</span><span class="choice-sub">~3,500만</span></button>
+                <button class="choice-btn" onclick="selectCarType(this,8000,'foreign')"><span class="choice-label">🌍 외제차</span><span class="choice-sub">~8,000만</span></button>
+                <button class="choice-btn" onclick="selectCarType(this,30000,'super')"><span class="choice-label">🏎️ 슈퍼카</span><span class="choice-sub">3억+</span></button>
+              </div>
+              <div class="input-row" style="margin-bottom:8px">
+                <div class="input-wrap">
+                  <input type="number" class="input-field sm" id="car-cost" placeholder="3500" value="3500" oninput="updateCarNote()">
+                </div>
+                <span class="input-unit">만원</span>
+              </div>
+              <div class="input-row">
+                <span style="font-size:12px;color:var(--muted);white-space:nowrap">지금으로부터</span>
+                <div class="input-wrap" style="max-width:80px;margin:0 8px">
+                  <input type="number" class="input-field sm" id="car-years" placeholder="2" value="2" min="0" max="50">
+                </div>
+                <span class="input-unit">년 후 구매</span>
+                <span style="font-size:11px;color:var(--dim);margin-left:6px" id="car-age-label"></span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:var(--mono)" id="car-note">유지비 약 월 53만원</div>
+            </div>
           </div>
         </div>
 
@@ -723,6 +769,7 @@ input[type=range]::-webkit-slider-thumb{
   </div>
 
 </div><!-- /container -->
+
 
 <script>
 // ━━ Supabase 초기화 ━━
@@ -812,6 +859,19 @@ async function saveHCAnalysis(data){
 // ━━ 상수 ━━
 const TOTAL_STEPS = 8;
 const EVENT_AGES  = { wedding:33, baby:35, car:30 };
+
+function updateEventAgeLabels(){
+  const age = S.age || parseInt(document.getElementById('age-input')?.value) || 30;
+  const wYrs = Math.max(0, parseInt(document.getElementById('wedding-years')?.value)||3);
+  const bYrs = Math.max(0, parseInt(document.getElementById('baby-years')?.value)||5);
+  const cYrs = Math.max(0, parseInt(document.getElementById('car-years')?.value)||2);
+  const wLabel = document.getElementById('wedding-age-label');
+  const bLabel = document.getElementById('baby-age-label');
+  const cLabel = document.getElementById('car-age-label');
+  if(wLabel) wLabel.textContent = `(${age+wYrs}세 예정)`;
+  if(bLabel) bLabel.textContent = `(${age+bYrs}세 예정)`;
+  if(cLabel) cLabel.textContent = `(${age+cYrs}세 구매)`;
+}
 const CAR_MAINT   = { domestic:{fuel:15,insure:10,repair:5}, foreign:{fuel:25,insure:20,repair:15}, super:{fuel:50,insure:50,repair:50} };
 
 // ━━ 상태 ━━
@@ -1040,10 +1100,24 @@ function updateLoanInfo(){
   document.getElementById('loan-info').textContent=
     S.loan?`대출 ${fmt(loanAmt)} · 월 상환 ${m.monthly.toLocaleString()}만원 · 30년`:'';
 }
-function selectCar(btn,cost,type){
+function selectCarOwn(btn){
   document.querySelectorAll('#car-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
-  S.carCost=cost;S.carType=type;
+  S.carOwned=true;
+  document.getElementById('car-own-section').style.display='block';
+  document.getElementById('car-buy-section').style.display='none';
+}
+function selectCarBuy(btn){
+  document.querySelectorAll('#car-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.carOwned=false;
+  document.getElementById('car-own-section').style.display='none';
+  document.getElementById('car-buy-section').style.display='block';
+}
+function selectCarType(btn,cost,type){
+  document.querySelectorAll('#car-type-choices .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.carCost=cost; S.carType=type;
   document.getElementById('car-cost').value=cost;
   updateCarNote();
 }
@@ -1056,10 +1130,23 @@ function updateCarNote(){
 function confirmQ8(){
   S.wedding=document.getElementById('wedding-toggle').classList.contains('on');
   S.weddingCost=parseInt(document.getElementById('wedding-cost').value)||5000;
+  S.weddingYears=Math.max(0,parseInt(document.getElementById('wedding-years')?.value)||3);
   S.baby=document.getElementById('baby-toggle').classList.contains('on');
   S.babyCost=parseInt(document.getElementById('baby-cost').value)||500;
+  S.babyYears=Math.max(0,parseInt(document.getElementById('baby-years')?.value)||5);
   S.car=document.getElementById('car-toggle').classList.contains('on');
-  S.carCost=parseInt(document.getElementById('car-cost').value)||3500;
+  if(S.car){
+    if(S.carOwned){
+      // 이미 보유중: 월유지비 직접 입력
+      S.carOwnMaint=Math.max(0,parseInt(document.getElementById('car-own-maint')?.value)||50);
+      S.carCost=0;
+      S.carYears=0;
+    } else {
+      // 구매 예정
+      S.carCost=parseInt(document.getElementById('car-cost').value)||3500;
+      S.carYears=Math.max(0,parseInt(document.getElementById('car-years')?.value)||2);
+    }
+  }
   S.maxSalary=parseInt(document.getElementById('max-salary-input').value)||15000;
 
   const events=[];
@@ -1088,18 +1175,18 @@ function simulateMonthly(){
   // 이벤트 일시금 (자산 차감)
   const extraByYear={};
   if(S.wedding){
-    const yr=Math.max(0,EVENT_AGES.wedding-S.age);
+    const yr=Math.max(0, S.weddingYears||0);
     extraByYear[yr]=(extraByYear[yr]||0)+S.weddingCost;
   }
   if(S.car){
-    const yr=Math.max(0,EVENT_AGES.car-S.age);
-    extraByYear[yr]=(extraByYear[yr]||0)+S.carCost;
+    const yr=Math.max(0, S.carYears||0);
+    if(!S.carOwned) extraByYear[yr]=(extraByYear[yr]||0)+S.carCost; // 이미 보유중이면 구매비 없음
   }
 
   // 육아비 월균등
   const monthlyBabyByYr={};
   if(S.baby){
-    const startYr=Math.max(0,EVENT_AGES.baby-S.age);
+    const startYr=Math.max(0, S.babyYears||0);
     const{byOffset}=calcBabyByYear(S.babyCost);
     Object.entries(byOffset).forEach(([offset,ann])=>{
       const yr=startYr+Number(offset);
@@ -1108,8 +1195,9 @@ function simulateMonthly(){
   }
 
   // 차량 유지비
-  const carStartYr=S.car?Math.max(0,EVENT_AGES.car-S.age):Infinity;
-  const carMaintMonthly=S.car?calcCarMonthly(S.carCost,S.carType):0;
+  const carStartYr=S.car?(S.carOwned?0:Math.max(0,S.carYears||0)):Infinity;
+  // 이미 보유중: 직접 입력한 유지비 / 구매 예정: 차값 기반 계산
+  const carMaintMonthly=S.car?(S.carOwned?(S.carOwnMaint||50):calcCarMonthly(S.carCost,S.carType)):0;
 
   // MAX 세후 연봉
   const maxNetSalary=calcTakeHome(S.maxSalary)*12;
@@ -1142,13 +1230,15 @@ function simulateMonthly(){
     const income=currentNet/12;
     const babyM=monthlyBabyByYr[yr]||0;
     const carM=yr>=carStartYr?carMaintMonthly:0;
-    const netCF=income-S.livingCost-monthlyLoan-carM-babyM;
+    // 대출 상환은 집 구매 후(reachedMonth 이후)부터만 적용
+    const activeLoan=reachedMonth>=0?monthlyLoan:0;
+    const netCF=income-S.livingCost-activeLoan-carM-babyM;
     const eventCost=mon===0&&extraByYear[yr]?extraByYear[yr]:0;
 
     // 자산이 0 이상일 때만 투자수익률 적용 (음수 복리 방지)
     const investedAsset=Math.max(0,asset);
     asset=investedAsset*(1+monthlyR)+(asset<0?asset:0)+netCF-eventCost;
-    const monthlyCost=S.livingCost+monthlyLoan+carM+babyM;
+    const monthlyCost=S.livingCost+activeLoan+carM+babyM;
 
     results.push({
       month:m,year:yr,
@@ -1202,10 +1292,6 @@ function renderResult(){
   const loanAmt=sim.loanAmt||0;
   const monthlySave=Math.round(S.takeHome-S.livingCost-(sim.monthlyLoan||0));
   const saveRate=Math.max(0,Math.round(monthlySave/S.takeHome*100));
-
-  // 기간
-  const yrs=sim.reachedMonth>=0?Math.ceil(sim.reachedMonth/12):null;
-  const achieveAge=yrs!=null?S.age+yrs:null;
 
   if(yrs===0||yrs===null&&sim.results[0]?.asset>=sim.effectiveTarget){
     document.getElementById('r-verdict').innerHTML='지금 바로 <span>가능해요!</span>';
@@ -1321,8 +1407,12 @@ function renderReport(sim){
   const monthlyInvest=Math.round(S.asset*(Math.pow(1+investRate/100,1/12)-1));
   const totalIncome=S.takeHome+monthlyInvest;
   const babyMonthAvg=S.baby?Math.round(calcBabyByYear(S.babyCost).total/26/12):0;
-  const carM=S.car?calcCarMonthly(S.carCost,S.carType):0;
-  const totalExpense=S.livingCost+babyMonthAvg+carM+(loanAmt>0?mortgage.monthly:0);
+  const carM=S.car?(S.carOwned?(S.carOwnMaint||50):calcCarMonthly(S.carCost,S.carType)):0;
+  // 지출 합계: 현재 시점 기준 (대출상환/육아/차량은 이벤트 전까지 0)
+  // → 리포트엔 "집 구매 후" 최대 지출로 표시 (사용자가 이해하기 쉽게)
+  const totalExpenseNow=S.livingCost; // 현재
+  const totalExpenseFull=S.livingCost+babyMonthAvg+carM+(loanAmt>0?mortgage.monthly:0); // 최대
+  const totalExpense=totalExpenseFull;
 
   const sections=[
     {title:'💰 수익 영역',rows:[
@@ -1334,10 +1424,10 @@ function renderReport(sim){
     ],total:['📥 월 수익 합계',`약 ${totalIncome.toLocaleString()}만원`,'positive']},
     {title:'💸 지출 영역',rows:[
       ['월 생활비',`${S.livingCost.toLocaleString()}만원`],
-      ['월 육아비',S.baby?`약 ${babyMonthAvg.toLocaleString()}만원 (월평균)`:'미반영'],
-      ['월 차량 유지비',S.car?`약 ${carM.toLocaleString()}만원`:'미반영'],
-      ['월 대출 상환',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (30년)`:'없음'],
-    ],total:['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`,'negative']},
+      ['👶 월 육아비',S.baby?`약 ${babyMonthAvg.toLocaleString()}만원 (${S.babyYears}년 후 출산부터)`:'미반영'],
+      ['🚗 월 차량 유지비',S.car?`약 ${carM.toLocaleString()}만원 (${S.carOwned?'현재부터':S.carYears+'년 후부터'})`:'미반영'],
+      ['🏦 월 대출 상환',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (집 구매 후부터)`:'없음'],
+    ],total:['📤 월 지출 최대',`약 ${totalExpense.toLocaleString()}만원 (모든 이벤트 후)`,'negative']},
     {title:'🏠 목표',rows:[
       ['목표 집값',fmt(S.housePrice)],
       ['대출 활용',loanAmt>0?`${fmt(loanAmt)} (LTV 40%)`:'미사용'],
