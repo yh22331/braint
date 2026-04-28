@@ -348,10 +348,184 @@ input[type=range]::-webkit-slider-thumb{
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
+/* ── 상세 보고서 CTA ── */
+.report-cta{
+  width:100%;padding:18px 20px;border:none;border-radius:16px;
+  font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:800;
+  cursor:pointer;color:#fff;letter-spacing:-.3px;
+  background:linear-gradient(135deg,#F78166,#F0C846);
+  box-shadow:0 10px 28px rgba(247,129,102,.32);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;
+}
+.report-cta::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 55%);pointer-events:none}
+.report-cta:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(247,129,102,.42)}
+.report-cta-main{display:flex;align-items:center;gap:8px}
+.report-cta-sub{font-size:11px;font-weight:500;opacity:.92;font-family:var(--mono);letter-spacing:.3px}
+
+/* ── 상세 보고서 모달 ── */
+.dr-overlay{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(13,17,23,.96);backdrop-filter:blur(10px);
+  flex-direction:column;
+}
+.dr-overlay.visible{display:flex;animation:fadeUp .25s ease both}
+.dr-header{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:rgba(13,17,23,.95);
+}
+.dr-back,.dr-close{
+  background:transparent;border:none;color:var(--text);font-size:20px;
+  cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1;
+}
+.dr-back:hover,.dr-close:hover{background:var(--surface2)}
+.dr-title{font-size:14px;font-weight:700;color:var(--text)}
+.dr-body{flex:1;overflow-y:auto;padding:20px;padding-bottom:100px}
+.dr-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:301;
+  padding:14px 18px 18px;background:linear-gradient(to top,rgba(13,17,23,.98) 80%,rgba(13,17,23,0));
+  border-top:1px solid var(--border);
+}
+.dr-section{margin-bottom:24px}
+.dr-section-title{
+  font-family:var(--mono);font-size:11px;color:var(--primary);
+  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;
+}
+.dr-chips{display:flex;gap:8px;flex-wrap:wrap}
+.dr-chip{
+  flex:1;min-width:60px;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 8px;color:var(--text);font-size:14px;font-weight:600;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;
+  transition:all .2s;text-align:center;
+}
+.dr-chip:hover{border-color:rgba(63,185,80,.4)}
+.dr-chip.selected{border-color:var(--primary);background:var(--primary-dim);color:var(--primary)}
+.dr-input{
+  width:100%;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:12px;
+  padding:13px 14px;font-size:15px;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;outline:none;
+  transition:border-color .2s;
+}
+.dr-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(63,185,80,.12)}
+.dr-slider-row{display:flex;align-items:center;gap:14px;margin-top:10px}
+.dr-slider{
+  flex:1;-webkit-appearance:none;appearance:none;height:4px;
+  background:var(--border);border-radius:2px;outline:none;
+}
+.dr-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:22px;height:22px;
+  border-radius:50%;background:var(--primary);cursor:pointer;
+  box-shadow:0 2px 8px rgba(63,185,80,.4);
+}
+.dr-slider::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;background:var(--primary);
+  cursor:pointer;border:none;box-shadow:0 2px 8px rgba(63,185,80,.4);
+}
+.dr-slider-val{
+  font-family:var(--mono);font-size:14px;font-weight:700;color:var(--primary);
+  min-width:54px;text-align:right;
+}
+.dr-helper{
+  margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.dr-submit{
+  width:100%;background:var(--primary);color:#000;border:none;
+  border-radius:14px;padding:16px;font-size:16px;font-weight:800;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;letter-spacing:-.3px;
+  transition:all .2s;
+}
+.dr-submit:hover:not(:disabled){background:#58D68D;transform:translateY(-1px)}
+.dr-submit:disabled{background:var(--border);color:var(--dim);cursor:not-allowed}
+
+/* ── 보고서 결과 (에세이형) ── */
+.dr-essay{
+  max-width:620px;margin:0 auto;
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+}
+.dr-essay-eyebrow{
+  font-family:var(--mono);font-size:11px;color:var(--primary);
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;
+}
+.dr-essay-h1{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(26px,6vw,34px);line-height:1.3;
+  letter-spacing:-.5px;color:var(--text);
+  margin:0 0 18px;font-weight:400;
+}
+.dr-essay-h2{
+  font-size:18px;font-weight:800;color:var(--primary);
+  letter-spacing:-.3px;margin:32px 0 12px;
+  padding-left:12px;border-left:3px solid var(--primary);
+  line-height:1.3;
+}
+.dr-essay-h3{
+  font-size:14px;font-weight:800;color:var(--text);
+  letter-spacing:-.2px;margin:22px 0 10px;
+}
+.dr-essay-p{
+  font-size:15px;line-height:1.85;color:var(--text);
+  margin:0 0 16px;font-weight:400;letter-spacing:-.1px;
+  word-break:keep-all;
+}
+.dr-essay strong{
+  color:var(--primary);font-weight:700;
+  background:linear-gradient(transparent 60%,rgba(63,185,80,.12) 60%);
+}
+.dr-essay em{
+  font-style:normal;color:var(--gold);font-weight:600;
+}
+.dr-essay-quote{
+  font-size:14.5px;line-height:1.85;color:var(--text);
+  padding:18px 20px;margin:0 0 28px;
+  background:linear-gradient(135deg,rgba(63,185,80,.07),rgba(88,166,255,.04));
+  border-left:3px solid var(--primary);
+  border-radius:0 12px 12px 0;font-weight:400;
+  word-break:keep-all;
+}
+.dr-essay-subquote{
+  font-size:13.5px;line-height:1.7;color:var(--gold);
+  padding:12px 16px;margin:0 0 18px;
+  background:rgba(240,200,70,.06);
+  border-left:2px solid var(--gold);
+  border-radius:0 10px 10px 0;font-weight:600;
+  word-break:keep-all;font-style:italic;
+}
+.dr-essay-list{
+  margin:0 0 18px;padding-left:24px;
+}
+.dr-essay-list li{
+  font-size:14.5px;line-height:1.8;color:var(--text);
+  margin-bottom:6px;font-weight:400;
+  word-break:keep-all;
+}
+.dr-essay-list li::marker{color:var(--primary);font-weight:700}
+.dr-essay-hr{
+  border:none;border-top:1px solid var(--border);
+  margin:32px 0;
+}
+.dr-essay-disclaimer{
+  font-size:12px;line-height:1.75;color:var(--muted);
+  padding:16px 18px;margin-top:28px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;font-weight:400;
+}
+.dr-disclaimer{
+  font-size:11px;color:var(--dim);text-align:center;
+  margin-top:32px;padding:14px;line-height:1.6;
+  background:var(--surface);border-radius:10px;
+}
+
 @media(max-width:480px){
   .metrics-grid{grid-template-columns:1fr 1fr}
   .metrics-grid .metric-card:last-child{grid-column:1/-1}
   .choice-grid.cols3{grid-template-columns:1fr 1fr}
+  .dr-body{padding:16px;padding-bottom:100px}
+  .dr-chip{font-size:13px;padding:13px 6px}
 }
 </style>
 
@@ -753,6 +927,12 @@ input[type=range]::-webkit-slider-thumb{
 
     <div class="report-card" id="report-card"></div>
 
+    <!-- 상세 보고서 CTA -->
+    <button class="report-cta" onclick="openDetailReport()" style="margin-top:6px">
+      <span class="report-cta-main">🔍 상세한 보고서 보러가기 (5,900원)</span>
+      <span class="report-cta-sub">내가 살 동 추천 · 직주근접 분석 · 4가지 시나리오</span>
+    </button>
+
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
       <button onclick="shareInstaHC()" style="width:100%;padding:14px 20px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:white;box-shadow:0 6px 20px rgba(220,39,67,0.35);transition:all .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -769,6 +949,73 @@ input[type=range]::-webkit-slider-thumb{
   </div>
 
 </div><!-- /container -->
+
+<!-- 상세 보고서 모달 -->
+<div class="dr-overlay" id="dr-overlay">
+  <div class="dr-header">
+    <button class="dr-back" id="dr-back-btn" onclick="closeDetailReport()" aria-label="닫기">←</button>
+    <div class="dr-title" id="dr-title">상세 보고서 입력</div>
+    <button class="dr-close" onclick="closeDetailReport()" aria-label="닫기">✕</button>
+  </div>
+
+  <!-- 입력 폼 뷰 -->
+  <div class="dr-body" id="dr-form-view">
+    <div class="dr-section">
+      <div class="dr-section-title">🛏️ 최소 방 개수</div>
+      <div class="dr-chips" data-group="rooms">
+        <button class="dr-chip" data-val="1">1개</button>
+        <button class="dr-chip" data-val="2">2개</button>
+        <button class="dr-chip" data-val="3">3개</button>
+        <button class="dr-chip" data-val="4+">4개+</button>
+      </div>
+    </div>
+
+    <div class="dr-section">
+      <div class="dr-section-title">🚿 화장실 2개 필수?</div>
+      <div class="dr-chips" data-group="bath">
+        <button class="dr-chip" data-val="required">필수</button>
+        <button class="dr-chip" data-val="any">상관없음</button>
+      </div>
+    </div>
+
+    <div class="dr-section">
+      <div class="dr-section-title">🏢 주거 형태</div>
+      <div class="dr-chips" data-group="housing">
+        <button class="dr-chip" data-val="apt">아파트</button>
+        <button class="dr-chip" data-val="villa">빌라</button>
+        <button class="dr-chip" data-val="any">무관</button>
+      </div>
+    </div>
+
+    <div class="dr-section">
+      <div class="dr-section-title">🚇 직주근접</div>
+      <input type="text" class="dr-input" id="dr-origin" placeholder="출발지 (예: 강남역, 판교, 회사 주소)">
+      <div class="dr-slider-row">
+        <input type="range" class="dr-slider" id="dr-commute" min="10" max="90" step="5" value="45">
+        <div class="dr-slider-val"><span id="dr-commute-val">45</span>분</div>
+      </div>
+      <div class="dr-helper">
+        💡 입력하신 정보를 기반으로 <strong style="color:var(--primary)">4가지 맞춤 시나리오</strong>와 동·평형·예상가를 추천해드려요.
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 뷰 (에세이형) -->
+  <div class="dr-body" id="dr-result-view" style="display:none">
+    <article class="dr-essay">
+      <div class="dr-essay-eyebrow">📊 맞춤 상세 보고서</div>
+      <div id="dr-essay-body"></div>
+    </article>
+  </div>
+
+  <!-- 하단 고정 버튼 -->
+  <div class="dr-footer" id="dr-form-footer">
+    <button class="dr-submit" id="dr-submit-btn" disabled onclick="generateDetailReport()">📊 보고서 생성 (5,900원)</button>
+  </div>
+  <div class="dr-footer" id="dr-result-footer" style="display:none">
+    <button class="dr-submit" onclick="closeDetailReport()" style="background:var(--surface2);color:var(--text)">닫기</button>
+  </div>
+</div>
 
 
 <script>
@@ -1494,6 +1741,228 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
 }
+
+// ━━ 상세 보고서 (Phase 1: 더미) ━━
+const drState = { rooms:null, bath:null, housing:null, origin:'', commute:45 };
+
+function openDetailReport(){
+  document.getElementById('dr-overlay').classList.add('visible');
+  document.getElementById('dr-form-view').style.display='block';
+  document.getElementById('dr-result-view').style.display='none';
+  document.getElementById('dr-form-footer').style.display='block';
+  document.getElementById('dr-result-footer').style.display='none';
+  document.getElementById('dr-title').textContent='상세 보고서 입력';
+  document.body.style.overflow='hidden';
+}
+
+function closeDetailReport(){
+  document.getElementById('dr-overlay').classList.remove('visible');
+  document.body.style.overflow='';
+}
+
+document.querySelectorAll('.dr-chips').forEach(group=>{
+  const key=group.dataset.group;
+  group.querySelectorAll('.dr-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      group.querySelectorAll('.dr-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      drState[key]=chip.dataset.val;
+      updateDrSubmit();
+    });
+  });
+});
+
+const drCommute=document.getElementById('dr-commute');
+if(drCommute){
+  drCommute.addEventListener('input',e=>{
+    drState.commute=+e.target.value;
+    document.getElementById('dr-commute-val').textContent=e.target.value;
+  });
+}
+const drOrigin=document.getElementById('dr-origin');
+if(drOrigin){
+  drOrigin.addEventListener('input',e=>{
+    drState.origin=e.target.value.trim();
+    updateDrSubmit();
+  });
+}
+
+function updateDrSubmit(){
+  const ok = drState.rooms && drState.bath && drState.housing && drState.origin.length>0;
+  document.getElementById('dr-submit-btn').disabled = !ok;
+}
+
+function drMakeEl(tag, cls, text){
+  const el = document.createElement(tag);
+  if(cls) el.className = cls;
+  if(text != null) el.textContent = text;
+  return el;
+}
+
+// 인라인 마크다운(**bold**, *italic*)을 안전하게 DOM 노드로 변환
+function drInlineToNodes(text){
+  const nodes = [];
+  const pattern = /\*\*([^*]+)\*\*|\*([^*]+)\*/g;
+  let last = 0;
+  for(const m of text.matchAll(pattern)){
+    if(m.index > last) nodes.push(document.createTextNode(text.slice(last, m.index)));
+    if(m[1] != null){
+      nodes.push(drMakeEl('strong', null, m[1]));
+    } else if(m[2] != null){
+      nodes.push(drMakeEl('em', null, m[2]));
+    }
+    last = m.index + m[0].length;
+  }
+  if(last < text.length) nodes.push(document.createTextNode(text.slice(last)));
+  return nodes;
+}
+
+// 더미 보고서: 3갈래길 (Phase 1: 입력값 무관, 고정 텍스트)
+const DR_REPORT = [
+  { type:'h1', text:'브레인T가 당신에게 제안하는 3갈래길' },
+  { type:'quote', text:'30대 초반의 자산 3억 정도, 서울 27평 정도의 집을 5년 후에 살 수 있다는 분석이 나왔습니다. 평균적인 페이스이긴 한데, 솔직히 말씀드리면 — 첫 집 구매 방식은 **하나의 정답이 없어요**. 당신의 성향, 상황, 미래 계획에 따라 길이 달라집니다. 그래서 우리는 정답을 정해드리지 않을 거예요. 대신, 가능한 3갈래길을 솔직하게 보여드릴게요.' },
+
+  { type:'h2', text:'지금 당신의 상황' },
+  { type:'p', text:'분석 결과대로면 5년 정도 기다리면 첫 집을 가지실 수 있습니다. 30대 초반 사회초년생 중에서는 평균적인 속도예요. 충분히 잘 하고 계신 거예요.' },
+  { type:'p', text:'다만 첫 집을 사는 방식은 사람마다 정말 다릅니다. **빨리 사서 부동산 상승에 올라타는 분**도 있고, **천천히 자산을 키우면서 기회를 보는 분**도 있어요. 둘 다 합리적이고, 둘 다 결과가 좋을 수도 나쁠 수도 있어요.' },
+  { type:'p', text:'그래서 우리는 당신이 선택할 수 있는 3갈래길을 보여드립니다. 본인 성향과 상황에 맞는 길이 어디인지 천천히 읽어보세요.' },
+  { type:'hr' },
+
+  { type:'h2', text:'첫 갈래길 — 균형의 길' },
+  { type:'subquote', text:'부동산도 투자로 보면서, 원하는 조건을 어느 정도 갖추되, 총자산을 지키는 방향' },
+  { type:'p', text:'이 갈래는 **"집은 사고 싶지만, 한 번에 다 걸지는 말자"** 는 분들을 위한 길이에요. 자산을 분산하고, 시간을 들여 차근차근 만들어가는 방식입니다.' },
+  { type:'p', text:'**구체적으로는 이런 모습이에요.** 지금 자산 3억 중에서 1.5~2억은 **전세 보증금**으로 거주에 사용하고, 나머지 1~1.5억으로 **재개발 빌라 한 채에 투자**하는 거예요. 5~10년 후 재개발이 진행되면 입주권이 나오면서 자산 가치가 1.5~2배까지 올라가는 케이스도 있습니다. 그동안 본인은 적당한 전셋집에서 안정적으로 살 수 있고요.' },
+  { type:'p', text:`흔히 재개발이라고 하면 무너져가는 집에서 10년 버티는 모습을 상상하시잖아요. **그건 오해입니다.** 재개발은 노후된 '지역'에 대한 정비 사업이에요. 그 지역 전체를 새로운 아파트 단지와 인프라로 다시 만드는 사업이라서, 그 안에 있는 개별 집의 노후도는 사실 큰 의미가 없어요. 오히려 그 지역 안에 있는 **신축 빌라**가 투자 대상이 되는 경우가 많습니다.` },
+  { type:'p', text:'왜냐하면, 재개발에서 받는 권리(=새 아파트로 바꿔주는 권리)의 가치는 **권리가액**으로 정해지는데, 권리가액은 **종전자산 감정평가액 × 비례율**로 산정됩니다. 빌라의 감정평가액은 공시가격 기반으로 매겨지는데, **신축 빌라가 공시가격이 더 높게 잡혀서 유리해져요**. 거기에 신축이면 사업 진행되는 10년 동안 전세를 놓기도 좋고, 본인이 거주해도 노후 하자 부담이 적습니다.' },
+  { type:'p', text:'다만 신축이라고 다 좋은 건 아니에요. **대지지분**도 같이 봐야 합니다. 같은 신축이어도 대지지분이 작은 빌라는 추가 분담금이 많이 나올 수 있거든요. 베스트는 **신축 + 대지지분 큰 빌라**입니다. 그리고 같은 재개발 구역 안에서 **상대적으로** 본인 빌라가 더 높게 평가되는 게 핵심이에요. 매물 비교를 정말 꼼꼼히 보셔야 합니다.' },
+  { type:'p', text:'물론 리스크도 솔직히 말씀드릴게요. **재개발은 평균 10~15년 걸려요.** 중간에 무산되는 사례도 있습니다. 조합 갈등, 분양 미달, 정책 변경 등으로요. 사업 중에는 매매가 어려워서 자금이 묶입니다. 이걸 감당할 시간적, 자금적 여유가 있어야 해요. **5년 안에 그 돈을 다시 써야 한다면 이 길은 안 맞아요.**' },
+  { type:'p', text:'**누구에게 맞는 길인가요?** 안정 추구하시는 분, 분산 투자 좋아하시는 분, 그리고 **10년 정도는 자금이 묶여도 괜찮은 분**에게 적합합니다.' },
+  { type:'hr' },
+
+  { type:'h2', text:'두 번째 갈래길 — 베팅의 길' },
+  { type:'subquote', text:'목표한 집을 영혼까지 끌어모아 구매하며, 부동산 상승에 베팅하는 방향' },
+  { type:'p', text:'이 갈래는 **"내가 원하는 집을 지금 사자, 안 그러면 영영 못 산다"** 는 분들을 위한 길이에요. 부동산 상승에 강한 확신을 가지고, 레버리지를 최대한 활용하는 방식입니다.' },
+  { type:'p', text:'**구체적으로는 이런 모습이에요.** 자산 3억 + 주택담보대출 (LTV 70% 활용 시 약 6억까지) + 신용대출 또는 가족 도움 (1~2억) → 총 10억 정도까지 확보해서 서울 30평형대 아파트에 도전하는 방식이에요. 디딤돌 대출이나 보금자리론 같은 정책자금을 활용하면 금리 부담을 좀 줄일 수 있고요.' },
+  { type:'p', text:'이 길의 매력은 명확해요. **레버리지 효과**예요. 만약 10억짜리 집이 5년 후 13억이 되면, 본인 자산은 3억 → 6억으로 두 배가 돼요. 부동산이 상승하면 본인이 가진 진짜 자산보다 훨씬 큰 이익을 얻을 수 있습니다. 그리고 무엇보다 **원하는 집에서 지금부터 살 수 있다는 것** — 이건 숫자로 환산되지 않는 가치예요.' },
+  { type:'p', text:'다만 솔직하게 말씀드릴게요. **이 길의 리스크는 진짜 큽니다.**' },
+  { type:'p', text:'첫째, **금리 인상**. 2022년 이후 한국 기준금리가 급등하면서 월 상환액이 두 배 가까이 늘어난 분들이 많았어요. 6억 대출 받으면 금리 1%p 오를 때마다 월 50만원씩 추가 부담입니다.' },
+  { type:'p', text:'둘째, **가격 하락**. 2022~2023년 서울 아파트 평균이 -20~30% 떨어진 적이 있어요. 영끌해서 산 집이 떨어지면 자산이 마이너스가 될 수도 있습니다.' },
+  { type:'p', text:'셋째, **생활 압박**. 월급의 절반 이상이 대출 상환에 들어가면 외식, 여행, 취미 다 줄여야 해요. 이게 1~2년이면 견딜 수 있지만 10~20년이 되면 정말 힘듭니다.' },
+  { type:'p', text:'넷째, **비상 상황 대응**. 의료비, 실직, 가족 사정 등 예상치 못한 큰 지출이 생기면 영끌 상태에선 정말 위험해요.' },
+  { type:'p', text:'**누구에게 맞는 길인가요?** 직장이 아주 안정적인 분 (대기업, 공무원 등), 향후 10년간 라이프스타일 변화가 적을 분 (이미 결혼·정착), 부동산 상승에 강한 확신이 있는 분, 그리고 **별도 비상금이 확보된 분**에게 적합합니다. 한 가지라도 빠지면 이 길은 권하지 않아요.' },
+  { type:'hr' },
+
+  { type:'h2', text:'세 번째 갈래길 — 인내의 길' },
+  { type:'subquote', text:'집을 최대한 늦게 사고, 투자 수익률을 믿고 주식시장 상승장을 노리는 방향' },
+  { type:'p', text:'이 갈래는 **"굳이 지금 집을 살 필요 있나? 더 좋은 방법이 있을 텐데"** 라는 분들을 위한 길이에요. 부동산 매수를 미루고, 주식·투자로 자산을 키우는 방식입니다.' },
+  { type:'p', text:'**구체적으로는 이런 모습이에요.** 전세 1.5~2억으로 거주 + 나머지 1~1.5억을 S&P500 ETF, KOSPI 200 ETF 등에 적립식 투자 → 5~10년 후 자산이 충분히 커지면 그때 집을 매수하는 방식이에요.' },
+  { type:'p', text:'이 길의 매력은 **수익률**입니다. S&P500의 장기 평균 수익률은 약 7~10%, 한국 주식은 약 5~7%, 서울 아파트는 약 5~8%입니다. **단순 수익률만 보면 주식이 유리할 수 있어요.** 게다가 주식은 부동산보다 유동성이 높아서, 라이프 변화 (이직, 해외 이주, 결혼 계획 변경 등)에 빠르게 대응할 수 있습니다.' },
+  { type:'p', text:'다만 부동산은 **레버리지 효과 + 거주 효용**이 있어서 단순 수익률 비교만으로는 부족해요. 그리고 한국에서는 "내 집"이 주는 심리적 안정감이 정말 큽니다. 이 길은 그 안정감을 일정 기간 포기하는 길이에요.' },
+  { type:'p', text:'리스크도 솔직히 말씀드릴게요.' },
+  { type:'p', text:'첫째, **전세값 상승**. 2년마다 갱신 시 비용이 계속 올라요. 전세 5억이 7억이 되면 추가로 2억을 어디선가 끌어와야 합니다.' },
+  { type:'p', text:'둘째, **장기 무주택의 심리적 부담**. 결혼하고 아이 생기면 "내 집 갖고 싶다"는 마음이 점점 강해져요. 처음엔 합리적이었던 결정이 나중엔 후회될 수도 있습니다.' },
+  { type:'p', text:'셋째, **시장 타이밍 실패**. "조금만 더 모으자, 조금만 더..." 하다가 부동산이 폭등하면 영영 못 따라잡을 수 있어요. 한국 부동산 역사에서 이런 일이 여러 번 있었습니다.' },
+  { type:'p', text:'넷째, **주식 시장 변동성**. 7~10% 평균 수익률은 어디까지나 평균이에요. 2008년처럼 -40% 폭락도 있고, 회복에 5년 걸린 적도 있습니다. 변동성 못 견디고 저점에 매도하면 손실 확정입니다.' },
+  { type:'p', text:'**누구에게 맞는 길인가요?** 투자 경험이 있어서 변동성을 견딜 수 있는 분, 라이프 변동 가능성이 큰 분 (지역 이동, 해외 이주 가능성), 부동산 시장에 다소 비관적이거나 회의적인 분, 그리고 **무주택 심리적 부담을 감수할 수 있는 분**에게 적합합니다.' },
+  { type:'hr' },
+
+  { type:'h2', text:'그래서 어느 길을 선택해야 할까' },
+  { type:'p', text:'솔직히 말씀드리면, 정답은 없어요. 본인 상황과 성향에 따라 다릅니다.' },
+  { type:'p', text:'**가족 상황**이 중요해요. 결혼·출산이 임박했다면 안정적인 거주가 중요해서 갈래 2 (베팅)에 가까운 선택이 합리적일 수 있어요. 반면 아직 라이프가 유동적이라면 갈래 3 (인내)가 자유롭고요.' },
+  { type:'p', text:'**직장 안정성**도 봐야 합니다. 대기업·공무원처럼 향후 10년 안정이 거의 확실하다면 갈래 2가 가능하지만, 이직이나 변동 가능성이 크다면 갈래 1 또는 3이 안전해요.' },
+  { type:'p', text:'**투자 성향**도 중요해요. 변동성 못 견디는 분이라면 갈래 3 (주식 베팅)은 정신적으로 너무 힘들 거예요. 안정 추구라면 갈래 1이 가장 무난합니다.' },
+  { type:'p', text:'한 달 정도 천천히 생각해보세요. 이 보고서를 한 번 더 읽으시고, 본인이 어느 갈래에 가장 끌리는지, 어느 갈래의 리스크가 가장 견딜 만한지 — 그게 답에 가까워요.' },
+  { type:'hr' },
+
+  { type:'h2', text:'다음 한 발' },
+  { type:'p', text:'선택한 갈래에 따라 이번 주에 알아볼 것들을 정리해드려요.' },
+  { type:'h3', text:'갈래 1 (균형)을 고려한다면' },
+  { type:'ol', items:[
+    '서울시 정비사업 정보몽땅 사이트에서 정비구역 지정 현황 조회',
+    '사업시행인가 단계 구역들의 신축 빌라 시세 (호갱노노, 네이버부동산)',
+    '본인 자산으로 접근 가능한 구역 1~2곳 선정'
+  ]},
+  { type:'h3', text:'갈래 2 (베팅)를 고려한다면' },
+  { type:'ol', items:[
+    '본인 DSR 한도 정확히 계산 (은행 모기지 상담)',
+    '디딤돌·보금자리론 등 정책자금 자격 확인',
+    '목표 지역의 5년 가격 추이와 향후 공급량 점검'
+  ]},
+  { type:'h3', text:'갈래 3 (인내)을 고려한다면' },
+  { type:'ol', items:[
+    '거치형 ETF 적립 계좌 개설 (미국 S&P500, 한국 KOSPI200 등)',
+    '매월 자동이체 설정 (적립식 투자)',
+    '향후 5~10년 라이프 계획 점검 (이직, 결혼 등)'
+  ]},
+  { type:'p', text:'결정은 한 달 정도 천천히 하셔도 늦지 않습니다. 좋은 매물이나 투자 기회를 발견하셨다면, 그때 부동산 전문가나 금융 자문가와 상담하시는 것을 추천드립니다.' },
+  { type:'p', text:'조급해하지 마세요. **첫 집을 5년 늦게 사도 됩니다. 진짜로요.** 중요한 건 본인에게 맞는 길을 천천히, 신중하게 찾는 거예요.' },
+  { type:'hr' },
+
+  { type:'disclaimer', text:'본 보고서는 일반적 정보 제공이며 투자 권유가 아닙니다.\n실제 투자 전 부동산 전문가 또는 금융 자문가 상담을 권장합니다.\n시장 상황과 개인 사정에 따라 결과가 달라질 수 있습니다.' }
+];
+
+function drRenderNode(node, parent){
+  switch(node.type){
+    case 'h1': parent.appendChild(drMakeEl('h1','dr-essay-h1',node.text)); break;
+    case 'h2': parent.appendChild(drMakeEl('h2','dr-essay-h2',node.text)); break;
+    case 'h3': parent.appendChild(drMakeEl('h3','dr-essay-h3',node.text)); break;
+    case 'p': {
+      const p = drMakeEl('p','dr-essay-p');
+      drInlineToNodes(node.text).forEach(n=>p.appendChild(n));
+      parent.appendChild(p);
+      break;
+    }
+    case 'quote': {
+      const q = drMakeEl('blockquote','dr-essay-quote');
+      drInlineToNodes(node.text).forEach(n=>q.appendChild(n));
+      parent.appendChild(q);
+      break;
+    }
+    case 'subquote': {
+      const q = drMakeEl('blockquote','dr-essay-subquote');
+      drInlineToNodes(node.text).forEach(n=>q.appendChild(n));
+      parent.appendChild(q);
+      break;
+    }
+    case 'ol':
+    case 'ul': {
+      const list = drMakeEl(node.type,'dr-essay-list');
+      node.items.forEach(item=>{
+        const li = document.createElement('li');
+        drInlineToNodes(item).forEach(n=>li.appendChild(n));
+        list.appendChild(li);
+      });
+      parent.appendChild(list);
+      break;
+    }
+    case 'hr': parent.appendChild(drMakeEl('hr','dr-essay-hr')); break;
+    case 'disclaimer': {
+      const q = drMakeEl('blockquote','dr-essay-disclaimer');
+      const lines = node.text.split('\n');
+      lines.forEach((line,i)=>{
+        if(i>0) q.appendChild(document.createElement('br'));
+        drInlineToNodes(line).forEach(n=>q.appendChild(n));
+      });
+      parent.appendChild(q);
+      break;
+    }
+  }
+}
+
+function generateDetailReport(){
+  // Phase 1: 입력값 무관, 고정 더미 보고서
+  const body = document.getElementById('dr-essay-body');
+  body.textContent = '';
+  DR_REPORT.forEach(node => drRenderNode(node, body));
+
+  document.getElementById('dr-form-view').style.display='none';
+  document.getElementById('dr-result-view').style.display='block';
+  document.getElementById('dr-form-footer').style.display='none';
+  document.getElementById('dr-result-footer').style.display='block';
+  document.getElementById('dr-title').textContent='상세 보고서 결과';
+  document.getElementById('dr-result-view').scrollTop=0;
+}
+
 </script>
 </body>
 </html>
