@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>우리 남친 연봉으로 집 살 수 있을까? 🏠💕</title>
+<title>내 연봉으로 집 살 수 있을까? 🏠💕</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -76,23 +76,30 @@
   .btn-cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,107,157,0.5)}
   .btn-cta:active{transform:translateY(0)}
 
-  /* ── 무료 결과 ── */
-  #result-section{display:none}
-  .result-card{background:linear-gradient(135deg,#FF6B9D 0%,#C850C0 50%,#4158D0 100%);border-radius:28px;padding:32px 24px;text-align:center;color:white;box-shadow:0 16px 48px rgba(255,107,157,0.4);position:relative;overflow:hidden;margin-bottom:16px}
-  .result-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.15) 0%,transparent 60%)}
-  .result-emoji{font-size:3rem;margin-bottom:12px;display:block}
-  .result-verdict{font-size:1.5rem;font-weight:900;margin-bottom:8px;letter-spacing:-0.5px;position:relative}
-  .result-sub{font-size:0.85rem;opacity:0.88;line-height:1.6;position:relative;font-family:'Gowun Dodum',sans-serif}
-  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-  .stat-item{background:rgba(255,255,255,0.88);border-radius:20px;padding:18px 14px;text-align:center;border:1.5px solid rgba(255,179,204,0.25);box-shadow:var(--shadow)}
-  .stat-label{font-size:0.72rem;color:var(--text-soft);font-weight:600;margin-bottom:6px}
-  .stat-value{font-size:1.15rem;font-weight:900;color:var(--pink);letter-spacing:-0.5px}
-  .stat-value.good{color:#3DB88A}
-  .stat-value.bad{color:#FF6B6B}
-  .progress-wrap{background:rgba(255,255,255,0.88);border-radius:20px;padding:20px;border:1.5px solid rgba(255,179,204,0.25);box-shadow:var(--shadow);margin-bottom:16px}
-  .progress-label{display:flex;justify-content:space-between;font-size:0.8rem;font-weight:700;color:var(--text-soft);margin-bottom:10px}
-  .progress-bar{height:14px;background:#F5DCE8;border-radius:99px;overflow:hidden}
-  .progress-fill{height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+  /* ── 결과 영역 ── */
+  /* 분석 전: 통합 결과 카드 + 차트 + 공유 + 커플 숨김. 추가 입력은 표시. */
+  .post-analyze{display:none}
+  body.analyzed .post-analyze{display:block}
+  /* 통합 결과 카드 (verdict full-width + 5 stats grid 2열) */
+  .result-summary{background:linear-gradient(135deg,#FF6B9D 0%,#C850C0 50%,#4158D0 100%);border-radius:28px;padding:24px 20px;color:white;box-shadow:0 16px 48px rgba(255,107,157,0.4);position:relative;overflow:hidden;margin-bottom:16px}
+  .result-summary::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.15) 0%,transparent 60%);pointer-events:none}
+  .rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative}
+  .rs-cell{background:rgba(255,255,255,0.18);border-radius:16px;padding:14px 12px;text-align:center;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.18)}
+  .rs-cell-label{font-size:0.7rem;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:4px}
+  .rs-cell-value{font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-0.4px}
+  .rs-cell-value.good{color:#A8FFD0}
+  .rs-cell-value.bad{color:#FFD3D3}
+  .rs-cell-progress .progress-bar{height:8px;background:rgba(255,255,255,0.22);border-radius:99px;margin-top:8px;overflow:hidden}
+  .rs-cell-progress .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#fff,#FFE4EF);transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1)}
+  .rs-cell-progress .range-labels{display:flex;justify-content:space-between;font-size:0.62rem;color:rgba(255,255,255,0.78);margin-top:6px}
+  .rs-cell-verdict{grid-column:1 / -1;padding:18px 14px}
+  .result-emoji{font-size:2.4rem;display:block;margin-bottom:6px}
+  .result-verdict{font-size:1.25rem;font-weight:900;margin-bottom:6px;letter-spacing:-0.5px}
+  .result-sub{font-size:0.78rem;opacity:0.92;line-height:1.5;font-family:'Gowun Dodum',sans-serif;white-space:pre-wrap}
+  /* 호환성: 기존 .stat-value 클래스 유지 (일부 JS가 className 조작) */
+  .stat-value{font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-0.4px}
+  .stat-value.good{color:#A8FFD0}
+  .stat-value.bad{color:#FFD3D3}
   .push-section{background:rgba(255,255,255,0.88);border-radius:28px;padding:24px;border:1.5px solid rgba(255,179,204,0.3);box-shadow:var(--shadow);margin-bottom:16px}
   .push-title{font-size:0.95rem;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .push-sub{font-size:0.78rem;color:var(--text-soft);margin-bottom:16px;font-family:'Gowun Dodum',sans-serif;line-height:1.5}
@@ -260,17 +267,13 @@
   .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiDrop linear forwards}
   @keyframes confettiDrop{0%{transform:translateY(-20px)rotate(0);opacity:1}100%{transform:translateY(100vh)rotate(720deg);opacity:0}}
   .disclaimer{text-align:center;font-size:0.7rem;color:var(--text-soft);margin-top:20px;font-family:'Gowun Dodum',sans-serif;line-height:1.6;opacity:0.7}
-  /* ── 플로팅 버튼 (3분할 탭) ── */
+  /* ── 플로팅 분석하기 버튼 (단일, 풀폭) ── */
   .floating-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 16px 20px;z-index:200;pointer-events:none;background:linear-gradient(to top,rgba(255,240,248,0.97) 70%,transparent)}
-  .floating-tab-bar{display:flex;gap:8px;pointer-events:all}
-  .floating-tab{flex:1;padding:13px 4px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .2s;letter-spacing:-.2px;line-height:1.2}
+  .floating-tab{width:100%;padding:14px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;letter-spacing:-.2px;line-height:1.2;pointer-events:all}
   .floating-tab-icon{font-size:1.1rem}
-  .floating-tab-basic{background:#fff;color:var(--text-soft);border:2px solid #F0D0DC}
-  .floating-tab-basic.active,.floating-tab-basic:hover{background:linear-gradient(135deg,#FFE4EF,#FFD0E6);color:var(--pink);border-color:var(--pink)}
-  .floating-tab-premium{background:#fff;color:var(--text-soft);border:2px solid #E0D0F0}
-  .floating-tab-premium.active,.floating-tab-premium:hover{background:linear-gradient(135deg,#F0E4FF,#E4D0FF);color:#9B4FD8;border-color:#C8A8E9}
-  .floating-tab-analyze{background:linear-gradient(135deg,#FF6B9D,#FF9EC4);color:#fff;border:2px solid transparent;box-shadow:0 6px 20px rgba(255,107,157,.45);flex:1.3}
+  .floating-tab-analyze{background:linear-gradient(135deg,#FF6B9D,#FF9EC4);color:#fff;box-shadow:0 6px 20px rgba(255,107,157,.45)}
   .floating-tab-analyze:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,157,.55)}
+  .floating-tab-analyze.active{transform:scale(.97)}
   .floating-tab-analyze.dirty{background:linear-gradient(135deg,#C850C0,#FF6B9D);animation:float-pulse 1.8s ease-in-out infinite}
   @keyframes float-pulse{0%,100%{box-shadow:0 6px 20px rgba(200,80,192,.45)}50%{box-shadow:0 8px 32px rgba(200,80,192,.7),0 0 0 5px rgba(200,80,192,.15)}}
 </style>
@@ -298,8 +301,8 @@
   <!-- 헤더 -->
   <div class="header">
     <span class="emoji-big">🏠💕</span>
-    <h1>우리 남친 연봉으로<br>집 살 수 있을까?</h1>
-    <p>남친의 재정 상태, 솔직하게 알아보자 🔍</p>
+    <h1>내 연봉으로<br>집 살 수 있을까?</h1>
+    <p>내 재정 상태, 솔직하게 알아보자 🔍</p>
   </div>
 
   <!-- 입력 카드 -->
@@ -307,7 +310,7 @@
     <div class="card-title">📋 기본 정보 입력</div>
 
     <div class="input-group">
-      <label>🎂 남친 현재 나이</label>
+      <label>🎂 내 나이</label>
       <div style="position:relative">
         <input type="number" id="age" min="20" max="70" value="30" placeholder="30"
           oninput="onAgeInput(this)"
@@ -318,7 +321,7 @@
     </div>
 
     <div class="input-group">
-      <label>💰 남친 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
+      <label>💰 내 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
       <div class="input-wrap" style="padding-top:30px">
         <span class="range-val" id="salary-val">5,000만원</span>
         <input type="range" id="salary" min="2000" max="20000" step="100" value="5000"
@@ -348,7 +351,7 @@
       </div>
     </div>
     <div class="input-group">
-      <label>💳 남친 자산 (현재 모은 돈)</label>
+      <label>💳 내 자산 (현재 모은 돈)</label>
       <div class="input-wrap" style="padding-top:30px">
         <span class="range-val" id="asset-val">5,000만원</span>
         <input type="range" id="asset" min="0" max="100000" step="1000" value="5000"
@@ -370,27 +373,30 @@
 
   <div style="height:90px"></div><!-- 플로팅 탭바 여백 -->
 
-  <!-- ══ 무료 결과 ══ -->
+  <!-- ══ 결과 영역 ══ -->
   <div id="result-section">
-    <div class="result-card" id="result-hero">
-      <span class="result-emoji" id="result-emoji">🏠</span>
-      <div class="result-verdict" id="result-verdict">계산 중...</div>
-      <div class="result-sub" id="result-sub"></div>
+    <!-- 통합 결과 카드: verdict + 5 stats + progress 한 카드 -->
+    <div class="result-summary post-analyze">
+      <div class="rs-grid">
+        <div class="rs-cell rs-cell-verdict">
+          <span class="result-emoji" id="result-emoji">🏠</span>
+          <div class="result-verdict" id="result-verdict">계산 중...</div>
+          <div class="result-sub" id="result-sub"></div>
+        </div>
+        <div class="rs-cell"><div class="rs-cell-label">🏠 목표 집값</div><div class="rs-cell-value stat-value" id="stat-price">-</div></div>
+        <div class="rs-cell"><div class="rs-cell-label">💰 현재 가능</div><div class="rs-cell-value stat-value" id="stat-avail">-</div></div>
+        <div class="rs-cell"><div class="rs-cell-label">📅 모아야 할 기간</div><div class="rs-cell-value stat-value" id="stat-years">-</div></div>
+        <div class="rs-cell"><div class="rs-cell-label">📈 연봉 대비</div><div class="rs-cell-value stat-value" id="stat-ratio">-</div></div>
+        <div class="rs-cell rs-cell-progress" style="grid-column:1 / -1">
+          <div class="rs-cell-label" style="justify-content:space-between"><span>💸 현재 보유</span><span id="progress-pct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div class="range-labels"><span id="prog-left">보유액</span><span id="prog-right">목표액</span></div>
+        </div>
+      </div>
     </div>
-    <div class="stats-grid">
-      <div class="stat-item"><div class="stat-label">🏠 목표 집값</div><div class="stat-value" id="stat-price">-</div></div>
-      <div class="stat-item"><div class="stat-label">💰 현재 가능 금액</div><div class="stat-value" id="stat-avail">-</div></div>
-      <div class="stat-item"><div class="stat-label">📅 모아야 할 기간</div><div class="stat-value" id="stat-years">-</div></div>
-      <div class="stat-item"><div class="stat-label">📈 연봉 대비 집값</div><div class="stat-value" id="stat-ratio">-</div></div>
-    </div>
-    <div class="progress-wrap">
-      <div class="progress-label"><span>💸 현재 보유</span><span id="progress-pct">0%</span></div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-      <div class="range-labels" style="margin-top:8px"><span id="prog-left">보유액</span><span id="prog-right">목표액</span></div>
-    </div>
-    <div class="push-section">
-      <div class="push-title">📣 남친한테 전달할 메시지</div>
-      <div class="push-sub">이 결과를 남친에게 공유해서<br>열심히 벌어달라고 응원(압박)해보세요 💪</div>
+    <div class="push-section post-analyze">
+      <div class="push-title">📝 나에게 다짐 한마디</div>
+      <div class="push-sub">이 결과를 보면서<br>스스로 다짐 한마디 적어둬요 💪</div>
       <div class="push-message" id="push-msg"></div>
       <div class="share-buttons">
         <button class="btn-share btn-insta" onclick="openInstaModal()">
@@ -405,58 +411,7 @@
       <div class="tooltip">* 인스타: 이미지 저장 후 스토리에 직접 올려주세요 📸</div>
     </div>
 
-    <!-- 유료 잠금 CTA (결제 전) -->
-    <div id="premium-locked">
-      <div class="premium-divider"><span class="premium-divider-text">✨ 더 궁금하다면?</span></div>
-      <div class="premium-section" style="margin-bottom:16px">
-        <div class="premium-header">
-          <div class="premium-badge">💎 PREMIUM</div>
-          <div class="premium-header-title">남친 재력 정밀 분석 4종</div>
-          <div class="premium-header-sub">연봉 올리면? 둘이 합치면? 실제로 얼마나 달라질까 👀</div>
-        </div>
-        <div class="premium-cards">
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-pink">📈</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">연봉 인상률 시뮬레이션 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">연봉 3%·5%·8% 올랐을 때 몇 년 단축되는지 비교</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" id="preview-years">-3년</div><div class="premium-preview-label">단축 기간</div></div>
-          </div>
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-mint">🎉</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">결혼·출산·차량 이벤트 반영 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">현실적인 지출 반영 후 재계산</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" style="filter:blur(5px)">현실판</div><div class="premium-preview-label">시나리오</div></div>
-          </div>
-          <div class="premium-card-item" onclick="openPayModal()">
-            <div class="premium-icon-wrap icon-peach">📄</div>
-            <div class="premium-card-content">
-              <div class="premium-card-title">PDF 리포트 다운로드 <span class="lock-badge">🔒 잠금</span></div>
-              <div class="premium-card-desc">분석 결과를 PDF로 저장·공유</div>
-            </div>
-            <div class="premium-preview"><div class="premium-preview-num" style="font-size:1.4rem">📎</div><div class="premium-preview-label">저장 가능</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="premium-cta-wrap">
-        <div class="price-tag">⚡ 990원으로 평생 이용</div>
-        <div style="margin-bottom:16px">
-          <div class="price-main">990<span>원</span></div>
-          <div class="price-sub">평생 이용 · 기기 무관 · 14일 환불 보장</div>
-        </div>
-        <button class="btn-premium btn-premium-gold btn-pulse" onclick="openPayModal()">🔓 990원으로 남친 완전 분석하기</button>
-        <div class="premium-guarantee">
-          <span>🔒 안전 결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
-        </div>
-      </div>
-    </div>
-    <!-- ══ 유료 기능 실제 콘텐츠 (결제 후 공개) ══ -->
     <div id="premium-content">
-      <div class="premium-divider"><span class="premium-divider-text">💎 프리미엄 분석 설정</span></div>
-
       <!-- ① 생활비 설정 -->
       <div class="section-wrap">
         <div class="section-title">🛒 월 평균 생활비</div>
@@ -480,6 +435,8 @@
       </div>
 
       <!-- ② 투자수익률 설정 -->
+      <div class="section-wrap">
+        <div class="section-title">📊 투자수익률</div>
         <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">저축액을 어떻게 굴리는지 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
         <div class="invest-tabs">
           <button class="invest-tab active" onclick="selectInvest('deposit',this)">🏦 예적금 3%</button>
@@ -667,7 +624,7 @@
       </div>
 
       <!-- ④ 자산 흐름 차트 + PDF -->
-      <div class="section-wrap">
+      <div class="section-wrap post-analyze">
         <div class="section-title">📊 나이별 자산 흐름 차트</div>
         <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:12px">수입(급여+투자수익) - 지출(생활비+이벤트) = 순자산 변화 · 이벤트 발생 연도에 자산 감소 반영</div>
         <div style="background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
@@ -686,7 +643,7 @@
           <div class="pdf-preview-header">
             <div class="pdf-preview-logo">🏠</div>
             <div>
-              <div class="pdf-preview-title">남친 재력 분석 리포트</div>
+              <div class="pdf-preview-title">내 재력 분석 리포트</div>
               <div class="pdf-preview-date" id="pdf-date">-</div>
             </div>
           </div>
@@ -704,7 +661,7 @@
       </div>
 
       <!-- ⑤ 커플 합산 계산기 -->
-      <div class="section-wrap">
+      <div class="section-wrap post-analyze">
         <div class="section-title">💑 커플 합산 계산</div>
         <div style="text-align:center;padding:28px 20px;background:linear-gradient(135deg,#F8F0FF,#EDE6FF);border-radius:20px;border:1.5px solid rgba(200,168,233,.3)">
           <div style="font-size:2.2rem;margin-bottom:10px">💑</div>
@@ -754,23 +711,11 @@
   </div>
 </div>
 
-<!-- 플로팅 탭 버튼 -->
+<!-- 플로팅 분석하기 버튼 -->
 <div class="floating-wrap" id="floating-wrap">
-  <div class="floating-tab-bar">
-    <button class="floating-tab floating-tab-basic" id="ftab-basic"
-      onclick="floatGoBasic()">
-      <span class="floating-tab-icon">📋</span>기본설정
-    </button>
-    <button class="floating-tab floating-tab-premium" id="ftab-premium"
-      onclick="floatGoPremium()">
-      <span class="floating-tab-icon" id="ftab-premium-icon">💎</span>
-      <span id="ftab-premium-label">프리미엄설정</span>
-    </button>
-    <button class="floating-tab floating-tab-analyze" id="ftab-analyze"
-      onclick="floatAnalyze()">
-      <span class="floating-tab-icon">📊</span>분석하기
-    </button>
-  </div>
+  <button class="floating-tab floating-tab-analyze" id="ftab-analyze" onclick="floatAnalyze()">
+    <span class="floating-tab-icon">📊</span>분석하기
+  </button>
 </div>
 
 <!-- 인스타 모달 -->
@@ -783,32 +728,6 @@
     <div class="modal-btns">
       <button class="modal-btn modal-btn-primary" onclick="downloadShareImage()">💾 이미지 저장</button>
       <button class="modal-btn" style="background:#F5F0F8;color:var(--text-soft)" onclick="closeModalById('insta-modal')">닫기</button>
-    </div>
-  </div>
-</div>
-
-<!-- 결제 모달 -->
-<div class="modal-overlay" id="pay-modal" onclick="closeModalByBg(event,'pay-modal')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3 style="margin-bottom:4px">💎 프리미엄 잠금 해제</h3>
-    <p style="margin-bottom:16px">990원 한 번으로 평생 사용! 기기 바꿔도 유지돼요.</p>
-    <div class="pay-features">
-      <div class="pay-feature-item">🛒 생활비 설정 + 월별 CF 시뮬레이션</div>
-      <div class="pay-feature-item">📈 연봉 진급 + 투자수익률 시나리오</div>
-      <div class="pay-feature-item">🎯 결혼·출산·차량·대출 현실 반영</div>
-      <div class="pay-feature-item">📊 나이별 자산 차트 + PDF 리포트</div>
-      <div class="pay-feature-item">💑 커플 합산 계산</div>
-    </div>
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:8px">☕ 커피 한 잔보다 저렴한 평생 이용권</div>
-      <div class="price-main">990<span>원</span></div>
-      <div class="price-sub">평생 이용 · 14일 전액 환불 보장</div>
-    </div>
-    <button class="btn-premium btn-premium-gold" style="margin-bottom:0" onclick="unlockPremium()">🔓 990원으로 바로 시작하기</button>
-    <button class="modal-btn-secondary" onclick="closeModalById('pay-modal')">나중에 할게요</button>
-    <div class="premium-guarantee" style="margin-top:16px">
-      <span>🔒 토스페이먼츠 안전결제</span><span>♾️ 평생 이용</span><span>↩️ 14일 환불</span>
     </div>
   </div>
 </div>
@@ -846,7 +765,7 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
 const MY_ASSETS={none:0,small:8000,mid:25000,big:40000};
 const EVENT_AGES={wedding:33,baby:35,car:30};
-const LS_MY='bfhc_my_data',LS_PARTNER='bfhc_partner_data',LS_PREMIUM='bfhc_premium';
+const LS_MY='bfhc_my_data',LS_PARTNER='bfhc_partner_data';
 
 // ━━ Supabase 초기화 ━━
 const SUPABASE_URL = 'https://zvgcekyknwoffffxgoib.supabase.co';
@@ -888,39 +807,13 @@ async function saveAnalysis(result){
       target_price: result.targetPrice||null,
       years_needed: result.yearsNeeded||null,
       verdict: result.verdict||null,
-      is_premium: isPremium,
       shared: false
     });
   }catch(e){console.log('save analysis error',e);}
 }
 
-// ━━ Supabase: 프리미엄 검증 ━━
-async function checkPremiumFromServer(phone){
-  try{
-    const{data,error}=await sb.from('payments')
-      .select('id,status')
-      .eq('status','done')
-      .limit(1);
-    if(error) return false;
-    return data&&data.length>0;
-  }catch(e){return false;}
-}
-
-// ━━ Supabase: 결제 완료 저장 (토스페이먼츠 연동 후 사용) ━━
-async function savePremiumPayment(orderId, paymentKey, amount){
-  try{
-    await sb.from('payments').upsert({
-      order_id: orderId,
-      payment_key: paymentKey,
-      amount: amount,
-      status: 'done',
-      paid_at: new Date().toISOString()
-    });
-    await sb.rpc('increment_analytics',{p_service:'bf-home',p_field:'total_payments'});
-  }catch(e){console.log('save payment error',e);}
-}
 const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
-let calcResult={},isPremium=localStorage.getItem(LS_PREMIUM)==='true',chartInstance=null;
+let calcResult={},chartInstance=null;
 let _premiumDirty=false;
 let _floatingObserver=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
@@ -954,7 +847,7 @@ const fmt=v=>{
   updateEventAgeLabels();
   updateBabyTotal();
   updateCarMaintenance();
-  if(isPremium) showPremiumContent();
+  showPremiumContent();
   updatePremiumTabLabel();
   restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
 })();
@@ -1376,18 +1269,19 @@ function calculate(){
   const ratio=(targetPrice/grossSalary).toFixed(1),pct=Math.min(Math.round(totalAsset/targetPrice*100),100);
   const salary=netSalary; // 이하 계산은 세후 기준
   let emoji,verdict,sub,color;
-  if(yearsNeeded<=0){emoji='🎉';verdict='이미 살 수 있어요!';sub='현재 자산으로 바로 구매 가능! 남친 완벽해 💍\n근데 진짜야...? 한번 더 확인해봐 🤔';color=['#43e97b','#38f9d7']}
-  else if(yearsNeeded<=3){emoji='🥰';verdict=`${yearsNeeded}년이면 OK!`;sub='조금만 더 열심히 하면 돼요!\n남친한테 응원의 메시지를 보내줘요 💌';color=['#f093fb','#f5576c']}
-  else if(yearsNeeded<=7){emoji='😬';verdict=`${yearsNeeded}년 걸려요...`;sub='꽤 오래 걸리네요. 남친 연봉 올려야겠는데?\n같이 투자 공부도 해보면 어떨까요 📈';color=['#4facfe','#00f2fe']}
-  else if(yearsNeeded<=15){emoji='😰';verdict=`${yearsNeeded}년...? 😱`;sub='현실이 좀 차갑네요 🧊\n남친한테 긴급 연봉 협상 요청을 보낼 시간이에요!';color=['#fa709a','#fee140']}
-  else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n부동산보다 남친 업그레이드가 빠를 수도...? 농담이에요 💕';color=['#a18cd1','#fbc2eb']}
+  if(yearsNeeded<=0){emoji='🎉';verdict='이미 살 수 있어요!';sub='현재 자산으로 바로 구매 가능! 이미 충분해 💍\n근데 진짜야...? 한번 더 확인해봐 🤔';color=['#43e97b','#38f9d7']}
+  else if(yearsNeeded<=3){emoji='🥰';verdict=`${yearsNeeded}년이면 OK!`;sub='조금만 더 열심히 하면 돼요!\n스스로에게 응원 한마디 보내줘요 💌';color=['#f093fb','#f5576c']}
+  else if(yearsNeeded<=7){emoji='😬';verdict=`${yearsNeeded}년 걸려요...`;sub='꽤 오래 걸리네요. 연봉 협상 각이네 💼\n투자 공부도 같이 해봐요 📈';color=['#4facfe','#00f2fe']}
+  else if(yearsNeeded<=15){emoji='😰';verdict=`${yearsNeeded}년...? 😱`;sub='현실이 좀 차갑네요 🧊\n긴급 연봉 협상 + 부수입 진지하게 고민할 때!';color=['#fa709a','#fee140']}
+  else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n전략 대수술이 필요해요. 포기 말고 차근차근 💪';color=['#a18cd1','#fbc2eb']}
   calcResult={emoji,verdict,sub,targetPrice,totalAsset,yearsNeeded,ratio,pct,color,salary,annualSavings,asset,myAsset,region:state.region,size:state.size,myAssetKey:state.myAsset,age,grossSalary,netSalary,monthlyTakehome};
   localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age,living:monthlyLivingCost,investRate:getInvestRate()}));
   // Supabase 분석 저장 + 횟수 추적
   trackAnalysis();
   saveAnalysis({age,grossSalary,totalAsset,region:state.region,size:state.size,targetPrice,yearsNeeded:calcResult.yearsNeeded,verdict:calcResult.verdict});
   // 무료 결과
-  document.getElementById('result-hero').style.background=`linear-gradient(135deg,${color[0]} 0%,${color[1]} 100%)`;
+  const summaryCard=document.querySelector('.result-summary');
+  if(summaryCard) summaryCard.style.background=`linear-gradient(135deg,${color[0]} 0%,${color[1]} 100%)`;
   document.getElementById('result-emoji').textContent=emoji;document.getElementById('result-verdict').textContent=verdict;document.getElementById('result-sub').textContent=sub;
   document.getElementById('stat-price').textContent=fmt(targetPrice);
   document.getElementById('stat-avail').textContent=fmt(totalAsset);document.getElementById('stat-avail').className='stat-value '+(totalAsset>=targetPrice?'good':'bad');
@@ -1405,16 +1299,12 @@ function calculate(){
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
   const pushMsg=genPushMsg(yearsNeeded,fmt(targetPrice),salary,rN[state.region],sN[state.size]);
   document.getElementById('push-msg').textContent=pushMsg;calcResult.pushMsg=pushMsg;
-  document.getElementById('result-section').style.display='block';
-  setTimeout(()=>document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  document.body.classList.add('analyzed');
+  const summaryEl=document.querySelector('.result-summary');
+  setTimeout(()=>{ if(summaryEl) summaryEl.scrollIntoView({behavior:'smooth',block:'start'}); },100);
   if(yearsNeeded<=3)launchConfetti();
-  // 프리미엄 열려있으면 표시만 하고 스크롤은 결과 상단으로 유지
-  if(isPremium){
-    document.getElementById('premium-locked').style.display='none';
-    document.getElementById('premium-content').style.display='block';
-    updatePremiumTabLabel();
-    // 스크롤은 result-section 상단으로만 (프리미엄까지 내려가지 않음)
-  }
+  document.getElementById('premium-content').style.display='block';
+  updatePremiumTabLabel();
   checkPartnerData();
 }
 
@@ -2206,7 +2096,7 @@ function downloadPDF(){
   // 헤더 텍스트
   ctx.textAlign='center';
   ctx.fillStyle='#FF6B9D'; ctx.font='bold 22px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
-  ctx.fillText('남친 재력 분석 리포트', W/2, 80);
+  ctx.fillText('내 재력 분석 리포트', W/2, 80);
   ctx.fillStyle='#9B7B8A'; ctx.font='13px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
   ctx.fillText(`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 · by Xalysis`, W/2, 108);
   ctx.fillStyle='#3D2C35'; ctx.font='bold 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
@@ -2277,7 +2167,7 @@ function downloadPDF(){
       srcY+=pageH;
     }
   }
-  const fn=`남친재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
+  const fn=`내재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
   doc.save(fn);
   showToast('📥 PDF 저장 완료!');
 }
@@ -2298,7 +2188,7 @@ function copyReportText(){
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
   const lines=[
-    '🏠 남친 재력 분석 리포트','─'.repeat(22),
+    '🏠 내 재력 분석 리포트','─'.repeat(22),
     `[목표] ${rN[region]} ${sN[size]} ${fmt(targetPrice)}`,
     `[현재자산] ${fmt(totalAsset)}`,
     `[연봉] 세전 ${fmt(grossSalary)} / 월 실수령 약 ${monthlyTakehome}만원`,
@@ -2313,86 +2203,36 @@ function copyReportText(){
   navigator.clipboard?.writeText(lines).then(()=>showToast('📋 복사 완료!'));
 }
 
-function unlockPremium(){
-  // TODO: 토스페이먼츠 실제 연동 자리 (990원 평생 이용권)
-  // 현재: 테스트 모드 (결제 없이 바로 해제)
-  isPremium=true;localStorage.setItem(LS_PREMIUM,'true');
-  closeModalById('pay-modal');showPremiumContent();
-  if(calcResult.salary){ calcAll(); scrollToPremium(); }
-  showToast('🎉 990원 프리미엄 잠금 해제 완료!');launchConfetti();
-  // Supabase에 프리미엄 활성화 기록 (토스 연동 전 임시)
-  savePremiumPayment('test_'+Date.now(),'test_key',990);
-}
-// ━━ 플로팅 탭 버튼 ━━
-function floatGoBasic(){
-  // 기본설정: 최상단으로
-  window.scrollTo({top:0, behavior:'smooth'});
-  setActiveTab('basic');
-}
-function floatGoPremium(){
-  // 프리미엄설정: 프리미엄 영역으로
-  if(!isPremium){
-    if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
-    openPayModal();
-    return;
-  }
-  const el = document.getElementById('premium-content');
-  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
-  setActiveTab('premium');
-}
+// ━━ 플로팅 분석하기 버튼 ━━
 function floatAnalyze(){
-  // 분석하기: 무료/유료 분기
   if(!calcResult.salary || _analyzeNeedsRefresh){
-    // 기본 분석 실행
     calculate();
     _analyzeNeedsRefresh = false;
   }
-  if(isPremium){
-    runPremiumAnalysis();
-  } else {
-    scrollToResult();
-  }
-  setActiveTab('analyze');
-}
-function setActiveTab(tab){
-  ['basic','premium','analyze'].forEach(t=>{
-    const el = document.getElementById(`ftab-${t}`);
-    if(el){ el.classList.remove('active'); }
-  });
-  const active = document.getElementById(`ftab-${tab}`);
-  if(active) active.classList.add('active');
-  setTimeout(()=>{ if(active) active.classList.remove('active'); }, 600);
-}
-function updatePremiumTabLabel(){
-  const icon  = document.getElementById('ftab-premium-icon');
-  const label = document.getElementById('ftab-premium-label');
-  if(!icon || !label) return;
-  if(!isPremium){
-    icon.textContent  = '🔒';
-    label.textContent = '프리미엄설정';
-  } else if(_premiumDirty){
-    icon.textContent  = '⚡';
-    label.textContent = '프리미엄설정';
-    document.getElementById('ftab-analyze')?.classList.add('dirty');
-  } else {
-    icon.textContent  = '🔓';
-    label.textContent = '프리미엄설정';
-    document.getElementById('ftab-analyze')?.classList.remove('dirty');
+  runPremiumAnalysis();
+  const btn = document.getElementById('ftab-analyze');
+  if(btn){
+    btn.classList.add('active');
+    setTimeout(()=>btn.classList.remove('active'), 600);
   }
 }
 
-// ━━ dirty 상태 관리 ━━
+// ━━ dirty 상태 관리 (입력 변경 시 분석하기 버튼 깜빡임) ━━
 function markDirty(){
-  if(!isPremium) return;
   _premiumDirty = true;
-  updatePremiumTabLabel();
+  document.getElementById('ftab-analyze')?.classList.add('dirty');
 }
+function clearDirty(){
+  _premiumDirty = false;
+  document.getElementById('ftab-analyze')?.classList.remove('dirty');
+}
+// 호환성 stub (init/showPremiumContent 호출처용)
+function updatePremiumTabLabel(){ /* no-op */ }
 function scrollToResult(){
-  const el = document.getElementById('result-section');
+  const el = document.querySelector('.result-summary');
   if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 function showPremiumContent(){
-  document.getElementById('premium-locked').style.display='none';
   document.getElementById('premium-content').style.display='block';
   updatePremiumTabLabel();
 }
@@ -2506,16 +2346,16 @@ function restoreFromShareUrl(){
     setTimeout(()=>calculate(), 300);
   }catch(e){}
 }
-// 프리미엄 설정 완료 후 결과 보기 버튼
+// 추가 설정 변경 후 결과 재계산
 function runPremiumAnalysis(){
-  _premiumDirty = false;
-  updatePremiumTabLabel();
+  clearDirty();
+  document.body.classList.add('analyzed');
   if(!calcResult.salary){
     calculate();
-    setTimeout(()=>{ if(calcResult.salary){ calcAll(); scrollToPremium(); } }, 100);
+    setTimeout(()=>{ if(calcResult.salary){ calcAll(); scrollToResult(); } }, 100);
   } else {
     calcAll();
-    scrollToPremium();
+    scrollToResult();
   }
   showToast('🔮 분석 결과를 업데이트했어요!');
 }
@@ -2526,7 +2366,6 @@ function scrollToPremium(){
 }
 
 // ━━ 모달 & 공유 ━━
-function openPayModal(){document.getElementById('pay-modal').classList.add('show')}
 function closeModalById(id){document.getElementById(id).classList.remove('show')}
 function closeModalByBg(e,id){if(e.target===document.getElementById(id))closeModalById(id)}
 function openInstaModal(){drawShareCard();document.getElementById('insta-modal').classList.add('show')}
@@ -2552,11 +2391,11 @@ function drawShareCard(){
   ctx.fillStyle='rgba(255,240,248,.9)';roundRect(ctx,70,720,W-140,120,24);ctx.fill();
   ctx.strokeStyle='#FFB3CC';ctx.lineWidth=2;roundRect(ctx,70,720,W-140,120,24);ctx.stroke();
   ctx.font='20px sans-serif';ctx.fillStyle='#3D2C35';ctx.textAlign='center';
-  ['💌 남친한테 이 결과 공유해봐요!','열심히 벌어달라고 슬쩍 압박해보세요 😉'].forEach((l,i)=>ctx.fillText(l,W/2,775+i*34));
-  ctx.font='18px sans-serif';ctx.fillStyle='rgba(155,123,138,.5)';ctx.fillText('🏠 남친 연봉 집계산기 · Xalysis',W/2,H-95);
+  ['💌 이 결과를 잊지 말고 다짐해봐요!','매달 한 번씩 내 자산 점검 어때요? 📊'].forEach((l,i)=>ctx.fillText(l,W/2,775+i*34));
+  ctx.font='18px sans-serif';ctx.fillStyle='rgba(155,123,138,.5)';ctx.fillText('🏠 내 연봉 집계산기 · Xalysis',W/2,H-95);
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
-function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='남친연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
+function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='내연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
 function shareKakao(){
   if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
   const{verdict,pushMsg,targetPrice,yearsNeeded}=calcResult;
@@ -2565,7 +2404,7 @@ function shareKakao(){
     Kakao.Share.sendDefault({
       objectType:'feed',
       content:{
-        title:'우리 남친 연봉으로 집 살 수 있을까? 🏠',
+        title:'내 연봉으로 집 살 수 있을까? 🏠',
         description: verdict + (pushMsg ? '\n' + pushMsg : ''),
         imageUrl:'https://braint.net/og-image.png',
         imageWidth: 800,
@@ -2595,7 +2434,7 @@ function launchConfetti(){const colors=['#FF6B9D','#FFB3CC','#C8A8E9','#FFAA80',
 const LEGAL = {
   terms: {
     title: '이용약관',
-    content: `<b>제1조 (목적)</b><br>본 약관은 엑스분석(이하 "회사")이 제공하는 "우리 남친 연봉으로 집 살 수 있을까?" 서비스의 이용 조건을 규정합니다.<br><br><b>제2조 (서비스 내용)</b><br>사용자가 입력한 정보를 바탕으로 부동산 구매 가능 시점을 시뮬레이션하는 서비스를 제공합니다. 분석 결과는 참고용이며 실제 투자·금융 결정의 법적 책임을 지지 않습니다.<br><br><b>제3조 (유료 서비스)</b><br>프리미엄 분석 기능은 990원의 일회성 이용료를 결제하여 이용할 수 있습니다. 결제 완료 시 즉시 서비스가 활성화됩니다.<br><br><b>제4조 (면책조항)</b><br>분석 결과는 시뮬레이션이며 실제 부동산 시세와 다를 수 있습니다. 서비스 이용으로 인한 손해에 대해 책임을 지지 않습니다.<br><br>시행일: 2025년 4월 25일 · 사업자: 엑스분석(Xalysis) · 대표: 이윤한`
+    content: `<b>제1조 (목적)</b><br>본 약관은 엑스분석(이하 "회사")이 제공하는 "내 연봉으로 집 살 수 있을까?" 서비스의 이용 조건을 규정합니다.<br><br><b>제2조 (서비스 내용)</b><br>사용자가 입력한 정보를 바탕으로 부동산 구매 가능 시점을 시뮬레이션하는 서비스를 제공합니다. 분석 결과는 참고용이며 실제 투자·금융 결정의 법적 책임을 지지 않습니다.<br><br><b>제3조 (면책조항)</b><br>분석 결과는 시뮬레이션이며 실제 부동산 시세와 다를 수 있습니다. 서비스 이용으로 인한 손해에 대해 책임을 지지 않습니다.<br><br>시행일: 2025년 4월 25일 · 사업자: 엑스분석(Xalysis) · 대표: 이윤한`
   },
   privacy: {
     title: '개인정보처리방침',
@@ -2626,51 +2465,7 @@ updateSalary(document.getElementById('salary'));
 updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));
 
 </script>
-<!-- 임시 개발용 프리미엄 열기 버튼 (토스 연동 후 제거) -->
-<button
-  id="dev-premium-btn"
-  onclick="devUnlockPremium()"
-  style="
-    position:fixed;bottom:90px;right:12px;z-index:999;
-    background:rgba(61,44,53,.7);color:rgba(255,255,255,.5);
-    border:1px dashed rgba(255,255,255,.2);border-radius:99px;
-    padding:5px 12px;font-size:.65rem;font-family:'Gowun Dodum',sans-serif;
-    cursor:pointer;backdrop-filter:blur(4px);
-    transition:all .2s;letter-spacing:.3px;
-  "
-  onmouseover="this.style.opacity='1';this.style.color='#fff'"
-  onmouseout="this.style.opacity='.7';this.style.color='rgba(255,255,255,.5)'"
->
-  🔧 dev
-</button>
 <script>
-function devUnlockPremium(){
-  if(isPremium){
-    // 프리미엄 닫기
-    isPremium=false;
-    localStorage.removeItem('bfhc_premium');
-    document.getElementById('premium-locked').style.display='block';
-    document.getElementById('premium-content').style.display='none';
-    document.getElementById('dev-premium-btn').textContent='🔧 dev';
-    updatePremiumTabLabel();
-    showToast('🔒 프리미엄 닫힘 (개발용)');
-  } else {
-    // 프리미엄 열기
-    if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
-    isPremium=true;
-    localStorage.setItem('bfhc_premium','true');
-    document.getElementById('premium-locked').style.display='none';
-    document.getElementById('premium-content').style.display='block';
-    updatePremiumTabLabel();
-    calcAll();
-    document.getElementById('dev-premium-btn').textContent='🔓 dev';
-    showToast('🔓 프리미엄 열림 (개발용)');
-  }
-}
-// 초기 상태 반영
-window.addEventListener('load',()=>{
-  if(isPremium) document.getElementById('dev-premium-btn').textContent='🔓 dev';
-});
 function goToCouple(){ location.href='/couple/'; }
 </script>
 </body>
