@@ -112,47 +112,6 @@
   .btn-share:hover{transform:translateY(-2px)}
   .tooltip{font-size:0.72rem;color:var(--text-soft);text-align:center;margin-top:8px;font-family:'Gowun Dodum',sans-serif}
 
-  /* ── 유료 전환 구간 ── */
-  .premium-divider{display:flex;align-items:center;gap:12px;margin:24px 0 20px}
-  .premium-divider::before,.premium-divider::after{content:'';flex:1;height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,107,157,0.3),transparent)}
-  .premium-divider-text{font-size:0.75rem;font-weight:700;color:var(--text-soft);white-space:nowrap;letter-spacing:0.5px}
-  .premium-header{background:linear-gradient(135deg,#3D2C35 0%,#5A3A4A 100%);border-radius:28px 28px 0 0;padding:22px 24px 18px;text-align:center;position:relative;overflow:hidden}
-  .premium-header::before{content:'';position:absolute;top:-40%;left:-20%;width:140%;height:180%;background:radial-gradient(circle at 60% 30%,rgba(255,107,157,0.18) 0%,transparent 60%)}
-  .premium-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--gold),#FFD166);color:#3D2C35;font-size:0.68rem;font-weight:900;padding:4px 12px;border-radius:99px;margin-bottom:10px;letter-spacing:0.5px;position:relative}
-  .premium-header-title{font-size:1.05rem;font-weight:900;color:white;margin-bottom:4px;position:relative;letter-spacing:-0.3px}
-  .premium-header-sub{font-size:0.78rem;color:rgba(255,255,255,0.6);font-family:'Gowun Dodum',sans-serif;position:relative}
-  .premium-cards{background:rgba(255,255,255,0.92);border-radius:0 0 28px 28px;border:1.5px solid rgba(255,179,204,0.25);border-top:none;overflow:hidden;box-shadow:var(--shadow-lg)}
-  .premium-card-item{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,179,204,0.15);cursor:pointer;transition:background 0.2s}
-  .premium-card-item:last-child{border-bottom:none}
-  .premium-card-item:hover{background:rgba(255,240,248,0.6)}
-  .premium-icon-wrap{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
-  .icon-pink{background:linear-gradient(135deg,#FFE4EF,#FFD0E6)}
-  .icon-purple{background:linear-gradient(135deg,#F0E8FF,#E4D4FF)}
-  .icon-mint{background:linear-gradient(135deg,#E4FFF8,#D0FFF0)}
-  .icon-peach{background:linear-gradient(135deg,#FFF4E4,#FFE8CC)}
-  .premium-card-content{flex:1;min-width:0}
-  .premium-card-title{font-size:0.9rem;font-weight:900;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .premium-card-desc{font-size:0.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.5}
-  .premium-preview{text-align:right;flex-shrink:0}
-  .premium-preview-num{font-size:1rem;font-weight:900;color:var(--pink);filter:blur(5px);user-select:none}
-  .premium-preview-label{font-size:0.65rem;color:var(--text-soft);margin-top:2px}
-  .lock-badge{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#F5F0F8,#EDE6F5);border:1px solid rgba(200,168,233,0.4);color:var(--lilac);font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
-  .premium-cta-wrap{background:rgba(255,255,255,0.92);border-radius:28px;padding:24px;border:1.5px solid rgba(245,166,35,0.3);box-shadow:0 8px 32px rgba(245,166,35,0.12);margin-bottom:16px;text-align:center}
-  .price-main{font-size:2rem;font-weight:900;color:var(--text);letter-spacing:-1px}
-  .price-main span{font-size:1rem;font-weight:500;color:var(--text-soft)}
-  .price-sub{font-size:0.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:4px}
-  .price-tag{display:inline-flex;align-items:center;gap:6px;background:var(--gold-light);border:1px solid rgba(245,166,35,0.3);color:#B5720A;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:99px;margin-bottom:12px}
-  .btn-premium{width:100%;padding:18px;background:linear-gradient(135deg,#3D2C35,#5A3A4A);border:none;border-radius:20px;color:white;font-family:'Noto Sans KR',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(61,44,53,0.35);transition:all 0.25s;display:flex;align-items:center;justify-content:center;gap:8px}
-  .btn-premium:hover{transform:translateY(-2px)}
-  .btn-premium-gold{background:linear-gradient(135deg,var(--gold),#FFD166);color:#3D2C35;box-shadow:0 8px 24px rgba(245,166,35,0.4)}
-  .btn-premium-gold:hover{box-shadow:0 12px 32px rgba(245,166,35,0.5)}
-  .premium-guarantee{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:14px;font-size:0.7rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif}
-  @keyframes pulse-glow{0%,100%{box-shadow:0 8px 24px rgba(245,166,35,0.4)}50%{box-shadow:0 8px 36px rgba(245,166,35,0.7),0 0 0 6px rgba(245,166,35,0.1)}}
-  .btn-pulse{animation:pulse-glow 2.5s ease-in-out infinite}
-
-  /* ── 유료 기능 실제 콘텐츠 ── */
-  #premium-content{display:none}
-
   /* 공통 */
   .section-title{font-size:.95rem;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px}
   .section-wrap{background:rgba(255,255,255,.92);border-radius:24px;padding:22px 20px;border:1.5px solid rgba(255,179,204,.25);box-shadow:var(--shadow);margin-bottom:16px}
@@ -814,7 +773,6 @@ async function saveAnalysis(result){
 
 const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
 let calcResult={},chartInstance=null;
-let _premiumDirty=false;
 let _floatingObserver=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
 // 연봉 인상 상태 (init() 전에 선언)
@@ -847,8 +805,6 @@ const fmt=v=>{
   updateEventAgeLabels();
   updateBabyTotal();
   updateCarMaintenance();
-  showPremiumContent();
-  updatePremiumTabLabel();
   restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
 })();
 
@@ -1303,8 +1259,6 @@ function calculate(){
   const summaryEl=document.querySelector('.result-summary');
   setTimeout(()=>{ if(summaryEl) summaryEl.scrollIntoView({behavior:'smooth',block:'start'}); },100);
   if(yearsNeeded<=3)launchConfetti();
-  document.getElementById('premium-content').style.display='block';
-  updatePremiumTabLabel();
   checkPartnerData();
 }
 
@@ -2219,24 +2173,15 @@ function floatAnalyze(){
 
 // ━━ dirty 상태 관리 (입력 변경 시 분석하기 버튼 깜빡임) ━━
 function markDirty(){
-  _premiumDirty = true;
   document.getElementById('ftab-analyze')?.classList.add('dirty');
 }
 function clearDirty(){
-  _premiumDirty = false;
   document.getElementById('ftab-analyze')?.classList.remove('dirty');
 }
-// 호환성 stub (init/showPremiumContent 호출처용)
-function updatePremiumTabLabel(){ /* no-op */ }
 function scrollToResult(){
   const el = document.querySelector('.result-summary');
   if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
-function showPremiumContent(){
-  document.getElementById('premium-content').style.display='block';
-  updatePremiumTabLabel();
-}
-function updateFloatingBtn(){ updatePremiumTabLabel(); } // 하위 호환
 
 // URL 결과 공유 → result.html로 이동
 function shareResultUrl(){
@@ -2358,11 +2303,6 @@ function runPremiumAnalysis(){
     scrollToResult();
   }
   showToast('🔮 분석 결과를 업데이트했어요!');
-}
-function scrollToPremium(){
-  // 차트 섹션으로 스크롤
-  const chartEl = document.getElementById('asset-chart');
-  if(chartEl) setTimeout(()=>chartEl.scrollIntoView({behavior:'smooth',block:'center'}),300);
 }
 
 // ━━ 모달 & 공유 ━━
