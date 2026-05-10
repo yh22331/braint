@@ -510,9 +510,9 @@
               <div class="event-name">결혼 비용</div>
               <div class="event-cost-note">예식장·혼수·스드메 평균 약 5,000만원 · 통계청 평균 33세</div>
             </div>
-            <label class="event-toggle"><input type="checkbox" id="ev-wedding" onchange="toggleEventDetail('wedding',this);markDirty()" checked><span class="event-slider"></span></label>
+            <label class="event-toggle"><input type="checkbox" id="ev-wedding" onchange="toggleEventDetail('wedding',this);markDirty()"><span class="event-slider"></span></label>
           </div>
-          <div class="event-detail show" id="detail-wedding">
+          <div class="event-detail" id="detail-wedding">
             <div class="event-detail-grid">
               <div class="event-field">
                 <label>결혼 비용</label>
@@ -533,9 +533,9 @@
               <div class="event-name">출산·육아 비용</div>
               <div class="event-cost-note">출생~26세까지 · 매년 3% 증가 · MAX 연 2,000만원</div>
             </div>
-            <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this);markDirty()" checked><span class="event-slider"></span></label>
+            <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this);markDirty()"><span class="event-slider"></span></label>
           </div>
-          <div class="event-detail show" id="detail-baby">
+          <div class="event-detail" id="detail-baby">
             <div class="event-detail-grid">
               <div class="event-field">
                 <label>초기 연 육아비 (0세)</label>
@@ -557,9 +557,9 @@
               <div class="event-name">차량 구매 + 유지비</div>
               <div class="event-cost-note" id="car-cost-note">국산차 기준 약 3,500만원 · 평균 30세</div>
             </div>
-            <label class="event-toggle"><input type="checkbox" id="ev-car" onchange="toggleEventDetail('car',this);markDirty()" checked><span class="event-slider"></span></label>
+            <label class="event-toggle"><input type="checkbox" id="ev-car" onchange="toggleEventDetail('car',this);markDirty()"><span class="event-slider"></span></label>
           </div>
-          <div class="event-detail show" id="detail-car">
+          <div class="event-detail" id="detail-car">
             <div class="car-options">
               <button class="car-opt active" onclick="selectCar(this,'domestic',3500)">🇰🇷 국산차<br><span style="font-size:.65rem;font-weight:400">~3,500만</span></button>
               <button class="car-opt" onclick="selectCar(this,'foreign',8000)">🌍 외제차<br><span style="font-size:.65rem;font-weight:400">~8,000만</span></button>
@@ -872,10 +872,13 @@ function renderDots(){
     wrap.appendChild(dot);
   }
   counter.textContent = (currentStep+1) + ' / ' + (MAX_STEP+1);
+  // Phase 4 Task 3: 네비 가시성 — Step 0은 nav 숨김, Step 7은 next 숨김 (분석 인라인 CTA 사용)
+  const navWrap = document.getElementById('step-nav');
   const prev = document.getElementById('step-prev');
   const next = document.getElementById('step-next');
-  if(prev) prev.disabled = (currentStep===0);
-  if(next) next.disabled = (currentStep===MAX_STEP);
+  if(navWrap) navWrap.style.display = (currentStep===0) ? 'none' : '';
+  if(prev) prev.style.display = '';
+  if(next) next.style.display = (currentStep===MAX_STEP) ? 'none' : '';
   // Phase 3: 현재 step만 보이게
   document.querySelectorAll('.step-section').forEach(sec => {
     sec.classList.toggle('active', Number(sec.dataset.step) === currentStep);
