@@ -226,6 +226,11 @@
   .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiDrop linear forwards}
   @keyframes confettiDrop{0%{transform:translateY(-20px)rotate(0);opacity:1}100%{transform:translateY(100vh)rotate(720deg);opacity:0}}
   .disclaimer{text-align:center;font-size:0.7rem;color:var(--text-soft);margin-top:20px;font-family:'Gowun Dodum',sans-serif;line-height:1.6;opacity:0.7}
+  /* ── 대화형 UI: 스텝 섹션 (Phase 2 — 구조 wrapper, 화면 전환은 Phase 3) ── */
+  .step-section{display:block;margin-bottom:0}
+  .step-section>.card,.step-section>.section-wrap{margin-bottom:16px}
+  .step-section.step-final .card,.step-section.step-start .card{background:linear-gradient(135deg,#FFF8FC 0%,#F8F0FF 100%);text-align:center}
+
   /* ── 대화형 UI: 스텝 인디케이터 + 네비게이션 (Phase 1 골격) ── */
   .step-progress{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;animation:fadeUp .5s ease both}
   .step-dots{display:flex;gap:8px;align-items:center;justify-content:center}
@@ -286,71 +291,329 @@
     <div class="step-counter" id="step-counter">1 / 8</div>
   </div>
 
-  <!-- 입력 카드 -->
-  <div class="card">
-    <div class="card-title">📋 기본 정보 입력</div>
+  <!-- ══ 대화형 UI Step 0: 시작 화면 ══ -->
+  <section class="step-section step-start" data-step="0">
+    <div class="card">
+      <div style="font-size:3rem;margin-bottom:10px">🏠✨</div>
+      <h2 style="font-size:1.2rem;font-weight:900;color:var(--pink);margin-bottom:10px;line-height:1.4">집 살 수 있을까?<br>같이 알아봐요</h2>
+      <p style="font-size:.85rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.7;margin-bottom:18px">7개 질문에 답하면<br>내 재정 상황을 현실적으로 분석해드려요 💕</p>
+      <button class="btn-cta" type="button" onclick="goNext()">시작하기 →</button>
+    </div>
+  </section>
 
-    <div class="input-group">
-      <label>🎂 내 나이</label>
-      <div style="position:relative">
-        <input type="number" id="age" min="20" max="70" value="30" placeholder="30"
-          oninput="onAgeInput(this)"
-          style="width:100%;padding:12px 46px 12px 16px;border:2px solid #F0D0DC;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);background:#fff;outline:none;transition:border-color .2s">
-        <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text-soft);font-weight:600;pointer-events:none">세</span>
+  <!-- ══ Step 1: 나 소개 (나이 + 연봉) ══ -->
+  <section class="step-section" data-step="1">
+    <div class="card">
+      <div class="card-title">📋 나 소개</div>
+
+      <div class="input-group">
+        <label>🎂 내 나이</label>
+        <div style="position:relative">
+          <input type="number" id="age" min="20" max="70" value="30" placeholder="30"
+            oninput="onAgeInput(this)"
+            style="width:100%;padding:12px 46px 12px 16px;border:2px solid #F0D0DC;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:.95rem;font-weight:700;color:var(--text);background:#fff;outline:none;transition:border-color .2s">
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--text-soft);font-weight:600;pointer-events:none">세</span>
+        </div>
+        <div id="age-warning" style="display:none;background:linear-gradient(135deg,#FFF8DC,#FFF0C8);border:1.5px solid rgba(245,166,35,.4);border-radius:12px;padding:10px 14px;font-size:.75rem;color:#8B6914;font-family:'Gowun Dodum',sans-serif;margin-top:6px"></div>
       </div>
-      <div id="age-warning" style="display:none;background:linear-gradient(135deg,#FFF8DC,#FFF0C8);border:1.5px solid rgba(245,166,35,.4);border-radius:12px;padding:10px 14px;font-size:.75rem;color:#8B6914;font-family:'Gowun Dodum',sans-serif;margin-top:6px"></div>
+
+      <div class="input-group">
+        <label>💰 내 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
+        <div class="input-wrap" style="padding-top:30px">
+          <span class="range-val" id="salary-val">5,000만원</span>
+          <input type="range" id="salary" min="2000" max="20000" step="100" value="5000"
+            oninput="updateSalary(this)"
+            style="--pct:16.7%">
+        </div>
+        <div class="range-labels"><span>2,000만</span><span>1억+</span><span>2억</span></div>
+        <div id="salary-takehome" style="margin-top:8px;font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;background:rgba(255,179,204,.1);border-radius:10px;padding:6px 12px;display:inline-block">
+          세후 월 실수령 약 <strong id="takehome-val" style="color:var(--pink)">334만원</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Step 2: 자산 (현재 자산 + 나의 기여) ══ -->
+  <section class="step-section" data-step="2">
+    <div class="card">
+      <div class="card-title">💳 자산 현황</div>
+
+      <div class="input-group">
+        <label>💳 내 자산 (현재 모은 돈)</label>
+        <div class="input-wrap" style="padding-top:30px">
+          <span class="range-val" id="asset-val">5,000만원</span>
+          <input type="range" id="asset" min="0" max="100000" step="1000" value="5000"
+            oninput="updateRange(this,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음':v.toLocaleString()+'만'))+'원'.replace('없음원','없음 😅'))"
+            style="--pct:5%">
+        </div>
+        <div class="range-labels"><span>없음</span><span>5억</span><span>10억</span></div>
+      </div>
+
+      <div class="input-group">
+        <label>💑 나의 기여 (내 자산)</label>
+        <div class="toggle-group" id="my-group">
+          <button class="toggle-btn active" onclick="selectToggle('my-group',this,'none')">🙈 난 쪽박</button>
+          <button class="toggle-btn" onclick="selectToggle('my-group',this,'small')">💵 1억 이하</button>
+          <button class="toggle-btn" onclick="selectToggle('my-group',this,'mid')">💰 2~3억</button>
+          <button class="toggle-btn" onclick="selectToggle('my-group',this,'big')">🤑 3억+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Step 3: 목표 집 (지역 + 평수) ══ -->
+  <section class="step-section" data-step="3">
+    <div class="card">
+      <div class="card-title">🏠 목표 집</div>
+
+      <div class="input-group">
+        <label>📍 원하는 지역</label>
+        <div class="toggle-group" id="region-group">
+          <button class="toggle-btn" onclick="selectToggle('region-group',this,'gangnam')">🏙️ 강남권</button>
+          <button class="toggle-btn active" onclick="selectToggle('region-group',this,'seoul')">🗼 서울기타</button>
+          <button class="toggle-btn" onclick="selectToggle('region-group',this,'gyeonggi')">🌿 수도권</button>
+          <button class="toggle-btn" onclick="selectToggle('region-group',this,'local')">🌾 지방</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>🛏️ 원하는 평수</label>
+        <div class="toggle-group" id="size-group">
+          <button class="toggle-btn" onclick="selectToggle('size-group',this,'small')">🐣 20평 이하</button>
+          <button class="toggle-btn active" onclick="selectToggle('size-group',this,'mid')">🏡 25~33평</button>
+          <button class="toggle-btn" onclick="selectToggle('size-group',this,'big')">🏰 40평+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Step 4: 라이프스타일 (생활비 + 투자수익률) ══ -->
+  <section class="step-section" data-step="4">
+    <!-- ① 생활비 설정 -->
+    <div class="section-wrap">
+      <div class="section-title">🛒 월 평균 생활비</div>
+      <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">생활비는 자산 성장에 직접 영향을 줘요 → 차트에 바로 반영돼요</div>
+      <div class="raise-options" id="living-options">
+        <button class="raise-opt" onclick="selectLiving(this,100)">💸 절약형<br><span style="font-size:.63rem;font-weight:400">월 100만원</span></button>
+        <button class="raise-opt active" onclick="selectLiving(this,200)">🏙️ 직장인 평균<br><span style="font-size:.63rem;font-weight:400">월 200만원</span></button>
+        <button class="raise-opt" onclick="selectLiving(this,300)">✨ 여유로운<br><span style="font-size:.63rem;font-weight:400">월 300만원+</span></button>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div style="position:relative;flex:1">
+          <input type="number" class="num-input" id="custom-living" min="50" max="1000" value="200"
+            placeholder="200" style="padding-right:52px">
+          <span class="num-input-suffix">만/월</span>
+        </div>
+        <button onclick="applyLiving()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+      </div>
+      <div id="living-selected-badge" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+        ✓ 월 200만원 적용 중
+      </div>
     </div>
 
-    <div class="input-group">
-      <label>💰 내 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
-      <div class="input-wrap" style="padding-top:30px">
-        <span class="range-val" id="salary-val">5,000만원</span>
-        <input type="range" id="salary" min="2000" max="20000" step="100" value="5000"
-          oninput="updateSalary(this)"
-          style="--pct:16.7%">
+    <!-- ② 투자수익률 설정 -->
+    <div class="section-wrap">
+      <div class="section-title">📊 투자수익률</div>
+      <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">저축액을 어떻게 굴리는지 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
+      <div class="invest-tabs">
+        <button class="invest-tab active" onclick="selectInvest('deposit',this)">🏦 예적금 3%</button>
+        <button class="invest-tab" onclick="selectInvest('custom',this)">📊 내 주식 수익률</button>
       </div>
-      <div class="range-labels"><span>2,000만</span><span>1억+</span><span>2억</span></div>
-      <div id="salary-takehome" style="margin-top:8px;font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;background:rgba(255,179,204,.1);border-radius:10px;padding:6px 12px;display:inline-block">
-        세후 월 실수령 약 <strong id="takehome-val" style="color:var(--pink)">334만원</strong>
+      <div class="invest-custom-wrap" id="invest-custom-wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="position:relative;flex:1">
+            <input type="number" class="num-input" id="custom-rate" min="0" max="200" value="7"
+              placeholder="7" style="padding-right:52px">
+            <span class="num-input-suffix">% / 년</span>
+          </div>
+          <button onclick="applyCustomRate()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+        </div>
+        <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">※ 0% 이상 입력 후 적용 버튼을 눌러주세요</div>
       </div>
-    </div>
-    <div class="input-group">
-      <label>📍 원하는 지역</label>
-      <div class="toggle-group" id="region-group">
-        <button class="toggle-btn" onclick="selectToggle('region-group',this,'gangnam')">🏙️ 강남권</button>
-        <button class="toggle-btn active" onclick="selectToggle('region-group',this,'seoul')">🗼 서울기타</button>
-        <button class="toggle-btn" onclick="selectToggle('region-group',this,'gyeonggi')">🌿 수도권</button>
-        <button class="toggle-btn" onclick="selectToggle('region-group',this,'local')">🌾 지방</button>
-      </div>
-    </div>
-    <div class="input-group">
-      <label>🛏️ 원하는 평수</label>
-      <div class="toggle-group" id="size-group">
-        <button class="toggle-btn" onclick="selectToggle('size-group',this,'small')">🐣 20평 이하</button>
-        <button class="toggle-btn active" onclick="selectToggle('size-group',this,'mid')">🏡 25~33평</button>
-        <button class="toggle-btn" onclick="selectToggle('size-group',this,'big')">🏰 40평+</button>
+      <div id="invest-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+        ✓ 예적금 3% 적용 중
       </div>
     </div>
-    <div class="input-group">
-      <label>💳 내 자산 (현재 모은 돈)</label>
-      <div class="input-wrap" style="padding-top:30px">
-        <span class="range-val" id="asset-val">5,000만원</span>
-        <input type="range" id="asset" min="0" max="100000" step="1000" value="5000"
-          oninput="updateRange(this,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음':v.toLocaleString()+'만'))+'원'.replace('없음원','없음 😅'))"
-          style="--pct:5%">
+  </section>
+
+  <!-- ══ Step 5: 커리어 (연봉 인상 + MAX 상한) ══ -->
+  <section class="step-section" data-step="5">
+    <div class="section-wrap">
+      <div class="section-title">📈 연봉 인상 설정</div>
+      <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">연봉 상승 방식을 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
+      <div class="raise-options">
+        <button class="raise-opt" onclick="selectRaise(this,'fixed3',3,false)">📊 연 3% 인상<br><span style="font-size:.63rem;font-weight:400">물가상승 수준</span></button>
+        <button class="raise-opt active" onclick="selectRaise(this,'promo5',3,true)">🎖️ 연 3% + 진급<br><span style="font-size:.63rem;font-weight:400">5년마다 +10%</span></button>
+        <button class="raise-opt" onclick="selectRaise(this,'high7',7,false)">🚀 연 7% 이상<br><span style="font-size:.63rem;font-weight:400">고성장 커리어</span></button>
       </div>
-      <div class="range-labels"><span>없음</span><span>5억</span><span>10억</span></div>
-    </div>
-    <div class="input-group">
-      <label>💑 나의 기여 (내 자산)</label>
-      <div class="toggle-group" id="my-group">
-        <button class="toggle-btn active" onclick="selectToggle('my-group',this,'none')">🙈 난 쪽박</button>
-        <button class="toggle-btn" onclick="selectToggle('my-group',this,'small')">💵 1억 이하</button>
-        <button class="toggle-btn" onclick="selectToggle('my-group',this,'mid')">💰 2~3억</button>
-        <button class="toggle-btn" onclick="selectToggle('my-group',this,'big')">🤑 3억+</button>
+      <!-- MAX 연봉 상한 -->
+      <div style="margin-top:14px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:8px">🔝 연봉 상한선 (MAX)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="position:relative;flex:1">
+            <input type="number" class="num-input" id="max-salary" min="3000" max="200000" value="15000"
+              placeholder="15000" oninput="updateMaxSalaryBadge()" style="padding-right:52px">
+            <span class="num-input-suffix">만원</span>
+          </div>
+          <button onclick="applyMaxSalary()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
+        </div>
+        <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">
+          이 금액 이상으로는 연봉이 오르지 않아요 · 현실적인 커리어 상한선을 설정해주세요
+        </div>
+      </div>
+      <div id="raise-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
+        ✓ 5년마다 진급 +10% · MAX 1.5억 적용 중
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- ══ Step 6: 인생 이벤트 (대출 + 결혼·출산·차량) ══ -->
+  <section class="step-section" data-step="6">
+    <div class="section-wrap">
+      <div class="section-title">🎯 현실 시나리오 반영</div>
+
+      <!-- 주식담보대출 -->
+      <div style="background:linear-gradient(135deg,#FFF8DC,#FFF3CC);border-radius:16px;padding:16px;border:1.5px solid rgba(245,166,35,.3);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:.88rem;font-weight:900;color:var(--text)">📊 주식담보대출 활용</span>
+          <label class="event-toggle"><input type="checkbox" id="loan-toggle" onchange="markDirty()" checked><span class="event-slider"></span></label>
+        </div>
+        <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:8px">LTV 40% 기준 · 금리 연 4% 고정<br>보유 자산의 40%를 대출 → 집값에서 차감, 이자 연 4% 반영</div>
+        <!-- 대출 계산 표시 박스 -->
+        <div id="loan-calc-box" style="display:none;background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(245,166,35,.3)">
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+            <span style="color:var(--text-soft)">목표 집값</span>
+            <span style="font-weight:700;color:var(--text)" id="loan-house-price">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+            <span style="color:var(--text-soft)">주식담보대출 (LTV 40%)</span>
+            <span style="font-weight:700;color:#3DB88A" id="loan-amount-display">-</span>
+          </div>
+          <div style="height:1px;background:rgba(245,166,35,.3);margin:6px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.88rem">
+            <span style="font-weight:700;color:var(--text)">실제 필요 현금</span>
+            <span style="font-weight:900;color:var(--gold);font-size:1rem" id="loan-net-display">-</span>
+          </div>
+          <div style="font-size:.68rem;color:var(--text-soft);margin-top:6px;font-family:'Gowun Dodum',sans-serif" id="loan-interest-note"></div>
+        </div>
+      </div>
+
+      <!-- 이벤트 -->
+      <div class="event-list">
+        <!-- 결혼 -->
+        <div class="event-item">
+          <div class="event-item-header">
+            <div class="event-icon">💍</div>
+            <div class="event-info">
+              <div class="event-name">결혼 비용</div>
+              <div class="event-cost-note">예식장·혼수·스드메 평균 약 5,000만원 · 통계청 평균 33세</div>
+            </div>
+            <label class="event-toggle"><input type="checkbox" id="ev-wedding" onchange="toggleEventDetail('wedding',this);markDirty()" checked><span class="event-slider"></span></label>
+          </div>
+          <div class="event-detail show" id="detail-wedding">
+            <div class="event-detail-grid">
+              <div class="event-field">
+                <label>결혼 비용</label>
+                <div style="position:relative"><input type="number" id="cost-wedding" value="5000" oninput="markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.7rem">만원</span></div>
+              </div>
+              <div class="event-field">
+                <label>예정 나이</label>
+                <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="wedding-status">결혼 예정: <strong id="age-wedding">33세</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 출산 -->
+        <div class="event-item">
+          <div class="event-item-header">
+            <div class="event-icon">👶</div>
+            <div class="event-info">
+              <div class="event-name">출산·육아 비용</div>
+              <div class="event-cost-note">출생~26세까지 · 매년 3% 증가 · MAX 연 2,000만원</div>
+            </div>
+            <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this);markDirty()" checked><span class="event-slider"></span></label>
+          </div>
+          <div class="event-detail show" id="detail-baby">
+            <div class="event-detail-grid">
+              <div class="event-field">
+                <label>초기 연 육아비 (0세)</label>
+                <div style="position:relative"><input type="number" id="cost-baby-yr" value="500" oninput="updateBabyTotal();markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.65rem">만/년</span></div>
+                <div style="font-size:.65rem;color:var(--text-soft);margin-top:3px">매년 3% 상승 · MAX 2,000만원 · 총 <span id="baby-total-cost">-</span></div>
+              </div>
+              <div class="event-field">
+                <label>예정 나이</label>
+                <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="baby-status">출산 예정: <strong id="age-baby">35세</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 차량 -->
+        <div class="event-item">
+          <div class="event-item-header">
+            <div class="event-icon">🚗</div>
+            <div class="event-info">
+              <div class="event-name">차량 구매 + 유지비</div>
+              <div class="event-cost-note" id="car-cost-note">국산차 기준 약 3,500만원 · 평균 30세</div>
+            </div>
+            <label class="event-toggle"><input type="checkbox" id="ev-car" onchange="toggleEventDetail('car',this);markDirty()" checked><span class="event-slider"></span></label>
+          </div>
+          <div class="event-detail show" id="detail-car">
+            <div class="car-options">
+              <button class="car-opt active" onclick="selectCar(this,'domestic',3500)">🇰🇷 국산차<br><span style="font-size:.65rem;font-weight:400">~3,500만</span></button>
+              <button class="car-opt" onclick="selectCar(this,'foreign',8000)">🌍 외제차<br><span style="font-size:.65rem;font-weight:400">~8,000만</span></button>
+              <button class="car-opt" onclick="selectCar(this,'super',30000)">🏎️ 슈퍼카<br><span style="font-size:.65rem;font-weight:400">3억+</span></button>
+            </div>
+            <div style="margin-top:10px;position:relative">
+              <input type="number" id="cost-car" value="3500" oninput="updateCarMaintenance();markDirty()" class="ev-input" placeholder="직접 입력">
+              <span class="num-input-suffix" style="font-size:.7rem">만원</span>
+            </div>
+            <div style="font-size:.65rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:4px">구매 예정 나이: <strong id="age-car">30세</strong></div>
+
+            <!-- 유지비 표기 -->
+            <div id="car-maintenance-box" style="margin-top:12px;background:linear-gradient(135deg,#FFF8F0,#FFF0E8);border-radius:12px;padding:12px;border:1px solid rgba(255,153,102,.3)">
+              <div style="font-size:.72rem;font-weight:900;color:#CC6600;margin-bottom:8px">🔧 월 유지비 (차량 보유 시 매월 발생)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.7rem;font-family:'Gowun Dodum',sans-serif">
+                <div style="color:var(--text-soft)">연료비</div>        <div id="car-fuel" style="font-weight:700;color:var(--text);text-align:right">월 15만원</div>
+                <div style="color:var(--text-soft)">보험료</div>        <div id="car-insure" style="font-weight:700;color:var(--text);text-align:right">월 10만원</div>
+                <div style="color:var(--text-soft)">정비·기타</div>     <div id="car-repair" style="font-weight:700;color:var(--text);text-align:right">월 5만원</div>
+                <div style="color:var(--text-soft);border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">감가상각</div>
+                <div id="car-depreciation" style="font-weight:700;color:#CC6600;text-align:right;border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">월 약 26만원</div>
+              </div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,153,102,.2);display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:.72rem;font-weight:900;color:#CC6600">총 월 유지비</span>
+                <span id="car-total-monthly" style="font-size:.9rem;font-weight:900;color:#CC6600">월 약 56만원</span>
+              </div>
+              <div id="car-depreciation-note" style="font-size:.62rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:6px;line-height:1.5">
+                감가: 연 10% · 잔존가치 하한 10% · 약 22년 후 수렴
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이벤트 합산 결과 -->
+      <div class="event-result" id="event-result">
+        <div class="event-result-row"><span class="event-result-label">기본 목표 집값</span><span class="event-result-val" id="er-base">-</span></div>
+        <div class="event-result-row"><span class="event-result-label">주식담보대출 차감</span><span class="event-result-val" style="color:#3DB88A" id="er-loan">-</span></div>
+        <div class="event-result-row"><span class="event-result-label">이벤트 추가 비용</span><span class="event-result-val diff" id="er-extra">+0원</span></div>
+        <div class="event-result-row" style="border-top:1px solid rgba(255,107,157,.2);margin-top:6px;padding-top:10px">
+          <span class="event-result-label" style="font-weight:700;color:var(--text)">실제 필요 금액</span>
+          <span class="event-result-val" style="font-size:1rem;color:var(--pink)" id="er-total">-</span>
+        </div>
+        <div class="event-result-row"><span class="event-result-label">현실 반영 후 기간</span><span class="event-result-val diff" id="er-years">-</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Step 7: 분석 트리거 ══ -->
+  <section class="step-section step-final" data-step="7">
+    <div class="card">
+      <div style="font-size:2.5rem;margin-bottom:8px">🎯</div>
+      <h2 style="font-size:1.1rem;font-weight:900;color:var(--pink);margin-bottom:8px">모든 답변 완료!</h2>
+      <p style="font-size:.82rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:6px">아래 분홍 버튼을 누르면<br>현실적인 분석 결과가 나와요 📊</p>
+      <p style="font-size:.7rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif">화면 아래 ↓ 분석하기 버튼</p>
+    </div>
+  </section>
 
   <!-- 스텝 네비게이션 (Phase 1: currentStep 변수만 변경, 화면 전환은 Phase 3) -->
   <div class="step-nav" id="step-nav">
@@ -398,219 +661,7 @@
       <div class="tooltip">* 인스타: 이미지 저장 후 스토리에 직접 올려주세요 📸</div>
     </div>
 
-    <div id="premium-content">
-      <!-- ① 생활비 설정 -->
-      <div class="section-wrap">
-        <div class="section-title">🛒 월 평균 생활비</div>
-        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">생활비는 자산 성장에 직접 영향을 줘요 → 차트에 바로 반영돼요</div>
-        <div class="raise-options" id="living-options">
-          <button class="raise-opt" onclick="selectLiving(this,100)">💸 절약형<br><span style="font-size:.63rem;font-weight:400">월 100만원</span></button>
-          <button class="raise-opt active" onclick="selectLiving(this,200)">🏙️ 직장인 평균<br><span style="font-size:.63rem;font-weight:400">월 200만원</span></button>
-          <button class="raise-opt" onclick="selectLiving(this,300)">✨ 여유로운<br><span style="font-size:.63rem;font-weight:400">월 300만원+</span></button>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-          <div style="position:relative;flex:1">
-            <input type="number" class="num-input" id="custom-living" min="50" max="1000" value="200"
-              placeholder="200" style="padding-right:52px">
-            <span class="num-input-suffix">만/월</span>
-          </div>
-          <button onclick="applyLiving()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
-        </div>
-        <div id="living-selected-badge" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
-          ✓ 월 200만원 적용 중
-        </div>
-      </div>
-
-      <!-- ② 투자수익률 설정 -->
-      <div class="section-wrap">
-        <div class="section-title">📊 투자수익률</div>
-        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">저축액을 어떻게 굴리는지 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
-        <div class="invest-tabs">
-          <button class="invest-tab active" onclick="selectInvest('deposit',this)">🏦 예적금 3%</button>
-          <button class="invest-tab" onclick="selectInvest('custom',this)">📊 내 주식 수익률</button>
-        </div>
-        <div class="invest-custom-wrap" id="invest-custom-wrap">
-          <div style="display:flex;gap:8px;align-items:center">
-            <div style="position:relative;flex:1">
-              <input type="number" class="num-input" id="custom-rate" min="0" max="200" value="7"
-                placeholder="7" style="padding-right:52px">
-              <span class="num-input-suffix">% / 년</span>
-            </div>
-            <button onclick="applyCustomRate()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
-          </div>
-          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">※ 0% 이상 입력 후 적용 버튼을 눌러주세요</div>
-        </div>
-        <div id="invest-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
-          ✓ 예적금 3% 적용 중
-        </div>
-      </div>
-
-      <!-- ② 연봉 인상률 -->
-      <div class="section-wrap">
-        <div class="section-title">📈 연봉 인상 설정</div>
-        <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">연봉 상승 방식을 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
-        <div class="raise-options">
-          <button class="raise-opt" onclick="selectRaise(this,'fixed3',3,false)">📊 연 3% 인상<br><span style="font-size:.63rem;font-weight:400">물가상승 수준</span></button>
-          <button class="raise-opt active" onclick="selectRaise(this,'promo5',3,true)">🎖️ 연 3% + 진급<br><span style="font-size:.63rem;font-weight:400">5년마다 +10%</span></button>
-          <button class="raise-opt" onclick="selectRaise(this,'high7',7,false)">🚀 연 7% 이상<br><span style="font-size:.63rem;font-weight:400">고성장 커리어</span></button>
-        </div>
-        <!-- MAX 연봉 상한 -->
-        <div style="margin-top:14px">
-          <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:8px">🔝 연봉 상한선 (MAX)</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div style="position:relative;flex:1">
-              <input type="number" class="num-input" id="max-salary" min="3000" max="200000" value="15000"
-                placeholder="15000" oninput="updateMaxSalaryBadge()" style="padding-right:52px">
-              <span class="num-input-suffix">만원</span>
-            </div>
-            <button onclick="applyMaxSalary()" style="padding:12px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">적용</button>
-          </div>
-          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:5px">
-            이 금액 이상으로는 연봉이 오르지 않아요 · 현실적인 커리어 상한선을 설정해주세요
-          </div>
-        </div>
-        <div id="raise-selected-badge" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE4EF,#FFD0E6);border:1px solid var(--pink-light);color:var(--pink);font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px">
-          ✓ 5년마다 진급 +10% · MAX 1.5억 적용 중
-        </div>
-      </div>
-
-      <!-- ③ 현실 시나리오 -->
-      <div class="section-wrap">
-        <div class="section-title">🎯 현실 시나리오 반영</div>
-
-        <!-- 주식담보대출 -->
-        <div style="background:linear-gradient(135deg,#FFF8DC,#FFF3CC);border-radius:16px;padding:16px;border:1.5px solid rgba(245,166,35,.3);margin-bottom:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:.88rem;font-weight:900;color:var(--text)">📊 주식담보대출 활용</span>
-            <label class="event-toggle"><input type="checkbox" id="loan-toggle" onchange="markDirty()" checked><span class="event-slider"></span></label>
-          </div>
-          <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:8px">LTV 40% 기준 · 금리 연 4% 고정<br>보유 자산의 40%를 대출 → 집값에서 차감, 이자 연 4% 반영</div>
-          <!-- 대출 계산 표시 박스 -->
-          <div id="loan-calc-box" style="display:none;background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(245,166,35,.3)">
-            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
-              <span style="color:var(--text-soft)">목표 집값</span>
-              <span style="font-weight:700;color:var(--text)" id="loan-house-price">-</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
-              <span style="color:var(--text-soft)">주식담보대출 (LTV 40%)</span>
-              <span style="font-weight:700;color:#3DB88A" id="loan-amount-display">-</span>
-            </div>
-            <div style="height:1px;background:rgba(245,166,35,.3);margin:6px 0"></div>
-            <div style="display:flex;justify-content:space-between;font-size:.88rem">
-              <span style="font-weight:700;color:var(--text)">실제 필요 현금</span>
-              <span style="font-weight:900;color:var(--gold);font-size:1rem" id="loan-net-display">-</span>
-            </div>
-            <div style="font-size:.68rem;color:var(--text-soft);margin-top:6px;font-family:'Gowun Dodum',sans-serif" id="loan-interest-note"></div>
-          </div>
-        </div>
-
-        <!-- 이벤트 -->
-        <div class="event-list">
-          <!-- 결혼 -->
-          <div class="event-item">
-            <div class="event-item-header">
-              <div class="event-icon">💍</div>
-              <div class="event-info">
-                <div class="event-name">결혼 비용</div>
-                <div class="event-cost-note">예식장·혼수·스드메 평균 약 5,000만원 · 통계청 평균 33세</div>
-              </div>
-              <label class="event-toggle"><input type="checkbox" id="ev-wedding" onchange="toggleEventDetail('wedding',this);markDirty()" checked><span class="event-slider"></span></label>
-            </div>
-            <div class="event-detail show" id="detail-wedding">
-              <div class="event-detail-grid">
-                <div class="event-field">
-                  <label>결혼 비용</label>
-                  <div style="position:relative"><input type="number" id="cost-wedding" value="5000" oninput="markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.7rem">만원</span></div>
-                </div>
-                <div class="event-field">
-                  <label>예정 나이</label>
-                  <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="wedding-status">결혼 예정: <strong id="age-wedding">33세</strong></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 출산 -->
-          <div class="event-item">
-            <div class="event-item-header">
-              <div class="event-icon">👶</div>
-              <div class="event-info">
-                <div class="event-name">출산·육아 비용</div>
-                <div class="event-cost-note">출생~26세까지 · 매년 3% 증가 · MAX 연 2,000만원</div>
-              </div>
-              <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this);markDirty()" checked><span class="event-slider"></span></label>
-            </div>
-            <div class="event-detail show" id="detail-baby">
-              <div class="event-detail-grid">
-                <div class="event-field">
-                  <label>초기 연 육아비 (0세)</label>
-                  <div style="position:relative"><input type="number" id="cost-baby-yr" value="500" oninput="updateBabyTotal();markDirty()" class="ev-input"><span class="num-input-suffix" style="font-size:.65rem">만/년</span></div>
-                  <div style="font-size:.65rem;color:var(--text-soft);margin-top:3px">매년 3% 상승 · MAX 2,000만원 · 총 <span id="baby-total-cost">-</span></div>
-                </div>
-                <div class="event-field">
-                  <label>예정 나이</label>
-                  <div style="font-size:.8rem;font-family:'Gowun Dodum',sans-serif;color:var(--text-soft);margin-top:8px" id="baby-status">출산 예정: <strong id="age-baby">35세</strong></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 차량 -->
-          <div class="event-item">
-            <div class="event-item-header">
-              <div class="event-icon">🚗</div>
-              <div class="event-info">
-                <div class="event-name">차량 구매 + 유지비</div>
-                <div class="event-cost-note" id="car-cost-note">국산차 기준 약 3,500만원 · 평균 30세</div>
-              </div>
-              <label class="event-toggle"><input type="checkbox" id="ev-car" onchange="toggleEventDetail('car',this);markDirty()" checked><span class="event-slider"></span></label>
-            </div>
-            <div class="event-detail show" id="detail-car">
-              <div class="car-options">
-                <button class="car-opt active" onclick="selectCar(this,'domestic',3500)">🇰🇷 국산차<br><span style="font-size:.65rem;font-weight:400">~3,500만</span></button>
-                <button class="car-opt" onclick="selectCar(this,'foreign',8000)">🌍 외제차<br><span style="font-size:.65rem;font-weight:400">~8,000만</span></button>
-                <button class="car-opt" onclick="selectCar(this,'super',30000)">🏎️ 슈퍼카<br><span style="font-size:.65rem;font-weight:400">3억+</span></button>
-              </div>
-              <div style="margin-top:10px;position:relative">
-                <input type="number" id="cost-car" value="3500" oninput="updateCarMaintenance();markDirty()" class="ev-input" placeholder="직접 입력">
-                <span class="num-input-suffix" style="font-size:.7rem">만원</span>
-              </div>
-              <div style="font-size:.65rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:4px">구매 예정 나이: <strong id="age-car">30세</strong></div>
-
-              <!-- 유지비 표기 -->
-              <div id="car-maintenance-box" style="margin-top:12px;background:linear-gradient(135deg,#FFF8F0,#FFF0E8);border-radius:12px;padding:12px;border:1px solid rgba(255,153,102,.3)">
-                <div style="font-size:.72rem;font-weight:900;color:#CC6600;margin-bottom:8px">🔧 월 유지비 (차량 보유 시 매월 발생)</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:.7rem;font-family:'Gowun Dodum',sans-serif">
-                  <div style="color:var(--text-soft)">연료비</div>        <div id="car-fuel" style="font-weight:700;color:var(--text);text-align:right">월 15만원</div>
-                  <div style="color:var(--text-soft)">보험료</div>        <div id="car-insure" style="font-weight:700;color:var(--text);text-align:right">월 10만원</div>
-                  <div style="color:var(--text-soft)">정비·기타</div>     <div id="car-repair" style="font-weight:700;color:var(--text);text-align:right">월 5만원</div>
-                  <div style="color:var(--text-soft);border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">감가상각</div>
-                  <div id="car-depreciation" style="font-weight:700;color:#CC6600;text-align:right;border-top:1px dashed rgba(255,153,102,.3);padding-top:4px">월 약 26만원</div>
-                </div>
-                <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,153,102,.2);display:flex;justify-content:space-between;align-items:center">
-                  <span style="font-size:.72rem;font-weight:900;color:#CC6600">총 월 유지비</span>
-                  <span id="car-total-monthly" style="font-size:.9rem;font-weight:900;color:#CC6600">월 약 56만원</span>
-                </div>
-                <div id="car-depreciation-note" style="font-size:.62rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-top:6px;line-height:1.5">
-                  감가: 연 10% · 잔존가치 하한 10% · 약 22년 후 수렴
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 이벤트 합산 결과 -->
-        <div class="event-result" id="event-result">
-          <div class="event-result-row"><span class="event-result-label">기본 목표 집값</span><span class="event-result-val" id="er-base">-</span></div>
-          <div class="event-result-row"><span class="event-result-label">주식담보대출 차감</span><span class="event-result-val" style="color:#3DB88A" id="er-loan">-</span></div>
-          <div class="event-result-row"><span class="event-result-label">이벤트 추가 비용</span><span class="event-result-val diff" id="er-extra">+0원</span></div>
-          <div class="event-result-row" style="border-top:1px solid rgba(255,107,157,.2);margin-top:6px;padding-top:10px">
-            <span class="event-result-label" style="font-weight:700;color:var(--text)">실제 필요 금액</span>
-            <span class="event-result-val" style="font-size:1rem;color:var(--pink)" id="er-total">-</span>
-          </div>
-          <div class="event-result-row"><span class="event-result-label">현실 반영 후 기간</span><span class="event-result-val diff" id="er-years">-</span></div>
-        </div>
-      </div>
-
-      <!-- ④ 자산 흐름 차트 + PDF -->
+    <!-- ④ 자산 흐름 차트 + PDF -->
       <div class="section-wrap post-analyze">
         <div class="section-title">📊 나이별 자산 흐름 차트</div>
         <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:12px">수입(급여+투자수익) - 지출(생활비+이벤트) = 순자산 변화 · 이벤트 발생 연도에 자산 감소 반영</div>
