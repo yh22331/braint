@@ -249,15 +249,6 @@
   .step-nav-next:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,107,157,.45)}
   .step-nav-next:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 
-  /* ── 플로팅 분석하기 버튼 (단일, 풀폭) ── */
-  .floating-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 16px 20px;z-index:200;pointer-events:none;background:linear-gradient(to top,rgba(255,240,248,0.97) 70%,transparent)}
-  .floating-tab{width:100%;padding:14px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;letter-spacing:-.2px;line-height:1.2;pointer-events:all}
-  .floating-tab-icon{font-size:1.1rem}
-  .floating-tab-analyze{background:linear-gradient(135deg,#FF6B9D,#FF9EC4);color:#fff;box-shadow:0 6px 20px rgba(255,107,157,.45)}
-  .floating-tab-analyze:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,157,.55)}
-  .floating-tab-analyze.active{transform:scale(.97)}
-  .floating-tab-analyze.dirty{background:linear-gradient(135deg,#C850C0,#FF6B9D);animation:float-pulse 1.8s ease-in-out infinite}
-  @keyframes float-pulse{0%,100%{box-shadow:0 6px 20px rgba(200,80,192,.45)}50%{box-shadow:0 8px 32px rgba(200,80,192,.7),0 0 0 5px rgba(200,80,192,.15)}}
 </style>
 </head>
 <body>
@@ -626,8 +617,6 @@
     <button class="step-nav-btn step-nav-next" id="step-next" type="button" onclick="goNext()">다음 →</button>
   </div>
 
-  <div style="height:90px"></div><!-- 플로팅 탭바 여백 -->
-
   <!-- ══ 결과 영역 ══ -->
   <div id="result-section">
     <!-- 통합 결과 카드: verdict + 5 stats + progress 한 카드 -->
@@ -716,8 +705,6 @@
         </div>
       </div>
 
-      <!-- 커플 합산, 플로팅 버튼으로 대체됨 -->
-
     <p class="disclaimer">
       ※ 이 계산기는 재미 목적으로 제작되었으며<br>
       실제 부동산 시세는 지역·시기마다 다를 수 있어요 🏠<br>
@@ -739,7 +726,6 @@
       통신판매업 신고번호: 신고 진행 중
     </div>
 
-    <div style="height:100px"></div><!-- 플로팅 버튼 여백 -->
   </div>
 </div>
 
@@ -752,13 +738,6 @@
     </div>
     <div id="legal-content" style="font-size:.8rem;color:#666;line-height:1.8;font-family:'Gowun Dodum',sans-serif"></div>
   </div>
-</div>
-
-<!-- 플로팅 분석하기 버튼 -->
-<div class="floating-wrap" id="floating-wrap">
-  <button class="floating-tab floating-tab-analyze" id="ftab-analyze" onclick="floatAnalyze()">
-    <span class="floating-tab-icon">📊</span>분석하기
-  </button>
 </div>
 
 <!-- 인스타 모달 -->
@@ -857,7 +836,6 @@ async function saveAnalysis(result){
 
 const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
 let calcResult={},chartInstance=null;
-let _floatingObserver=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
 
 // ━━ 대화형 UI 스텝 (Phase 3: 한 화면 한 질문) ━━
@@ -2284,27 +2262,18 @@ function copyReportText(){
   navigator.clipboard?.writeText(lines).then(()=>showToast('📋 복사 완료!'));
 }
 
-// ━━ 플로팅 분석하기 버튼 ━━
+// ━━ 분석 트리거 (Step 7 인라인 CTA에서 호출) ━━
 function floatAnalyze(){
   if(!calcResult.salary || _analyzeNeedsRefresh){
     calculate();
     _analyzeNeedsRefresh = false;
   }
   runPremiumAnalysis();
-  const btn = document.getElementById('ftab-analyze');
-  if(btn){
-    btn.classList.add('active');
-    setTimeout(()=>btn.classList.remove('active'), 600);
-  }
 }
 
-// ━━ dirty 상태 관리 (입력 변경 시 분석하기 버튼 깜빡임) ━━
-function markDirty(){
-  document.getElementById('ftab-analyze')?.classList.add('dirty');
-}
-function clearDirty(){
-  document.getElementById('ftab-analyze')?.classList.remove('dirty');
-}
+// ━━ dirty 상태 관리 (플로팅 버튼 폐기 후 no-op, 호출처 호환 위해 유지) ━━
+function markDirty(){}
+function clearDirty(){}
 function scrollToResult(){
   const el = document.querySelector('.result-summary');
   if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
