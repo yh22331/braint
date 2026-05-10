@@ -94,7 +94,7 @@ export default async function handler(req) {
       carMonthlyMaint, livingCost: living,
     });
 
-    const years = sim.reachedMonth > 0 ? Math.ceil(sim.reachedMonth / 12) : null;
+    const years = sim.reachedMonth >= 0 ? Math.ceil(sim.reachedMonth / 12) : null;
     const netMonthly = calcTakehome(salary);
     const babyTotal = babyOn ? calcBabyTotal(babyCost) : 0;
     const totalEventCost = (weddingOn ? weddingCost : 0) + babyTotal + (carOn ? carCost : 0);

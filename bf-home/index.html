@@ -1272,7 +1272,7 @@ function simulateMonthly({
     const eventCost = (mon === 0 && extraByYear[yr]) ? extraByYear[yr] : 0;
 
     // 자산 갱신
-    asset = asset * (1 + monthlyR) + netCashflow - eventCost;
+    asset = Math.max(0, asset) * (1 + monthlyR) + netCashflow - eventCost;
 
     const evLabels = [];
     if(eventCost > 0 && extraByYear._labels && extraByYear._labels[yr]){
@@ -1391,7 +1391,7 @@ function yearsToTargetFull(salary, initAsset, targetPrice, investRate, withRaise
   return reachedMonth >= 0 ? Math.ceil(reachedMonth / 12) : 61;
 }
 
-// ━━ 메인 계산 ━━
+// ━━ 메인 계산 (Phase B: base data + naiveYears만 산출, verdict는 calcAll 이후 renderVerdict에서) ━━
 function calculate(){
   const age=getAge(),grossSalary=Number(document.getElementById('salary').value),asset=Number(document.getElementById('asset').value);
   const myAsset=MY_ASSETS[state.myAsset],targetPrice=PRICES[state.region][state.size];
@@ -1400,45 +1400,55 @@ function calculate(){
   const monthlyTakehome=calcTakehome(grossSalary);
   const netSalary=monthlyTakehome*12; // 세후 연 실수령
   const annualSavings = netSalary - monthlyLivingCost * 12; // 연 실수령 - 연 생활비
-  const needed=targetPrice-totalAsset,yearsNeeded=needed>0?Math.ceil(needed/annualSavings):0;
+  // naiveYears: 단순 산식 — er-years addedYears 비교용 베이스라인으로만 사용
+  const needed=targetPrice-totalAsset,naiveYears=needed>0?Math.ceil(needed/annualSavings):0;
   const ratio=(targetPrice/grossSalary).toFixed(1),pct=Math.min(Math.round(totalAsset/targetPrice*100),100);
   const salary=netSalary; // 이하 계산은 세후 기준
+  calcResult={
+    targetPrice,totalAsset,naiveYears,
+    yearsNeeded:naiveYears, // 임시값 — calcAll에서 sim 결과로 덮어씀
+    ratio,pct,salary,annualSavings,asset,myAsset,
+    region:state.region,size:state.size,myAssetKey:state.myAsset,
+    age,grossSalary,netSalary,monthlyTakehome,
+  };
+  localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age,living:monthlyLivingCost,investRate:getInvestRate()}));
+  trackAnalysis(); // 횟수 카운터 (saveAnalysis는 calcAll에서 sim N년으로 저장)
+  // N년 무관 stats — verdict/stat-years/색상은 renderVerdict에서
+  document.getElementById('stat-price').textContent=fmt(targetPrice);
+  document.getElementById('stat-avail').textContent=fmt(totalAsset);document.getElementById('stat-avail').className='stat-value '+(totalAsset>=targetPrice?'good':'bad');
+  document.getElementById('stat-ratio').textContent=`${ratio}배`;document.getElementById('stat-ratio').className='stat-value '+(ratio<=10?'good':ratio<=20?'':'bad');
+  document.getElementById('progress-pct').textContent=pct+'%';document.getElementById('prog-left').textContent=fmt(totalAsset);document.getElementById('prog-right').textContent=fmt(targetPrice);
+  setTimeout(()=>{const f=document.getElementById('progress-fill');f.style.width=pct+'%';f.style.background=pct>=80?'linear-gradient(90deg,#43e97b,#38f9d7)':pct>=40?'linear-gradient(90deg,#f093fb,#f5576c)':'linear-gradient(90deg,#fa709a,#fee140)'},100);
+  checkPartnerData();
+}
+
+// ━━ Phase B: verdict UI 렌더 (sim 기반 N년으로 calcAll 이후 호출) ━━
+function renderVerdict(yearsNeeded){
+  const{salary,totalAsset,targetPrice}=calcResult;
   let emoji,verdict,sub,color;
   if(yearsNeeded<=0){emoji='🎉';verdict='이미 살 수 있어요!';sub='현재 자산으로 바로 구매 가능! 이미 충분해 💍\n근데 진짜야...? 한번 더 확인해봐 🤔';color=['#43e97b','#38f9d7']}
   else if(yearsNeeded<=3){emoji='🥰';verdict=`${yearsNeeded}년이면 OK!`;sub='조금만 더 열심히 하면 돼요!\n스스로에게 응원 한마디 보내줘요 💌';color=['#f093fb','#f5576c']}
   else if(yearsNeeded<=7){emoji='😬';verdict=`${yearsNeeded}년 걸려요...`;sub='꽤 오래 걸리네요. 연봉 협상 각이네 💼\n투자 공부도 같이 해봐요 📈';color=['#4facfe','#00f2fe']}
   else if(yearsNeeded<=15){emoji='😰';verdict=`${yearsNeeded}년...? 😱`;sub='현실이 좀 차갑네요 🧊\n긴급 연봉 협상 + 부수입 진지하게 고민할 때!';color=['#fa709a','#fee140']}
   else{emoji='💀';verdict=`${yearsNeeded}년... 포기각?`;sub='이건 좀 심각해요 😭\n전략 대수술이 필요해요. 포기 말고 차근차근 💪';color=['#a18cd1','#fbc2eb']}
-  calcResult={emoji,verdict,sub,targetPrice,totalAsset,yearsNeeded,ratio,pct,color,salary,annualSavings,asset,myAsset,region:state.region,size:state.size,myAssetKey:state.myAsset,age,grossSalary,netSalary,monthlyTakehome};
-  localStorage.setItem(LS_MY,JSON.stringify({salary:grossSalary,asset,region:state.region,size:state.size,myAsset:state.myAsset,age,living:monthlyLivingCost,investRate:getInvestRate()}));
-  // Supabase 분석 저장 + 횟수 추적
-  trackAnalysis();
-  saveAnalysis({age,grossSalary,totalAsset,region:state.region,size:state.size,targetPrice,yearsNeeded:calcResult.yearsNeeded,verdict:calcResult.verdict});
-  // 무료 결과
+  Object.assign(calcResult,{emoji,verdict,sub,yearsNeeded,color});
   const summaryCard=document.querySelector('.result-summary');
   if(summaryCard) summaryCard.style.background=`linear-gradient(135deg,${color[0]} 0%,${color[1]} 100%)`;
-  document.getElementById('result-emoji').textContent=emoji;document.getElementById('result-verdict').textContent=verdict;document.getElementById('result-sub').textContent=sub;
-  document.getElementById('stat-price').textContent=fmt(targetPrice);
-  document.getElementById('stat-avail').textContent=fmt(totalAsset);document.getElementById('stat-avail').className='stat-value '+(totalAsset>=targetPrice?'good':'bad');
-  document.getElementById('stat-years').textContent=yearsNeeded<=0?'지금 당장! 🎉':`${yearsNeeded}년`;document.getElementById('stat-years').className='stat-value '+(yearsNeeded<=5?'good':yearsNeeded<=10?'':'bad');
-  document.getElementById('stat-ratio').textContent=`${ratio}배`;document.getElementById('stat-ratio').className='stat-value '+(ratio<=10?'good':ratio<=20?'':'bad');
-  document.getElementById('progress-pct').textContent=pct+'%';document.getElementById('prog-left').textContent=fmt(totalAsset);document.getElementById('prog-right').textContent=fmt(targetPrice);
-  setTimeout(()=>{const f=document.getElementById('progress-fill');f.style.width=pct+'%';f.style.background=pct>=80?'linear-gradient(90deg,#43e97b,#38f9d7)':pct>=40?'linear-gradient(90deg,#f093fb,#f5576c)':'linear-gradient(90deg,#fa709a,#fee140)'},100);
+  document.getElementById('result-emoji').textContent=emoji;
+  document.getElementById('result-verdict').textContent=verdict;
+  document.getElementById('result-sub').textContent=sub;
+  document.getElementById('stat-years').textContent=yearsNeeded<=0?'지금 당장! 🎉':`${yearsNeeded}년`;
+  document.getElementById('stat-years').className='stat-value '+(yearsNeeded<=5?'good':yearsNeeded<=10?'':'bad');
   // 블러 프리뷰
   const simYrs=yearsToTarget(salary,totalAsset,targetPrice,getInvestRate(),true);
   const py=document.getElementById('preview-years');const pc=document.getElementById('preview-couple');
   if(py)py.textContent=`-${Math.max(yearsNeeded-simYrs,1)}년`;
-  if(pc)pc.textContent=`-${Math.max(yearsNeeded-Math.ceil(needed/(salary*1.8*0.25)),2)}년`;
+  if(pc){const needed=targetPrice-totalAsset;pc.textContent=`-${Math.max(yearsNeeded-Math.ceil(needed/(salary*1.8*0.25)),2)}년`;}
   // 푸시메시지
   const rN={gangnam:'강남권',seoul:'서울',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
-  const pushMsg=genPushMsg(yearsNeeded,fmt(targetPrice),salary,rN[state.region],sN[state.size]);
+  const pushMsg=genPushMsg(yearsNeeded,fmt(targetPrice),salary,rN[calcResult.region],sN[calcResult.size]);
   document.getElementById('push-msg').textContent=pushMsg;calcResult.pushMsg=pushMsg;
-  document.body.classList.add('analyzed');
-  const summaryEl=document.querySelector('.result-summary');
-  setTimeout(()=>{ if(summaryEl) summaryEl.scrollIntoView({behavior:'smooth',block:'start'}); },100);
-  if(yearsNeeded<=3)launchConfetti();
-  checkPartnerData();
 }
 
 function genPushMsg(years,price,salary,region,size){
@@ -1668,7 +1678,8 @@ function updateLoanBox(){
 }
 async function calcAll(){
   if(!calcResult.salary)return;
-  const{salary,totalAsset,targetPrice,yearsNeeded}=calcResult;
+  // Phase B: naiveYears는 단순 산식 베이스라인 (er-years addedYears 비교용)
+  const{salary,totalAsset,targetPrice,naiveYears}=calcResult;
   const age=getAge();
   const investRate=getInvestRate();
   const{loanAmt,loanRate}=getLoanData();
@@ -1724,7 +1735,7 @@ async function calcAll(){
       maxNetSalary:getMaxNetSalary(),carStartYr,carMonthlyMaint,
     });
     const reachedYr=monthlySimResult.reachedMonth>=0?Math.ceil(monthlySimResult.reachedMonth/12):61;
-    const addedYears=reachedYr-yearsNeeded;
+    const addedYears=reachedYr-naiveYears;
     document.getElementById('er-years').textContent=reachedYr<=0?'지금 바로 가능!':`${reachedYr}년${addedYears>0?' (+'+addedYears+'년)':addedYears<0?' ('+addedYears+'년)':''}`;
     document.getElementById('er-years').style.color=addedYears>0?'#FF6B6B':addedYears<0?'#3DB88A':'var(--text)';
     window._lastSimResult=monthlySimResult;window._lastEffectiveTarget=effectiveTarget;
@@ -1736,6 +1747,10 @@ async function calcAll(){
     document.getElementById('er-extra').style.color=totalExtra>0?'#FF6B6B':'#3DB88A';
     document.getElementById('er-total').textContent=fmt(effectiveTarget+totalExtra);
     renderPDFPreview(reachedYr,totalExtra,loanAmt);
+    // Phase B: 보라색 카드 + 저장값 + 컨페티 모두 sim 결과 기반으로 일관 처리
+    renderVerdict(reachedYr);
+    saveAnalysis({age:calcResult.age,grossSalary:calcResult.grossSalary,totalAsset,region:calcResult.region,size:calcResult.size,targetPrice,yearsNeeded:reachedYr,verdict:calcResult.verdict});
+    if(reachedYr<=3 && reachedYr>=0 && !document.body.classList.contains('analyzed')) launchConfetti();
     return;
   }
 
@@ -1743,8 +1758,8 @@ async function calcAll(){
   const{years,reachedMonth,effectiveTarget,loanAmt:apiLoan,monthlyLoanPayment,
         totalEventCost,chartData,eventMarkers}=apiResult;
 
-  const reachedYr=years||61;
-  const addedYears=reachedYr-yearsNeeded;
+  const reachedYr=years===null?61:years;
+  const addedYears=reachedYr-naiveYears;
 
   updateLoanBox();
   document.getElementById('er-base').textContent=fmt(targetPrice);
@@ -1792,6 +1807,10 @@ async function calcAll(){
 
   try{renderChart(mockSimResult,effectiveTarget||targetPrice,totalAsset,salary,investRate);}catch(e){console.error('차트 오류:',e);}
   renderPDFPreview(reachedYr,totalEventCost,apiLoan||0);
+  // Phase B: 보라색 카드 + 저장값 + 컨페티 모두 sim 결과 기반으로 일관 처리
+  renderVerdict(reachedYr);
+  saveAnalysis({age:calcResult.age,grossSalary:calcResult.grossSalary,totalAsset,region:calcResult.region,size:calcResult.size,targetPrice,yearsNeeded:reachedYr,verdict:calcResult.verdict});
+  if(reachedYr<=3 && reachedYr>=0 && !document.body.classList.contains('analyzed')) launchConfetti();
 }
 
 // ━━ ④ 차트 (월별 시뮬레이션 기반) ━━
@@ -2378,8 +2397,9 @@ function startAnalyze(){
 
   setTimeout(() => { msg.textContent = ANALYZE_MESSAGES[1]; bar.style.width = '66%'; }, ANALYZE_PER_MSG);
   setTimeout(() => { msg.textContent = ANALYZE_MESSAGES[2]; bar.style.width = '100%'; }, ANALYZE_PER_MSG * 2);
-  setTimeout(() => {
-    floatAnalyze(); // 실제 분석 + body.analyzed
+  setTimeout(async () => {
+    // Phase B: 분석(API 응답) 완료까지 await — 로딩 UI는 그동안 유지
+    await floatAnalyze();
     // Step 7 카드 원본 복원
     while(card.firstChild) card.removeChild(card.firstChild);
     originalChildren.forEach(node => card.appendChild(node));
@@ -2389,13 +2409,13 @@ function startAnalyze(){
   }, ANALYZE_TOTAL_MS);
 }
 
-// ━━ 분석 트리거 (Step 7 인라인 CTA에서 호출) ━━
-function floatAnalyze(){
+// ━━ 분석 트리거 (Step 7 인라인 CTA에서 호출, Phase B: async 체인) ━━
+async function floatAnalyze(){
   if(!calcResult.salary || _analyzeNeedsRefresh){
     calculate();
     _analyzeNeedsRefresh = false;
   }
-  runPremiumAnalysis();
+  await runPremiumAnalysis();
 }
 
 // ━━ dirty 상태 관리 (플로팅 버튼 폐기 후 no-op, 호출처 호환 위해 유지) ━━
@@ -2510,21 +2530,19 @@ function restoreFromShareUrl(){
     if(data.ms) { raiseState.maxSalary=data.ms; document.getElementById('max-salary').value=data.ms; }
     window.history.replaceState({},'',location.pathname);
     showToast('📊 공유된 분석 설정이 복원됐어요!');
-    // 자동으로 분석 실행
-    setTimeout(()=>calculate(), 300);
+    // 자동으로 분석 실행 (Phase B: sim 기반 풀 파이프라인)
+    setTimeout(()=>floatAnalyze(), 300);
   }catch(e){}
 }
 // 추가 설정 변경 후 결과 재계산
-function runPremiumAnalysis(){
+async function runPremiumAnalysis(){
   clearDirty();
-  document.body.classList.add('analyzed');
   if(!calcResult.salary){
     calculate();
-    setTimeout(()=>{ if(calcResult.salary){ calcAll(); scrollToResult(); } }, 100);
-  } else {
-    calcAll();
-    scrollToResult();
+    if(!calcResult.salary) return;
   }
+  await calcAll(); // sim 기반 N년 산출 + verdict/리포트 일관 렌더
+  document.body.classList.add('analyzed'); // calcAll 완료 후에만 결과 영역 노출
   showToast('🔮 분석 결과를 업데이트했어요!');
 }
 
