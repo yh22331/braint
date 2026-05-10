@@ -236,7 +236,7 @@
   /* ── 대화형 UI: 스텝 인디케이터 + 네비게이션 (Phase 1 골격) ── */
   .step-progress{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;animation:fadeUp .5s ease both}
   .step-dots{display:flex;gap:8px;align-items:center;justify-content:center}
-  .step-dot{width:8px;height:8px;border-radius:50%;background:#F0D0DC;transition:all .25s ease}
+  .step-dot{width:8px;height:8px;border-radius:50%;background:#F0D0DC;transition:all .25s ease;cursor:pointer}
   .step-dot.active{background:var(--pink);transform:scale(1.5);box-shadow:0 2px 8px rgba(255,107,157,.4)}
   .step-dot.done{background:var(--pink-light)}
   .step-counter{font-size:.72rem;color:var(--text-soft);font-weight:600;font-family:'Gowun Dodum',sans-serif;letter-spacing:.5px}
@@ -248,6 +248,9 @@
   .step-nav-next{background:linear-gradient(135deg,var(--pink),#FF9EC4);color:#fff;border:none;box-shadow:0 4px 16px rgba(255,107,157,.35)}
   .step-nav-next:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,107,157,.45)}
   .step-nav-next:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+  /* ── 대화형 UI: 검증 에러 메시지 (Phase 4 Task 1) ── */
+  .step-error{display:none;background:linear-gradient(135deg,#FFE8E8,#FFDDE0);border:1.5px solid rgba(220,80,80,.35);border-radius:12px;padding:10px 14px;font-size:.78rem;color:#B83A3A;font-family:'Gowun Dodum',sans-serif;margin-bottom:10px;line-height:1.5}
+  .step-error.show{display:block}
 
 </style>
 </head>
@@ -611,7 +614,10 @@
     </div>
   </section>
 
-  <!-- 스텝 네비게이션 (Phase 1: currentStep 변수만 변경, 화면 전환은 Phase 3) -->
+  <!-- Phase 4 Task 1: 검증 에러 메시지 -->
+  <div class="step-error" id="step-error"></div>
+
+  <!-- 스텝 네비게이션 -->
   <div class="step-nav" id="step-nav">
     <button class="step-nav-btn step-nav-prev" id="step-prev" type="button" onclick="goPrev()">← 뒤로</button>
     <button class="step-nav-btn step-nav-next" id="step-next" type="button" onclick="goNext()">다음 →</button>
@@ -838,10 +844,66 @@ const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
 let calcResult={},chartInstance=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
 
-// ━━ 대화형 UI 스텝 (Phase 3: 한 화면 한 질문) ━━
+// ━━ 대화형 UI 스텝 (Phase 4: 검증 + 자유 점프) ━━
 // 8화면: 0=시작, 1=나, 2=자산, 3=목표집, 4=라이프, 5=커리어, 6=이벤트, 7=결과
 const MAX_STEP = 7;
 let currentStep = 0;
+
+// Phase 4 Task 1: step별 검증
+function validateStep(step){
+  if(step === 1){
+    const v = parseInt(document.getElementById('age')?.value);
+    if(isNaN(v) || v < 20 || v > 70) return {valid:false, msg:'⚠️ 나이를 20~70세 사이로 입력해주세요'};
+  }
+  if(step === 4){
+    const cl = parseInt(document.getElementById('custom-living')?.value);
+    if(isNaN(cl) || cl < 50 || cl > 1000) return {valid:false, msg:'⚠️ 생활비를 50~1,000만원 사이로 입력해주세요'};
+    if(state.investMode === 'custom'){
+      const cr = parseFloat(document.getElementById('custom-rate')?.value);
+      if(isNaN(cr) || cr < 0 || cr > 200) return {valid:false, msg:'⚠️ 투자수익률을 0~200% 사이로 입력해주세요'};
+    }
+  }
+  if(step === 5){
+    const v = parseInt(document.getElementById('max-salary')?.value);
+    if(isNaN(v) || v < 3000 || v > 200000) return {valid:false, msg:'⚠️ MAX 연봉을 3,000~200,000만원 사이로 입력해주세요'};
+  }
+  if(step === 6){
+    if(document.getElementById('ev-wedding')?.checked){
+      const v = parseInt(document.getElementById('cost-wedding')?.value);
+      if(isNaN(v) || v < 0) return {valid:false, msg:'⚠️ 결혼 비용을 확인해주세요'};
+    }
+    if(document.getElementById('ev-baby')?.checked){
+      const v = parseInt(document.getElementById('cost-baby-yr')?.value);
+      if(isNaN(v) || v < 0) return {valid:false, msg:'⚠️ 출산·육아 비용을 확인해주세요'};
+    }
+    if(document.getElementById('ev-car')?.checked){
+      const v = parseInt(document.getElementById('cost-car')?.value);
+      if(isNaN(v) || v < 0) return {valid:false, msg:'⚠️ 차량 비용을 확인해주세요'};
+    }
+  }
+  return {valid:true, msg:''};
+}
+
+// Phase 4 Task 1: 검증 결과 → 다음 버튼 disabled + 에러 박스 표시
+function updateNavGate(){
+  const r = validateStep(currentStep);
+  const errBox = document.getElementById('step-error');
+  if(errBox){
+    errBox.classList.toggle('show', !r.valid);
+    if(!r.valid) errBox.textContent = r.msg;
+  }
+  const next = document.getElementById('step-next');
+  if(next) next.disabled = !r.valid;
+}
+
+// Phase 4 Task 2: 점 클릭 자유 점프
+function goToStep(target){
+  if(target < 0 || target > MAX_STEP) return;
+  currentStep = target;
+  renderDots();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
 function renderDots(){
   const wrap = document.getElementById('step-dots');
   const counter = document.getElementById('step-counter');
@@ -850,10 +912,12 @@ function renderDots(){
   for(let i=0; i<=MAX_STEP; i++){
     const dot = document.createElement('div');
     dot.className = 'step-dot' + (i===currentStep ? ' active' : (i<currentStep ? ' done' : ''));
+    dot.title = (i+1) + ' / ' + (MAX_STEP+1);
+    dot.onclick = ((idx) => () => goToStep(idx))(i);
     wrap.appendChild(dot);
   }
   counter.textContent = (currentStep+1) + ' / ' + (MAX_STEP+1);
-  // Phase 4 Task 3: 네비 가시성 — Step 0은 nav 숨김, Step 7은 next 숨김 (분석 인라인 CTA 사용)
+  // Phase 4 Task 3: 네비 가시성
   const navWrap = document.getElementById('step-nav');
   const prev = document.getElementById('step-prev');
   const next = document.getElementById('step-next');
@@ -864,9 +928,12 @@ function renderDots(){
   document.querySelectorAll('.step-section').forEach(sec => {
     sec.classList.toggle('active', Number(sec.dataset.step) === currentStep);
   });
+  updateNavGate();
 }
 function goNext(){
   if(currentStep<MAX_STEP){
+    const r = validateStep(currentStep);
+    if(!r.valid){ updateNavGate(); return; }
     currentStep++;
     renderDots();
     window.scrollTo({top: 0, behavior: 'smooth'});
@@ -911,6 +978,13 @@ const fmt=v=>{
   updateCarMaintenance();
   restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
   renderDots(); // Phase 1: 스텝 인디케이터 초기 렌더
+  // Phase 4 Task 1: step-section 내 input/click을 위임으로 캐치 → 실시간 검증
+  document.body.addEventListener('input', e => {
+    if(e.target.closest('.step-section')) updateNavGate();
+  });
+  document.body.addEventListener('click', e => {
+    if(e.target.closest('.step-section')) updateNavGate();
+  });
 })();
 
 function restoreToggle(groupId,key){document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(b=>{b.classList.remove('active');if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${key}'`)){b.classList.add('active');if(groupId==='region-group')state.region=key;else if(groupId==='size-group')state.size=key;else if(groupId==='my-group')state.myAsset=key}})}
