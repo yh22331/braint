@@ -226,6 +226,22 @@
   .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiDrop linear forwards}
   @keyframes confettiDrop{0%{transform:translateY(-20px)rotate(0);opacity:1}100%{transform:translateY(100vh)rotate(720deg);opacity:0}}
   .disclaimer{text-align:center;font-size:0.7rem;color:var(--text-soft);margin-top:20px;font-family:'Gowun Dodum',sans-serif;line-height:1.6;opacity:0.7}
+  /* ── 대화형 UI: 스텝 인디케이터 + 네비게이션 (Phase 1 골격) ── */
+  .step-progress{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;animation:fadeUp .5s ease both}
+  .step-dots{display:flex;gap:8px;align-items:center;justify-content:center}
+  .step-dot{width:8px;height:8px;border-radius:50%;background:#F0D0DC;transition:all .25s ease}
+  .step-dot.active{background:var(--pink);transform:scale(1.5);box-shadow:0 2px 8px rgba(255,107,157,.4)}
+  .step-dot.done{background:var(--pink-light)}
+  .step-counter{font-size:.72rem;color:var(--text-soft);font-weight:600;font-family:'Gowun Dodum',sans-serif;letter-spacing:.5px}
+  .step-nav{display:flex;gap:10px;margin-bottom:16px}
+  .step-nav-btn{flex:1;padding:14px 16px;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px}
+  .step-nav-prev{background:transparent;border:2px solid #F0D0DC;color:var(--text-soft)}
+  .step-nav-prev:hover:not(:disabled){border-color:var(--pink-light);color:var(--pink)}
+  .step-nav-prev:disabled{opacity:.35;cursor:not-allowed}
+  .step-nav-next{background:linear-gradient(135deg,var(--pink),#FF9EC4);color:#fff;border:none;box-shadow:0 4px 16px rgba(255,107,157,.35)}
+  .step-nav-next:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,107,157,.45)}
+  .step-nav-next:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+
   /* ── 플로팅 분석하기 버튼 (단일, 풀폭) ── */
   .floating-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 16px 20px;z-index:200;pointer-events:none;background:linear-gradient(to top,rgba(255,240,248,0.97) 70%,transparent)}
   .floating-tab{width:100%;padding:14px;border:none;border-radius:16px;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;letter-spacing:-.2px;line-height:1.2;pointer-events:all}
@@ -262,6 +278,12 @@
     <span class="emoji-big">🏠💕</span>
     <h1>내 연봉으로<br>집 살 수 있을까?</h1>
     <p>내 재정 상태, 솔직하게 알아보자 🔍</p>
+  </div>
+
+  <!-- 스텝 인디케이터 (Phase 1: UI 골격, Phase 2에서 입력 분할) -->
+  <div class="step-progress" id="step-progress">
+    <div class="step-dots" id="step-dots"></div>
+    <div class="step-counter" id="step-counter">1 / 8</div>
   </div>
 
   <!-- 입력 카드 -->
@@ -328,6 +350,12 @@
         <button class="toggle-btn" onclick="selectToggle('my-group',this,'big')">🤑 3억+</button>
       </div>
     </div>
+  </div>
+
+  <!-- 스텝 네비게이션 (Phase 1: currentStep 변수만 변경, 화면 전환은 Phase 3) -->
+  <div class="step-nav" id="step-nav">
+    <button class="step-nav-btn step-nav-prev" id="step-prev" type="button" onclick="goPrev()">← 뒤로</button>
+    <button class="step-nav-btn step-nav-next" id="step-next" type="button" onclick="goNext()">다음 →</button>
   </div>
 
   <div style="height:90px"></div><!-- 플로팅 탭바 여백 -->
@@ -775,6 +803,35 @@ const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
 let calcResult={},chartInstance=null;
 let _floatingObserver=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
+
+// ━━ 대화형 UI 스텝 (Phase 1: 골격만 — 화면 전환/검증은 Phase 3에서) ━━
+// 8화면: 0=시작, 1=나, 2=자산, 3=목표집, 4=라이프, 5=커리어, 6=이벤트, 7=결과
+const MAX_STEP = 7;
+let currentStep = 0;
+function renderDots(){
+  const wrap = document.getElementById('step-dots');
+  const counter = document.getElementById('step-counter');
+  if(!wrap || !counter) return;
+  while(wrap.firstChild) wrap.removeChild(wrap.firstChild);
+  for(let i=0; i<=MAX_STEP; i++){
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i===currentStep ? ' active' : (i<currentStep ? ' done' : ''));
+    wrap.appendChild(dot);
+  }
+  counter.textContent = (currentStep+1) + ' / ' + (MAX_STEP+1);
+  const prev = document.getElementById('step-prev');
+  const next = document.getElementById('step-next');
+  if(prev) prev.disabled = (currentStep===0);
+  if(next) next.disabled = (currentStep===MAX_STEP);
+}
+function goNext(){
+  if(currentStep<MAX_STEP){ currentStep++; renderDots(); }
+  console.log('[step] currentStep =', currentStep);
+}
+function goPrev(){
+  if(currentStep>0){ currentStep--; renderDots(); }
+  console.log('[step] currentStep =', currentStep);
+}
 // 연봉 인상 상태 (init() 전에 선언)
 const raiseState={mode:'promo5',rate:3,promo:true,maxSalary:15000};
 // 생활비 (init() 전에 선언)
@@ -806,6 +863,7 @@ const fmt=v=>{
   updateBabyTotal();
   updateCarMaintenance();
   restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
+  renderDots(); // Phase 1: 스텝 인디케이터 초기 렌더
 })();
 
 function restoreToggle(groupId,key){document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(b=>{b.classList.remove('active');if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${key}'`)){b.classList.add('active');if(groupId==='region-group')state.region=key;else if(groupId==='size-group')state.size=key;else if(groupId==='my-group')state.myAsset=key}})}
