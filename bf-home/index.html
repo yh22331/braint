@@ -608,7 +608,7 @@
       <h2 style="font-size:1.3rem;font-weight:900;color:var(--pink);margin-bottom:6px;letter-spacing:-.4px">모든 답변 완료!</h2>
       <p style="font-size:.78rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:22px">7가지 정보 입력 완료</p>
       <p style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:18px;line-height:1.5">분석 결과 보러 가실까요?</p>
-      <button class="btn-cta" id="step7-analyze" type="button" onclick="floatAnalyze()" style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <button class="btn-cta" id="step7-analyze" type="button" onclick="startAnalyze()" style="display:flex;align-items:center;justify-content:center;gap:8px">
         <span style="font-size:1.15rem">📊</span>분석하기
       </button>
     </div>
@@ -2334,6 +2334,59 @@ function copyReportText(){
     '─'.repeat(22),'Powered by Xalysis',
   ].filter(Boolean).join('\n');
   navigator.clipboard?.writeText(lines).then(()=>showToast('📋 복사 완료!'));
+}
+
+// ━━ Phase 4 Task 6: 분석 진행 애니메이션 (1.5초, 3 메시지) ━━
+const ANALYZE_MESSAGES = ['💼 연봉 분석 중...', '💰 자산 추정 중...', '🎯 시나리오 적용 중...'];
+const ANALYZE_TOTAL_MS = 1500;
+const ANALYZE_PER_MSG = ANALYZE_TOTAL_MS / 3;
+let _analyzeAnimating = false;
+
+function startAnalyze(){
+  if(_analyzeAnimating) return;
+  const card = document.querySelector('section[data-step="7"] .card');
+  if(!card){ floatAnalyze(); return; }
+  _analyzeAnimating = true;
+
+  // 기존 자식 노드 보관 (애니메이션 후 복원)
+  const originalChildren = Array.from(card.childNodes);
+  while(card.firstChild) card.removeChild(card.firstChild);
+
+  // 로딩 UI 빌드 (DOM 메서드, innerHTML 미사용)
+  const emoji = document.createElement('div');
+  emoji.style.cssText = 'font-size:2.6rem;margin-bottom:14px;line-height:1;animation:stepIn .35s ease both';
+  emoji.textContent = '⏳';
+
+  const msg = document.createElement('div');
+  msg.style.cssText = 'font-size:1rem;font-weight:700;color:var(--pink);min-height:1.6em;letter-spacing:-.2px;font-family:Noto Sans KR,sans-serif';
+  msg.textContent = ANALYZE_MESSAGES[0];
+
+  const sub = document.createElement('div');
+  sub.style.cssText = 'font-size:.72rem;color:var(--text-soft);font-family:Gowun Dodum,sans-serif;margin-top:6px';
+  sub.textContent = '잠시만 기다려주세요';
+
+  const barWrap = document.createElement('div');
+  barWrap.style.cssText = 'margin-top:22px;height:5px;background:#F0D0DC;border-radius:99px;overflow:hidden';
+  const bar = document.createElement('div');
+  bar.style.cssText = 'height:100%;background:linear-gradient(90deg,var(--pink),#FF9EC4);width:33%;transition:width .5s ease;border-radius:99px';
+  barWrap.appendChild(bar);
+
+  card.appendChild(emoji);
+  card.appendChild(msg);
+  card.appendChild(sub);
+  card.appendChild(barWrap);
+
+  setTimeout(() => { msg.textContent = ANALYZE_MESSAGES[1]; bar.style.width = '66%'; }, ANALYZE_PER_MSG);
+  setTimeout(() => { msg.textContent = ANALYZE_MESSAGES[2]; bar.style.width = '100%'; }, ANALYZE_PER_MSG * 2);
+  setTimeout(() => {
+    floatAnalyze(); // 실제 분석 + body.analyzed
+    // Step 7 카드 원본 복원
+    while(card.firstChild) card.removeChild(card.firstChild);
+    originalChildren.forEach(node => card.appendChild(node));
+    _analyzeAnimating = false;
+    // 결과 영역으로 스크롤
+    scrollToResult();
+  }, ANALYZE_TOTAL_MS);
 }
 
 // ━━ 분석 트리거 (Step 7 인라인 CTA에서 호출) ━━
