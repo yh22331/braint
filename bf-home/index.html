@@ -226,10 +226,12 @@
   .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiDrop linear forwards}
   @keyframes confettiDrop{0%{transform:translateY(-20px)rotate(0);opacity:1}100%{transform:translateY(100vh)rotate(720deg);opacity:0}}
   .disclaimer{text-align:center;font-size:0.7rem;color:var(--text-soft);margin-top:20px;font-family:'Gowun Dodum',sans-serif;line-height:1.6;opacity:0.7}
-  /* ── 대화형 UI: 스텝 섹션 (Phase 2 — 구조 wrapper, 화면 전환은 Phase 3) ── */
-  .step-section{display:block;margin-bottom:0}
+  /* ── 대화형 UI: 스텝 섹션 (Phase 3 — 한 화면 한 질문) ── */
+  .step-section{display:none}
+  .step-section.active{display:block;animation:stepIn .35s ease both}
   .step-section>.card,.step-section>.section-wrap{margin-bottom:16px}
   .step-section.step-final .card,.step-section.step-start .card{background:linear-gradient(135deg,#FFF8FC 0%,#F8F0FF 100%);text-align:center}
+  @keyframes stepIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
   /* ── 대화형 UI: 스텝 인디케이터 + 네비게이션 (Phase 1 골격) ── */
   .step-progress{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;animation:fadeUp .5s ease both}
@@ -292,7 +294,7 @@
   </div>
 
   <!-- ══ 대화형 UI Step 0: 시작 화면 ══ -->
-  <section class="step-section step-start" data-step="0">
+  <section class="step-section step-start active" data-step="0">
     <div class="card">
       <div style="font-size:3rem;margin-bottom:10px">🏠✨</div>
       <h2 style="font-size:1.2rem;font-weight:900;color:var(--pink);margin-bottom:10px;line-height:1.4">집 살 수 있을까?<br>같이 알아봐요</h2>
@@ -855,7 +857,7 @@ let calcResult={},chartInstance=null;
 let _floatingObserver=null;
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
 
-// ━━ 대화형 UI 스텝 (Phase 1: 골격만 — 화면 전환/검증은 Phase 3에서) ━━
+// ━━ 대화형 UI 스텝 (Phase 3: 한 화면 한 질문) ━━
 // 8화면: 0=시작, 1=나, 2=자산, 3=목표집, 4=라이프, 5=커리어, 6=이벤트, 7=결과
 const MAX_STEP = 7;
 let currentStep = 0;
@@ -874,14 +876,24 @@ function renderDots(){
   const next = document.getElementById('step-next');
   if(prev) prev.disabled = (currentStep===0);
   if(next) next.disabled = (currentStep===MAX_STEP);
+  // Phase 3: 현재 step만 보이게
+  document.querySelectorAll('.step-section').forEach(sec => {
+    sec.classList.toggle('active', Number(sec.dataset.step) === currentStep);
+  });
 }
 function goNext(){
-  if(currentStep<MAX_STEP){ currentStep++; renderDots(); }
-  console.log('[step] currentStep =', currentStep);
+  if(currentStep<MAX_STEP){
+    currentStep++;
+    renderDots();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
 }
 function goPrev(){
-  if(currentStep>0){ currentStep--; renderDots(); }
-  console.log('[step] currentStep =', currentStep);
+  if(currentStep>0){
+    currentStep--;
+    renderDots();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
 }
 // 연봉 인상 상태 (init() 전에 선언)
 const raiseState={mode:'promo5',rate:3,promo:true,maxSalary:15000};
