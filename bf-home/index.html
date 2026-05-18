@@ -75,6 +75,10 @@
   .btn-cta{width:100%;padding:18px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:20px;color:white;font-family:'Noto Sans KR',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:-0.3px;box-shadow:0 8px 24px rgba(255,107,157,0.4);transition:all 0.25s;position:relative;overflow:hidden}
   .btn-cta:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,107,157,0.5)}
   .btn-cta:active{transform:translateY(0)}
+  /* Phase 5: 다시 분석하기 — 메인 CTA와 시각적 차별을 위해 톤다운 (outline 분홍) */
+  .btn-reset{width:100%;padding:14px;background:#FFF5F9;border:1.5px solid rgba(255,107,157,0.45);border-radius:16px;color:var(--pink);font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;letter-spacing:-0.2px;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .btn-reset:hover{background:#FFE4EF;border-color:var(--pink);transform:translateY(-1px)}
+  .btn-reset:active{transform:translateY(0)}
 
   /* ── 결과 영역 ── */
   /* 분석 전: 통합 결과 카드 + 차트 + 공유 + 커플 숨김. 추가 입력은 표시. */
@@ -711,6 +715,13 @@
         </div>
       </div>
 
+      <!-- Phase 5: 다시 분석하기 — 입력값 보존, Step 0 복귀 -->
+      <div class="post-analyze">
+        <button class="btn-reset" type="button" onclick="resetToStep0()">
+          <span style="font-size:1rem">🔄</span>다시 분석하기
+        </button>
+      </div>
+
     <p class="disclaimer">
       ※ 이 계산기는 재미 목적으로 제작되었으며<br>
       실제 부동산 시세는 지역·시기마다 다를 수 있어요 🏠<br>
@@ -900,6 +911,15 @@ function updateNavGate(){
 function goToStep(target){
   if(target < 0 || target > MAX_STEP) return;
   currentStep = target;
+  renderDots();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// Phase 5: 다시 분석하기 — Step 0으로 복귀, 입력값은 보존
+function resetToStep0(){
+  document.body.classList.remove('analyzed'); // 결과 영역 숨김
+  _analyzeNeedsRefresh = true;                // 다음 분석 시 재계산 강제
+  currentStep = 0;
   renderDots();
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
