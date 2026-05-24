@@ -1,2 +1,12 @@
 .vercel
 .env*.local
+
+# 로컬 전용 (Playwright E2E) — 배포 repo에 포함 안 함
+node_modules/
+package.json
+package-lock.json
+playwright.config.js
+tests/
+playwright-report/
+test-results/
+.last-run.json

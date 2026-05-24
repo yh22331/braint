@@ -33,6 +33,46 @@ nav{display:flex;gap:28px;align-items:center}
 nav a{font-size:.78rem;font-weight:700;letter-spacing:.5px;color:var(--muted);text-decoration:none;text-transform:uppercase;transition:color .2s}
 nav a:hover{color:var(--white)}
 
+/* 헤더 인증 UI */
+.hdr-right{display:flex;align-items:center;gap:24px}
+.hdr-auth{position:relative;display:flex;align-items:center;gap:12px}
+
+/* 로그인 버튼 — 컴팩트 외곽선 (.btn-ghost 축소판) */
+.hdr-auth-login{padding:7px 16px;font-family:'Noto Sans KR',sans-serif;font-size:.74rem;font-weight:700;
+  color:var(--white);background:transparent;border:1px solid var(--border2);border-radius:99px;
+  cursor:none;transition:all .2s}
+.hdr-auth-login:hover{border-color:var(--white);background:var(--surface)}
+
+/* 닉네임 (데스크톱) */
+.hdr-auth-name{font-size:.8rem;font-weight:700;color:var(--muted);
+  max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 햄버거 (SVG 3선) */
+.hdr-auth-burger{display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
+  background:transparent;border:1px solid var(--border);border-radius:10px;
+  color:var(--muted);cursor:none;transition:all .2s}
+.hdr-auth-burger:hover,.hdr-auth-burger[aria-expanded="true"]{color:var(--white);border-color:var(--border2)}
+.hdr-auth-burger svg{width:18px;height:18px;display:block}
+
+/* 드롭다운 */
+.hdr-auth-menu{position:absolute;top:calc(100% + 12px);right:0;min-width:210px;
+  background:rgba(10,10,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:var(--radius);padding:8px;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:200;
+  opacity:0;visibility:hidden;transform:translateY(-8px);pointer-events:none;
+  transition:opacity .2s,transform .2s,visibility .2s}
+.hdr-auth-menu.open{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.hdr-auth-menu-name{padding:8px 12px 10px;font-size:.82rem;font-weight:700;color:var(--white);
+  border-bottom:1px solid var(--border);margin-bottom:6px;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-auth-menu-item{display:block;width:100%;text-align:left;padding:10px 12px;
+  font-family:'Noto Sans KR',sans-serif;font-size:.8rem;color:var(--muted);text-decoration:none;
+  background:none;border:0;border-radius:8px;cursor:none;transition:all .15s}
+.hdr-auth-menu-item:hover{background:var(--surface2);color:var(--white)}
+
+/* 모바일: 닉네임 숨김 (☰만 노출) */
+@media(max-width:960px){.hdr-auth-name{display:none}}
+
 /* 히어로 */
 .hero{min-height:100vh;display:flex;align-items:center;padding:100px 40px 80px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;pointer-events:none;
@@ -184,11 +224,14 @@ footer{padding:48px 40px;border-top:1px solid var(--border);display:flex;align-i
 
 <header id="hdr">
   <a href="/" class="logo">Brain<em>t</em></a>
-  <nav>
-    <a href="#services">서비스</a>
-    <a href="#roadmap">로드맵</a>
-    <a href="mailto:hello@braint.net">문의</a>
-  </nav>
+  <div class="hdr-right">
+    <nav>
+      <a href="#services">서비스</a>
+      <a href="#roadmap">로드맵</a>
+      <a href="mailto:hello@braint.net">문의</a>
+    </nav>
+    <div class="hdr-auth" id="hdrAuth"></div>
+  </div>
 </header>
 
 <!-- 히어로 -->
@@ -460,6 +503,109 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
   statObs.observe(document.querySelector('.stats'));
   initChart();
+});
+</script>
+
+<script type="module">
+import { openAuthModal } from '/js/auth-modal.js';
+import { logout, onAuthChange } from '/js/auth.js';
+
+const hdrAuth = document.getElementById('hdrAuth');
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// 닫기 정리용 핸들러 (모듈 스코프 — 메모리 누수 방지)
+let escHandler = null;
+let outsideHandler = null;
+
+// DOM 헬퍼 (innerHTML 미사용; auth-modal.js와 동일 패턴)
+function el(tag, attrs = {}, children = []) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k === 'onclick') n.addEventListener('click', v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of children) n.appendChild(c);
+  return n;
+}
+
+// 햄버거 SVG 3선 (createElementNS — createElement로는 SVG 불가)
+function burgerIcon() {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const y of [7, 12, 17]) {
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', '4'); line.setAttribute('x2', '20');
+    line.setAttribute('y1', y);  line.setAttribute('y2', y);
+    line.setAttribute('stroke', 'currentColor');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+  }
+  return svg;
+}
+
+// 컨테이너 비우기 + 떠도는 리스너 정리 (재렌더 시 누수 방지)
+function clearAuth() {
+  if (escHandler) { document.removeEventListener('keydown', escHandler); escHandler = null; }
+  if (outsideHandler) { document.removeEventListener('click', outsideHandler); outsideHandler = null; }
+  while (hdrAuth.firstChild) hdrAuth.removeChild(hdrAuth.firstChild);
+}
+
+// 메뉴 열기/닫기 (aria-expanded 동기화 + ESC/외부클릭 핸들러 보관)
+function openMenu(burger, menu) {
+  menu.classList.add('open');
+  burger.setAttribute('aria-expanded', 'true');
+  escHandler = (e) => { if (e.key === 'Escape') closeMenu(burger, menu); };
+  outsideHandler = (e) => { if (!hdrAuth.contains(e.target)) closeMenu(burger, menu); };
+  document.addEventListener('keydown', escHandler);
+  document.addEventListener('click', outsideHandler);
+}
+function closeMenu(burger, menu) {
+  menu.classList.remove('open');
+  burger.setAttribute('aria-expanded', 'false');
+  if (escHandler) { document.removeEventListener('keydown', escHandler); escHandler = null; }
+  if (outsideHandler) { document.removeEventListener('click', outsideHandler); outsideHandler = null; }
+}
+
+function renderLoggedOut() {
+  clearAuth();
+  hdrAuth.appendChild(el('button', { class: 'hdr-auth-login', text: '로그인', onclick: openAuthModal }));
+}
+
+function renderLoggedIn(user) {
+  clearAuth();
+  const nickname = (user.user_metadata && user.user_metadata.name) || user.email || '사용자';
+
+  const name = el('span', { class: 'hdr-auth-name', text: nickname });
+  const burger = el('button', {
+    class: 'hdr-auth-burger', 'aria-label': '메뉴', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+  }, [burgerIcon()]);
+  const logoutBtn = el('button', { class: 'hdr-auth-menu-item', 'data-action': 'logout', text: '로그아웃' });
+  const menu = el('div', { class: 'hdr-auth-menu' }, [
+    el('div', { class: 'hdr-auth-menu-name', text: nickname }),
+    el('a', { class: 'hdr-auth-menu-item', href: '/mypage/', text: '보고서 보관함' }),
+    logoutBtn,
+  ]);
+
+  burger.addEventListener('click', (e) => {
+    e.stopPropagation(); // 같은 클릭이 외부핸들러로 새어 즉시 닫히는 것 방지
+    menu.classList.contains('open') ? closeMenu(burger, menu) : openMenu(burger, menu);
+  });
+  logoutBtn.addEventListener('click', async () => {
+    closeMenu(burger, menu);
+    await logout(); // onAuthChange(SIGNED_OUT) → renderLoggedOut 자동 갱신
+  });
+
+  hdrAuth.append(name, burger, menu);
+}
+
+// UI 일원화: INITIAL_SESSION이 초기 상태도 처리 (콜백 내 await supabase 호출 X — session.user만)
+onAuthChange((event, session) => {
+  if (session && session.user) renderLoggedIn(session.user);
+  else renderLoggedOut();
 });
 </script>
 </body>
