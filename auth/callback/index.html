@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>로그인 중 · 브레인티</title>
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:#fff;color:#191919;
+      font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+    .wrap{text-align:center;padding:24px;}
+    .spinner{width:40px;height:40px;margin:0 auto 16px;border:4px solid #eee;
+      border-top-color:#191919;border-radius:50%;animation:braint-spin .8s linear infinite;}
+    @keyframes braint-spin{to{transform:rotate(360deg);}}
+    .msg{margin:0;font-size:15px;color:#555;}
+    .home-link{display:none;margin:16px 0 0;font-size:14px;color:#888;}
+    .home-link a{color:#555;}
+    /* 에러 상태: 스피너 숨기고 메시지 빨강 */
+    .error .spinner{display:none;}
+    .error .msg{color:#e03131;}
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="spinner" id="spinner"></div>
+    <p class="msg" id="msg" role="status">로그인 중...</p>
+    <p class="home-link" id="homeLink"><a href="/">홈으로 돌아가기</a></p>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/js/supabase-client.js';
+
+    const wrap = document.getElementById('wrap');
+    const msg = document.getElementById('msg');
+    const homeLink = document.getElementById('homeLink');
+
+    // 실패 처리: 사용자 친화 메시지 + "홈으로" 링크 노출 + 2.5초 후 홈
+    function fail(text) {
+      wrap.classList.add('error');
+      msg.textContent = text;
+      homeLink.style.display = 'block';
+      setTimeout(() => location.replace('/'), 2500);
+    }
+
+    async function run() {
+      const params = new URLSearchParams(window.location.search);
+
+      // 1) 제공자/Supabase 에러 먼저 검사 (원본 영어 메시지는 노출 X)
+      if (params.get('error')) {
+        fail(params.get('error') === 'access_denied'
+          ? '로그인을 취소하셨어요.'
+          : '로그인에 실패했어요. 다시 시도해주세요.');
+        return;
+      }
+
+      // 2) 세션 확보 (detectSessionInUrl:true → ?code 자동 교환, getSession은 교환 완료 후 반환)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          location.replace('/');          // 3) 성공 → 즉시 메인 (히스토리에 콜백 URL 안 남김)
+        } else {
+          fail('로그인에 실패했어요. 다시 시도해주세요.'); // 4) 세션 없음
+        }
+      } catch (e) {
+        console.error('[auth/callback]', e);
+        fail('로그인에 실패했어요. 다시 시도해주세요.');
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
