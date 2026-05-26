@@ -487,15 +487,15 @@
 
     <div class="gallery">
       <figure class="shot reveal">
-        <div class="frame"><img src="/public/portfolio/images/graduation.jpg" alt="아주대학교 졸업" loading="lazy" onerror="pfImg(this)"></div>
+        <div class="frame"><img src="/portfolio/images/graduation.jpg" alt="아주대학교 졸업" loading="lazy" onerror="pfImg(this)"></div>
         <figcaption>아주대학교 산업공학과 졸업</figcaption>
       </figure>
       <figure class="shot reveal d1">
-        <div class="frame"><img src="/public/portfolio/images/nh_award.jpg" alt="NH투자증권 빅데이터 경진대회 수상" loading="lazy" onerror="pfImg(this)"></div>
+        <div class="frame"><img src="/portfolio/images/nh_award.jpg" alt="NH투자증권 빅데이터 경진대회 수상" loading="lazy" onerror="pfImg(this)"></div>
         <figcaption>NH투자증권 빅데이터 경진대회 우수상</figcaption>
       </figure>
       <figure class="shot reveal d2">
-        <div class="frame"><img src="/public/portfolio/images/hdhi.jpg" alt="현대중공업그룹 BIG DATA AI 경진대회 수상" loading="lazy" onerror="pfImg(this)"></div>
+        <div class="frame"><img src="/portfolio/images/hdhi.jpg" alt="현대중공업그룹 BIG DATA AI 경진대회 수상" loading="lazy" onerror="pfImg(this)"></div>
         <figcaption>현대중공업그룹 BIG DATA AI 경진대회 장려상</figcaption>
       </figure>
     </div>
@@ -535,13 +535,13 @@
           <span class="badge">모델링 1위</span>
           <span class="badge">보조지표 유효성 분석</span>
         </div>
-        <div class="role-shot"><img src="/public/portfolio/images/nh_analysis.jpg" alt="주식 보조지표 유효성 분석 프로젝트" loading="lazy" onerror="pfImg(this)"></div>
+        <div class="role-shot"><img src="/portfolio/images/nh_analysis.jpg" alt="주식 보조지표 유효성 분석 프로젝트" loading="lazy" onerror="pfImg(this)"></div>
       </div>
     </div>
 
     <div class="gallery" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
       <figure class="shot reveal d1">
-        <div class="frame" style="aspect-ratio:16/10;"><img src="/public/portfolio/images/nh_present.jpg" alt="NH투자증권 인턴 프로젝트 발표" loading="lazy" onerror="pfImg(this)"></div>
+        <div class="frame" style="aspect-ratio:16/10;"><img src="/portfolio/images/nh_present.jpg" alt="NH투자증권 인턴 프로젝트 발표" loading="lazy" onerror="pfImg(this)"></div>
         <figcaption>NH투자증권 인턴 프로젝트 발표</figcaption>
       </figure>
     </div>
@@ -618,7 +618,7 @@
             </div>
           </div>
           <div class="media">
-            <img src="/public/portfolio/images/shinhan_present.jpg" alt="유관부서 100명 설명회" loading="lazy" onerror="pfImg(this)">
+            <img src="/portfolio/images/shinhan_present.jpg" alt="유관부서 100명 설명회" loading="lazy" onerror="pfImg(this)">
             <span class="tag mono">100명 설명회</span>
           </div>
         </div>
@@ -657,7 +657,7 @@
             </div>
           </div>
           <div class="media">
-            <img src="/public/portfolio/images/shinhan_cms.jpg" alt="모바일웹 & CMS 도입" loading="lazy" onerror="pfImg(this)">
+            <img src="/portfolio/images/shinhan_cms.jpg" alt="모바일웹 & CMS 도입" loading="lazy" onerror="pfImg(this)">
             <span class="tag mono">CMS 도입</span>
           </div>
         </div>
@@ -667,7 +667,7 @@
 
     <!-- 진급 (작게) -->
     <div class="promo reveal">
-      <div class="pic"><img src="/public/portfolio/images/promotion.jpg" alt="대리 진급" loading="lazy" onerror="pfImg(this)"></div>
+      <div class="pic"><img src="/portfolio/images/promotion.jpg" alt="대리 진급" loading="lazy" onerror="pfImg(this)"></div>
       <div class="txt">
         <div class="lab mono">Promotion</div>
         <div class="main">2022.12 입사 <span class="arrow">→</span> 대리 진급</div>
@@ -811,7 +811,7 @@
   function pfImg(el){
     if(!el.dataset.fb){
       el.dataset.fb = "1";
-      el.src = el.src.replace("/public/portfolio/images/", "/portfolio/images/");
+      el.src = el.src.replace("/portfolio/images/", "/portfolio/images/");
       return;
     }
     // 두 경로 모두 실패 → 이미지 숨기고 슬롯을 placeholder로
