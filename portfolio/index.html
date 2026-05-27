@@ -408,6 +408,106 @@
     .promo{flex-direction:column;align-items:flex-start;text-align:left;}
     .awards .pz{display:none;}
   }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 인쇄 / PDF (이미지만 숨김, 디자인 유지) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  @page{ margin:12mm; }
+  @media print{
+    /* 애니메이션만 제거 + 기존 컬러·배경 그대로 인쇄되도록 */
+    *,*::before,*::after{
+      transition:none!important;
+      animation:none!important;
+      -webkit-print-color-adjust:exact!important;
+      print-color-adjust:exact!important;
+    }
+    html{scroll-behavior:auto;}
+
+    /* 인쇄 시 최상단 원문 링크 (화면에는 표시 안 됨) */
+    body::before{
+      content:"웹 포트폴리오 원문: braint.net/portfolio/";
+      display:block;
+      font-size:12px;
+      text-align:right;
+      color:#000;
+      padding:0 4px 8px;
+      margin:0 0 14px;
+      border-bottom:1px solid #000;
+    }
+
+    /* 이미지·시각 요소 숨김 + 차지하던 자리(공백)까지 제거 */
+    img,figure,.gallery,.media,.frame,.pic,.role-shot{
+      display:none!important;
+      height:0!important;
+      margin:0!important;
+      padding:0!important;
+    }
+    /* 우측 이미지 컬럼이 사라진 자리를 텍스트가 full-width로 채우도록 (인라인 스타일도 덮음) */
+    .work-card .inner{grid-template-columns:1fr!important;}
+
+    /* 성장과정: 갤러리(이미지) 숨김 공백 제거 + 한 페이지에 통째로 담기 */
+    .gallery{margin-bottom:0!important;padding-bottom:0!important;height:auto!important;}
+    #growth{
+      padding-top:24px!important;
+      padding-bottom:0!important;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    #growth .sec-head{margin-bottom:16px!important;}
+    #growth .lead{margin:0 0 16px!important;}
+    #growth .stats{margin-top:16px!important;}
+    #growth .awards{margin-top:16px!important;}
+    #growth .awards li{padding:10px 2px!important;}
+
+    /* reveal 스크롤 애니메이션 숨김 해제 */
+    .reveal,.reveal.in,
+    .reveal.d1,.reveal.d2,.reveal.d3,.reveal.d4{
+      opacity:1!important;
+      transform:none!important;
+      visibility:visible!important;
+    }
+    .doing-list .dot::after{animation:none!important;}
+
+    /* 섹션 단위 페이지 나누기 — 히어로(표지)=1p, 첫 섹션(성장과정)=2p */
+    section{
+      break-before:always;
+      page-break-before:always;
+    }
+
+    /* 카드·목록 잘림 방지 */
+    .work-card,.role-card,.stat,.promo,.insight,.project,
+    .cert,.contact,.timeline li,.retro,.layer,.awards{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    h1,h2,h3,.sec-head{
+      break-after:avoid;
+      page-break-after:avoid;
+    }
+
+    /* ── [요청 수정] print 색상·배경 보정 ── */
+    /* (1) 강조 텍스트(.hl): print에서 배경(형광펜) 완전 제거, color만 유지 */
+    .hl,.hero .tagline .hl,.next-copy .hl{
+      background:none!important;
+      background-color:transparent!important;
+      -webkit-text-fill-color:currentColor!important;
+    }
+
+    /* (2) braint.net 소개 카드(.project): print에서 웨이브 그래픽 제거 + 배경 white·텍스트 dark */
+    .project{
+      background:#fff!important;
+      background-image:none!important;
+      color:#1a1a1a!important;
+    }
+    /* 파란색 웨이브(radial-gradient) pseudo-element 제거 */
+    .project::before,.project::after{
+      display:none!important;
+      background:none!important;
+    }
+    /* 카드 내부 텍스트 가독성 위해 dark 통일 */
+    .project *{
+      color:#1a1a1a!important;
+      -webkit-text-fill-color:#1a1a1a!important;
+    }
+  }
 </style>
 </head>
 
