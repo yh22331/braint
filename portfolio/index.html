@@ -421,16 +421,16 @@
     }
     html{scroll-behavior:auto;}
 
-    /* 인쇄 시 최상단 원문 링크 (화면에는 표시 안 됨) */
-    body::before{
-      content:"웹 포트폴리오 원문: braint.net/portfolio/";
+    /* 태그라인 바로 아래 원문 링크 (print 전용, 화면에는 표시 안 됨) */
+    .tagline::after{
+      content:"웹 포트폴리오 원문 → braint.net/portfolio/";
       display:block;
-      font-size:12px;
-      text-align:right;
-      color:#000;
-      padding:0 4px 8px;
-      margin:0 0 14px;
-      border-bottom:1px solid #000;
+      margin-top:10px;
+      font-size:14px;
+      font-weight:700;
+      color:var(--accent)!important;
+      -webkit-text-fill-color:var(--accent)!important;
+      text-decoration:underline;
     }
 
     /* 이미지·시각 요소 숨김 + 차지하던 자리(공백)까지 제거 */
