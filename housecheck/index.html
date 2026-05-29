@@ -1093,6 +1093,7 @@ async function trackHCAnalysis(){
 
 async function saveHCAnalysis(data){
   try{
+    const uid = window.brAuthGetUser ? (await window.brAuthGetUser())?.id ?? null : null;
     const session = localStorage.getItem('bfhc_session_id') || crypto.randomUUID();
     localStorage.setItem('bfhc_session_id', session);
     await sb.from('analyses').insert({
@@ -1105,7 +1106,8 @@ async function saveHCAnalysis(data){
       years_needed: data.years || null,
       verdict: data.verdict || null,
       is_premium: false,
-      shared: false
+      shared: false,
+      user_id: uid
     });
   } catch(e){ console.log('save error',e); }
 }
@@ -1976,6 +1978,9 @@ function generateDetailReport(){
   // ━━ 로그인 영역 (ESM) ━━
   import { openAuthModal } from '/js/auth-modal.js';
   import { onAuthChange, getCurrentUser, logout } from '/js/auth.js';
+
+  // 인라인 스크립트(saveHCAnalysis 등)에서 현재 유저 조회용 다리
+  window.brAuthGetUser = getCurrentUser;
 
   const authArea = document.getElementById('hc-auth-area');
 

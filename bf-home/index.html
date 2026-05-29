@@ -843,6 +843,7 @@ async function trackShare(){
 // ━━ Supabase: 분석 결과 저장 ━━
 async function saveAnalysis(result){
   try{
+    const uid = window.brAuthGetUser ? (await window.brAuthGetUser())?.id ?? null : null;
     const session=localStorage.getItem('bfhc_session_id')||crypto.randomUUID();
     localStorage.setItem('bfhc_session_id',session);
     await sb.from('analyses').insert({
@@ -856,7 +857,8 @@ async function saveAnalysis(result){
       target_price: result.targetPrice||null,
       years_needed: result.yearsNeeded||null,
       verdict: result.verdict||null,
-      shared: false
+      shared: false,
+      user_id: uid
     });
   }catch(e){console.log('save analysis error',e);}
 }
@@ -2683,6 +2685,9 @@ function goToCouple(){ location.href='/couple/'; }
   // ━━ 로그인 영역 (ESM) ━━
   import { openAuthModal } from '/js/auth-modal.js';
   import { onAuthChange, getCurrentUser, logout } from '/js/auth.js';
+
+  // 인라인 스크립트(saveAnalysis 등)에서 현재 유저 조회용 다리
+  window.brAuthGetUser = getCurrentUser;
 
   const authArea = document.getElementById('bf-auth-area');
 
