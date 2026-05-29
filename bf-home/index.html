@@ -255,6 +255,15 @@
   /* ── 대화형 UI: 검증 에러 메시지 (Phase 4 Task 1) ── */
   .step-error{display:none;background:linear-gradient(135deg,#FFE8E8,#FFDDE0);border:1.5px solid rgba(220,80,80,.35);border-radius:12px;padding:10px 14px;font-size:.78rem;color:#B83A3A;font-family:'Gowun Dodum',sans-serif;margin-bottom:10px;line-height:1.5}
   .step-error.show{display:block}
+  /* ━━ 로그인 영역 ━━ */
+  .header{position:relative}
+  .bf-auth-area{position:absolute;top:0;right:0;display:flex;align-items:center;gap:8px;font-family:'Noto Sans KR',sans-serif;min-height:32px}
+  .bf-auth-btn{padding:7px 14px;border-radius:12px;font-family:'Noto Sans KR',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.2px;border:none}
+  .bf-auth-btn-login{background:linear-gradient(135deg,var(--pink),#FF9EC4);color:#fff;box-shadow:0 3px 10px rgba(255,107,157,.3)}
+  .bf-auth-btn-login:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(255,107,157,.4)}
+  .bf-auth-btn-logout{background:#fff;border:1.5px solid #F0D0DC;color:var(--text-soft)}
+  .bf-auth-btn-logout:hover{border-color:var(--pink-light);color:var(--pink)}
+  .bf-auth-name{font-size:.78rem;font-weight:700;color:var(--pink);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 </style>
 </head>
@@ -280,6 +289,7 @@
 
   <!-- 헤더 -->
   <div class="header">
+    <div id="bf-auth-area" class="bf-auth-area"></div>
     <span class="emoji-big">🏠💕</span>
     <h1>내 연봉으로<br>집 살 수 있을까?</h1>
     <p>내 재정 상태, 솔직하게 알아보자 🔍</p>
@@ -2668,6 +2678,56 @@ updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).
 </script>
 <script>
 function goToCouple(){ location.href='/couple/'; }
+</script>
+<script type="module">
+  // ━━ 로그인 영역 (ESM) ━━
+  import { openAuthModal } from '/js/auth-modal.js';
+  import { onAuthChange, getCurrentUser, logout } from '/js/auth.js';
+
+  const authArea = document.getElementById('bf-auth-area');
+
+  function clearAuthArea(){
+    while (authArea.firstChild) authArea.removeChild(authArea.firstChild);
+  }
+
+  function renderLoggedOut(){
+    clearAuthArea();
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bf-auth-btn bf-auth-btn-login';
+    btn.textContent = '로그인';
+    btn.addEventListener('click', () => openAuthModal());
+    authArea.appendChild(btn);
+  }
+
+  function renderLoggedIn(user){
+    const meta = user.user_metadata || {};
+    const name = meta.name || meta.full_name || meta.nickname || user.email || '회원';
+    clearAuthArea();
+    const nameEl = document.createElement('span');
+    nameEl.className = 'bf-auth-name';
+    nameEl.textContent = name + '님';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bf-auth-btn bf-auth-btn-logout';
+    btn.textContent = '로그아웃';
+    btn.addEventListener('click', async () => { await logout(); });
+    authArea.appendChild(nameEl);
+    authArea.appendChild(btn);
+  }
+
+  try {
+    const u = await getCurrentUser();
+    if (u) renderLoggedIn(u); else renderLoggedOut();
+  } catch (e) {
+    console.error('[bf-home auth] init error:', e);
+    renderLoggedOut();
+  }
+
+  onAuthChange((event, session) => {
+    if (session?.user) renderLoggedIn(session.user);
+    else renderLoggedOut();
+  });
 </script>
 </body>
 </html>
