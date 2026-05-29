@@ -527,6 +527,14 @@ input[type=range]::-webkit-slider-thumb{
   .dr-body{padding:16px;padding-bottom:100px}
   .dr-chip{font-size:13px;padding:13px 6px}
 }
+/* ━━ 로그인 영역 ━━ */
+.hc-auth-area{display:flex;align-items:center;gap:8px;font-family:inherit}
+.hc-auth-btn{padding:6px 14px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s ease;border:1px solid transparent;letter-spacing:-.2px;line-height:1}
+.hc-auth-btn-login{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hc-auth-btn-login:hover{background:#FF8E70;border-color:#FF8E70}
+.hc-auth-btn-logout{background:transparent;color:var(--muted);border-color:var(--border)}
+.hc-auth-btn-logout:hover{color:var(--text);border-color:var(--accent)}
+.hc-auth-name{font-size:12px;font-weight:600;color:var(--accent);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 
 
@@ -535,7 +543,7 @@ input[type=range]::-webkit-slider-thumb{
 
 <header>
   <div class="logo">house<span>check</span></div>
-  <div class="header-badge">PRO</div>
+  <div id="hc-auth-area" class="hc-auth-area"></div>
 </header>
 
 <div class="loading" id="loading">
@@ -1963,6 +1971,56 @@ function generateDetailReport(){
   document.getElementById('dr-result-view').scrollTop=0;
 }
 
+</script>
+<script type="module">
+  // ━━ 로그인 영역 (ESM) ━━
+  import { openAuthModal } from '/js/auth-modal.js';
+  import { onAuthChange, getCurrentUser, logout } from '/js/auth.js';
+
+  const authArea = document.getElementById('hc-auth-area');
+
+  function clearAuthArea(){
+    while (authArea.firstChild) authArea.removeChild(authArea.firstChild);
+  }
+
+  function renderLoggedOut(){
+    clearAuthArea();
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hc-auth-btn hc-auth-btn-login';
+    btn.textContent = '로그인';
+    btn.addEventListener('click', () => openAuthModal());
+    authArea.appendChild(btn);
+  }
+
+  function renderLoggedIn(user){
+    const meta = user.user_metadata || {};
+    const name = meta.name || meta.full_name || meta.nickname || user.email || '회원';
+    clearAuthArea();
+    const nameEl = document.createElement('span');
+    nameEl.className = 'hc-auth-name';
+    nameEl.textContent = name + '님';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hc-auth-btn hc-auth-btn-logout';
+    btn.textContent = '로그아웃';
+    btn.addEventListener('click', async () => { await logout(); });
+    authArea.appendChild(nameEl);
+    authArea.appendChild(btn);
+  }
+
+  try {
+    const u = await getCurrentUser();
+    if (u) renderLoggedIn(u); else renderLoggedOut();
+  } catch (e) {
+    console.error('[housecheck auth] init error:', e);
+    renderLoggedOut();
+  }
+
+  onAuthChange((event, session) => {
+    if (session?.user) renderLoggedIn(session.user);
+    else renderLoggedOut();
+  });
 </script>
 </body>
 </html>
