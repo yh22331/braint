@@ -58,7 +58,10 @@
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          location.replace('/');          // 3) 성공 → 즉시 메인 (히스토리에 콜백 URL 안 남김)
+          let next = localStorage.getItem('braint-next') || '/';
+          localStorage.removeItem('braint-next');
+          if (typeof next !== 'string' || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) next = '/';
+          location.replace(next);          // 3) 성공 → 출발 페이지로 복귀 (히스토리에 콜백 URL 안 남김)
         } else {
           fail('로그인에 실패했어요. 다시 시도해주세요.'); // 4) 세션 없음
         }

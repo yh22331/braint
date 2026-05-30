@@ -86,6 +86,8 @@ export function openAuthModal() {
     kakaoBtn.disabled = true;
     kakaoLabel.textContent = '카카오로 이동 중...';
     errEl.style.display = 'none';
+    const p = location.pathname;
+    localStorage.setItem('braint-next', (p.startsWith('/') && !p.startsWith('//') && !p.startsWith('/\\')) ? p : '/');
     const { error } = await loginWithKakao(); // 정상 흐름이면 곧 페이지 이탈
     if (error) {
       kakaoBtn.disabled = false;

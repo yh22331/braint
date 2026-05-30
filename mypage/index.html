@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>보고서 보관함 · Braint</title>
+<meta name="description" content="내가 분석한 기록을 한곳에서 확인하세요. Braint 보고서 보관함.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0A0F;--surface:rgba(255,255,255,.04);--surface2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --white:#F5F4EF;--muted:rgba(245,244,239,.45);--dim:rgba(245,244,239,.2);
+  --pink:#FF6B9D;--green:#3FB950;--blue:#58A6FF;--gold:#F0C846;--purple:#BC8CFF;
+  --mono:'DM Mono',monospace;--radius:16px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:'Noto Sans KR',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+body::after{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* 헤더 */
+header{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between;transition:all .4s;background:rgba(10,10,15,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;text-decoration:none;color:var(--white)}
+.logo em{font-style:normal;color:var(--pink)}
+.hdr-right{display:flex;align-items:center;gap:24px}
+
+/* 헤더 인증 UI */
+.hdr-auth{position:relative;display:flex;align-items:center;gap:12px}
+.hdr-auth-login{padding:7px 16px;font-family:'Noto Sans KR',sans-serif;font-size:.74rem;font-weight:700;
+  color:var(--white);background:transparent;border:1px solid var(--border2);border-radius:99px;cursor:pointer;transition:all .2s}
+.hdr-auth-login:hover{border-color:var(--white);background:var(--surface)}
+.hdr-auth-name{font-size:.8rem;font-weight:700;color:var(--muted)}
+.hdr-auth-burger{display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
+  background:transparent;border:1px solid var(--border);border-radius:10px;
+  color:var(--muted);cursor:pointer;transition:all .2s}
+.hdr-auth-burger:hover,.hdr-auth-burger[aria-expanded="true"]{color:var(--white);border-color:var(--border2)}
+.hdr-auth-burger svg{width:18px;height:18px;display:block}
+.hdr-auth-menu{position:absolute;top:calc(100% + 12px);right:0;min-width:210px;
+  background:rgba(20,20,28,.97);backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:var(--radius);padding:8px;
+  opacity:0;visibility:hidden;transform:translateY(-8px);pointer-events:none;transition:all .2s}
+.hdr-auth-menu.open{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.hdr-auth-menu-name{padding:8px 12px 10px;font-size:.82rem;font-weight:700;color:var(--white);
+  border-bottom:1px solid var(--border);margin-bottom:6px}
+.hdr-auth-menu-item{display:block;width:100%;text-align:left;padding:10px 12px;border:0;background:transparent;border-radius:10px;
+  font-family:'Noto Sans KR',sans-serif;font-size:.8rem;color:var(--muted);text-decoration:none;cursor:pointer;transition:all .2s}
+.hdr-auth-menu-item:hover{background:var(--surface2);color:var(--white)}
+
+/* 본문 */
+main{flex:1;max-width:1100px;width:100%;margin:0 auto;padding:120px 40px 80px}
+.mp-tag{font-family:var(--mono);font-size:.68rem;color:var(--pink);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.mp-tag::before{content:'';width:28px;height:1px;background:var(--pink)}
+.mp-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,5vw,4rem);line-height:1;margin-bottom:12px}
+.mp-sub{font-size:.9rem;font-weight:300;color:var(--muted);line-height:1.7;margin-bottom:48px}
+
+/* 버튼 */
+.btn{padding:14px 28px;border-radius:var(--radius);font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:700;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .25s;letter-spacing:-.2px;border:none}
+.btn-primary{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,107,157,.3)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--white);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--white);transform:translateY(-2px)}
+
+/* 안내/빈 상태 */
+.mp-state{display:none;text-align:center;padding:64px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.mp-state.show{display:block}
+.mp-state-emoji{font-size:2.6rem;margin-bottom:16px}
+.mp-state-text{font-size:.95rem;color:var(--muted);line-height:1.7;margin-bottom:28px}
+.mp-state-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* 로딩 */
+.mp-loading{display:none;text-align:center;padding:64px 24px;color:var(--muted);font-family:var(--mono);font-size:.8rem;letter-spacing:1px}
+.mp-loading.show{display:block}
+
+/* 보고서 카드 그리드 */
+.report-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-decoration:none;color:var(--white);display:flex;flex-direction:column;position:relative;overflow:hidden;transition:all .3s;cursor:pointer}
+.rcard:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-3px)}
+.rcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.rcard-badge{font-family:var(--mono);font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:99px;font-weight:500}
+.rcard-badge[data-svc="bf-home"]{color:var(--pink);background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.25)}
+.rcard-badge[data-svc="housecheck"]{color:var(--green);background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25)}
+.rcard-badge[data-svc="etc"]{color:var(--muted);background:var(--surface2);border:1px solid var(--border)}
+.rcard-date{font-family:var(--mono);font-size:.65rem;color:var(--dim);letter-spacing:1px}
+.rcard-verdict{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;line-height:1.1;margin-bottom:16px;color:var(--white)}
+.rcard-rows{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.rcard-row{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border)}
+.rcard-row:last-child{border-bottom:none}
+.rcard-row .v{color:var(--white);font-weight:700}
+.rcard-arrow{position:absolute;right:20px;bottom:20px;font-size:.85rem;color:var(--dim);transition:all .3s}
+.rcard:hover .rcard-arrow{color:var(--pink);transform:translateX(3px)}
+
+/* 푸터 */
+footer{padding:48px 40px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px}
+.footer-logo em{font-style:normal;color:var(--pink)}
+.footer-copy{font-family:var(--mono);font-size:.62rem;color:var(--dim);letter-spacing:.5px}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-family:var(--mono);font-size:.62rem;color:var(--dim);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
+.footer-links a:hover{color:var(--white)}
+
+@media(max-width:960px){
+  header{padding:0 20px}
+  .hdr-auth-name{display:none}
+  main{padding:100px 20px 60px}
+}
+@media(max-width:520px){
+  .report-list{grid-template-columns:1fr}
+  footer{padding:36px 20px;flex-direction:column;gap:16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">Brain<em>t</em></a>
+  <div class="hdr-right">
+    <div class="hdr-auth" id="mp-auth-area"></div>
+  </div>
+</header>
+
+<main>
+  <div class="mp-tag">My Reports</div>
+  <h1 class="mp-title">보고서 보관함</h1>
+  <p class="mp-sub">내가 분석한 기록을 저장해드려요</p>
+
+  <!-- 로딩 -->
+  <div class="mp-loading" id="loading-state">불러오는 중...</div>
+
+  <!-- 비로그인 안내 -->
+  <div class="mp-state" id="login-prompt">
+    <div class="mp-state-emoji">🔒</div>
+    <p class="mp-state-text">로그인하면 분석 기록을 확인할 수 있어요</p>
+    <div class="mp-state-actions">
+      <button class="btn btn-primary" id="login-prompt-btn">카카오로 로그인 →</button>
+    </div>
+  </div>
+
+  <!-- 빈 상태 -->
+  <div class="mp-state" id="empty-state">
+    <div class="mp-state-emoji">📭</div>
+    <p class="mp-state-text">아직 분석 기록이 없어요.<br>분석을 시작해보세요!</p>
+    <div class="mp-state-actions">
+      <a class="btn btn-primary" href="/bf-home/">🏠 남친 재력 분석</a>
+      <a class="btn btn-ghost" href="/housecheck/">📊 HouseCheck PRO</a>
+    </div>
+  </div>
+
+  <!-- 보고서 카드 목록 -->
+  <div class="report-list" id="report-list"></div>
+</main>
+
+<footer>
+  <div class="footer-logo">Brain<em>t</em></div>
+  <div class="footer-copy">© 2025 Braint · braint.net · 엑스분석(Xalysis)</div>
+  <div class="footer-links">
+    <a href="/bf-home/">남친분석</a>
+    <a href="/housecheck/">집계산기</a>
+    <a href="mailto:hello@braint.net">문의</a>
+  </div>
+</footer>
+
+<script type="module">
+import { supabase } from '/js/supabase-client.js';
+import { getCurrentUser, onAuthChange, logout } from '/js/auth.js';
+import { openAuthModal } from '/js/auth-modal.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// ━━ DOM 헬퍼 (innerHTML 미사용 → XSS 차단) ━━
+function el(tag, attrs = {}, children = []) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k === 'onclick') n.addEventListener('click', v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of children) n.appendChild(c);
+  return n;
+}
+
+// ━━ 헤더 인증 UI (index.html 패턴 동일) ━━
+const authArea = document.getElementById('mp-auth-area');
+let escHandler = null, outsideHandler = null;
+
+function burgerIcon() {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const y of [7, 12, 17]) {
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', '4'); line.setAttribute('x2', '20');
+    line.setAttribute('y1', y);  line.setAttribute('y2', y);
+    line.setAttribute('stroke', 'currentColor');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+  }
+  return svg;
+}
+
+function clearAuth() {
+  if (escHandler) { document.removeEventListener('keydown', escHandler); escHandler = null; }
+  if (outsideHandler) { document.removeEventListener('click', outsideHandler); outsideHandler = null; }
+  while (authArea.firstChild) authArea.removeChild(authArea.firstChild);
+}
+
+function openMenu(burger, menu) {
+  menu.classList.add('open');
+  burger.setAttribute('aria-expanded', 'true');
+  escHandler = (e) => { if (e.key === 'Escape') closeMenu(burger, menu); };
+  outsideHandler = (e) => { if (!authArea.contains(e.target)) closeMenu(burger, menu); };
+  document.addEventListener('keydown', escHandler);
+  document.addEventListener('click', outsideHandler);
+}
+function closeMenu(burger, menu) {
+  menu.classList.remove('open');
+  burger.setAttribute('aria-expanded', 'false');
+  if (escHandler) { document.removeEventListener('keydown', escHandler); escHandler = null; }
+  if (outsideHandler) { document.removeEventListener('click', outsideHandler); outsideHandler = null; }
+}
+
+function renderHeaderLoggedOut() {
+  clearAuth();
+  authArea.appendChild(el('button', { class: 'hdr-auth-login', text: '로그인', onclick: openAuthModal }));
+}
+
+function renderHeaderLoggedIn(user) {
+  clearAuth();
+  const nickname = (user.user_metadata && user.user_metadata.name) || user.email || '사용자';
+  const name = el('span', { class: 'hdr-auth-name', text: nickname });
+  const burger = el('button', {
+    class: 'hdr-auth-burger', 'aria-label': '메뉴', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+  }, [burgerIcon()]);
+  const logoutBtn = el('button', { class: 'hdr-auth-menu-item', 'data-action': 'logout', text: '로그아웃' });
+  const menu = el('div', { class: 'hdr-auth-menu' }, [
+    el('div', { class: 'hdr-auth-menu-name', text: nickname }),
+    el('a', { class: 'hdr-auth-menu-item', href: '/', text: '홈으로' }),
+    logoutBtn,
+  ]);
+  burger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.contains('open') ? closeMenu(burger, menu) : openMenu(burger, menu);
+  });
+  logoutBtn.addEventListener('click', async () => {
+    closeMenu(burger, menu);
+    await logout(); // onAuthChange(SIGNED_OUT) → 자동 갱신
+  });
+  authArea.append(name, burger, menu);
+}
+
+// ━━ 상태 영역 토글 ━━
+const elLoading = document.getElementById('loading-state');
+const elLoginPrompt = document.getElementById('login-prompt');
+const elEmpty = document.getElementById('empty-state');
+const elList = document.getElementById('report-list');
+
+function showOnly(node) {
+  [elLoading, elLoginPrompt, elEmpty].forEach(n => n.classList.remove('show'));
+  elList.innerHTML = '';
+  if (node) node.classList.add('show');
+}
+
+document.getElementById('login-prompt-btn').addEventListener('click', openAuthModal);
+
+// ━━ 포맷 헬퍼 ━━
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+}
+
+const SVC_LABEL = { 'bf-home': '남친 재력 분석', 'housecheck': 'HouseCheck PRO' };
+const SVC_URL = { 'bf-home': '/bf-home/', 'housecheck': '/housecheck/' };
+
+function fmtPrice(v) {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  return n.toLocaleString('ko-KR') + '만원';
+}
+function fmtYears(v) {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  if (n <= 0) return '즉시 가능';
+  return n + '년';
+}
+
+// ━━ 카드 렌더 (textContent 기반, XSS 안전) ━━
+function buildCard(row) {
+  const svcKey = SVC_URL[row.service] ? row.service : 'etc';
+  const badge = el('span', {
+    class: 'rcard-badge', 'data-svc': svcKey,
+    text: SVC_LABEL[row.service] || row.service || '분석',
+  });
+  const date = el('span', { class: 'rcard-date', text: fmtDate(row.created_at) });
+  const top = el('div', { class: 'rcard-top' }, [badge, date]);
+
+  const verdictText = row.verdict || row.result_label || '분석 완료';
+  const verdict = el('div', { class: 'rcard-verdict', text: verdictText });
+
+  const rows = el('div', { class: 'rcard-rows' });
+  const price = fmtPrice(row.target_price);
+  if (price) {
+    rows.appendChild(el('div', { class: 'rcard-row' }, [
+      el('span', { text: '목표 집값' }),
+      el('span', { class: 'v', text: price }),
+    ]));
+  }
+  const years = fmtYears(row.years_needed);
+  if (years) {
+    rows.appendChild(el('div', { class: 'rcard-row' }, [
+      el('span', { text: '목표 기간' }),
+      el('span', { class: 'v', text: years }),
+    ]));
+  }
+
+  const arrow = el('div', { class: 'rcard-arrow', text: '→' });
+
+  const url = SVC_URL[row.service] || null;
+  const card = el('div', { class: 'rcard', role: 'link', tabindex: '0' }, [top, verdict, rows, arrow]);
+  if (url) {
+    const go = () => { window.location.href = url; };
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  }
+  return card;
+}
+
+function renderReports(list) {
+  elList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  list.forEach(row => frag.appendChild(buildCard(row)));
+  elList.appendChild(frag);
+}
+
+// ━━ 데이터 로드 ━━
+let loadToken = 0;
+async function loadFor(user) {
+  const myToken = ++loadToken;
+  if (!user) { showOnly(elLoginPrompt); return; }
+
+  showOnly(elLoading);
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (myToken !== loadToken) return; // 더 최신 로드가 시작됨 → 폐기
+
+  if (error) {
+    console.error('[mypage] analyses 조회 실패:', error.message);
+    showOnly(elEmpty);
+    return;
+  }
+  if (!data || data.length === 0) {
+    showOnly(elEmpty);
+    return;
+  }
+  showOnly(null);
+  renderReports(data);
+}
+
+// ━━ 초기화 ━━
+(async () => {
+  const user = await getCurrentUser();
+  if (user) renderHeaderLoggedIn(user); else renderHeaderLoggedOut();
+  await loadFor(user);
+})();
+
+// ━━ 인증 상태 변화 → 헤더 + 목록 자동 갱신 ━━
+onAuthChange((event, session) => {
+  const user = session && session.user ? session.user : null;
+  if (user) renderHeaderLoggedIn(user); else renderHeaderLoggedOut();
+  loadFor(user);
+});
+</script>
+</body>
+</html>
