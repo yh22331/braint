@@ -73,7 +73,8 @@ export default async function handler(req) {
   const key = process.env.DART_API_KEY;
   if (!key) return json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }, 500);
 
-  const company = (new URL(req.url).searchParams.get('company') || '').trim();
+  const url = new URL(req.url, 'http://localhost');
+  const company = (url.searchParams.get('company') || '').trim();
   if (!company) return json({ error: 'BAD_REQUEST', message: '회사명을 입력해주세요' }, 400);
 
   // 1) 회사명 normalize → CORP_MAP에서 corp_code 조회
