@@ -1,6 +1,16 @@
 export const config = { runtime: 'nodejs' };
 
-import { json, corsHeaders } from './_utils.js';
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json',
+  };
+}
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
+}
 
 // ━━ 회사명 → DART 기업 평균연봉 조회 ━━
 // GET /api/dart-salary?company=삼성전자
