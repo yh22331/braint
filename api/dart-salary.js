@@ -98,7 +98,7 @@ export default async function handler(req) {
       bsns_year: bsnsYear,
     });
   } catch (e) {
-    return json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }, 502);
+    return json({ error: 'DART_ERROR', message: e.message || String(e) }, 502);
   }
 }
 
