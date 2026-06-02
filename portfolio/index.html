@@ -338,6 +338,24 @@
   .layer.key .star{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.06em;font-weight:600;color:#fff;background:var(--accent);border-radius:6px;padding:2px 8px;}
   .lsep{align-self:center;color:var(--accent);font-weight:600;font-size:1.25rem;line-height:1;padding:3px 0;}
 
+  /* NH 인턴 분석 상세 */
+  .nh-detail{list-style:none;margin:16px 0 0;padding:16px 18px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:11px;}
+  .nh-detail li{display:flex;gap:12px;font-size:.92rem;line-height:1.55;color:var(--ink-soft);}
+  .nh-detail .dk{flex:none;width:72px;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.02em;color:var(--accent);padding-top:.18em;}
+  .nh-detail .dv{flex:1;}
+  .nh-conc{margin-top:14px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;font-size:.93rem;line-height:1.62;color:var(--ink);}
+  .nh-conc b{color:var(--accent-ink);font-weight:600;}
+  .pdf-link{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--accent-ink);text-decoration:none;background:var(--accent-soft);border:1px solid #d7e0fb;border-radius:9px;padding:9px 14px;transition:background .2s var(--ease),border-color .2s,transform .2s var(--ease);}
+  .pdf-link:hover{background:#e6ecfd;border-color:var(--accent);transform:translateY(-1px);}
+
+  /* 바이브코딩 섹션 */
+  .vibe-grid{display:grid;gap:18px;grid-template-columns:1fr 1fr;}
+  .vibe-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .3s;}
+  .vibe-card:hover{transform:translateY(-3px);box-shadow:0 18px 44px -26px rgba(23,24,28,.5);border-color:var(--line-2);}
+  .vibe-card .vk{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);}
+  .vibe-card h3{margin:11px 0 0;font-size:clamp(1.15rem,2.6vw,1.4rem);font-weight:600;letter-spacing:-0.02em;line-height:1.3;}
+  .vibe-card p{margin:14px 0 0;color:var(--ink-soft);font-size:.96rem;line-height:1.72;}
+
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ NEXT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   .next-copy{
     font-size:clamp(1.5rem,4vw,2.5rem);font-weight:500;line-height:1.36;letter-spacing:-0.025em;
@@ -391,6 +409,7 @@
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 반응형 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   @media (max-width:760px){
     .intern-grid{grid-template-columns:1fr;}
+    .vibe-grid{grid-template-columns:1fr;}
     .work-card .inner{grid-template-columns:1fr;}
     .work-card .media{border-left:0;border-top:1px solid var(--line);min-height:0;aspect-ratio:16/10;}
     .work-card .media img{position:static;}
@@ -635,6 +654,13 @@
           <span class="badge">모델링 1위</span>
           <span class="badge">보조지표 유효성 분석</span>
         </div>
+        <ul class="nh-detail">
+          <li><span class="dk">분석 대상</span><span class="dv">코스피·코스닥 전 종목 (약 2,643개)</span></li>
+          <li><span class="dk">분석 지표</span><span class="dv">Bollinger Bands · RSI · CCI · MACD · Stochastic Slow</span></li>
+          <li><span class="dk">분석 시기</span><span class="dv">횡보장(2019) / 상승장(2020~2021) / 하락장(2021~2022) 구간별 분석</span></li>
+        </ul>
+        <div class="nh-conc"><b>결론.</b> 단기 승률 유효 (55~82%), 장기 수익률은 시장 언더퍼폼 → 보조지표 단독 전략의 한계 확인</div>
+        <a class="pdf-link" href="/portfolio/nh_report.pdf" target="_blank" rel="noopener">📄 발표 자료 보기 <span>↗</span></a>
         <div class="role-shot"><img src="/portfolio/images/nh_analysis.jpg" alt="주식 보조지표 유효성 분석 프로젝트" loading="lazy" onerror="pfImg(this)"></div>
       </div>
     </div>
@@ -814,7 +840,8 @@
       <div class="pblock">
         <div class="pblk-title">지금까지</div>
         <ol class="timeline">
-          <li><span class="tdate">2026.03</span><span class="tdesc">Claude와 단순 채팅 방식으로 HTML 구현 — 바이브코딩 입문</span></li>
+          <li><span class="tdate">2022.08</span><span class="tdesc">NH인턴: Python으로 코스피 전 종목 보조지표 분석 직접 구현</span></li>
+          <li><span class="tdate">2026.03</span><span class="tdesc">Claude와 단순 채팅 방식으로 단순 HTML 구현 — 바이브코딩 입문</span></li>
           <li><span class="tdate">2026.03</span><span class="tdesc">도메인 구매 + Vercel 배포 — 공유 목적</span></li>
           <li><span class="tdate">2026.04</span><span class="tdesc">카카오 공유하기 연동</span></li>
           <li><span class="tdate">2026.04</span><span class="tdesc">Claude Code Plugin 도입 — 보안·프론트·디자인·백엔드 Agent 분담 코딩 시작</span></li>
@@ -853,11 +880,39 @@
 
 <hr class="rule" />
 
-<!-- ━━━━━━━━━━━━━━━━━━━━ 04 NEXT ━━━━━━━━━━━━━━━━━━━━ -->
-<section id="next">
+<!-- ━━━━━━━━━━━━━━━━━━━━ 04 바이브코딩 ━━━━━━━━━━━━━━━━━━━━ -->
+<section id="vibe">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="idx">04</span>
+      <div class="t">
+        <h2>바이브코딩으로 배운 것들</h2>
+        <p class="sub">직접 만들며 체감한 AI 시대의 개발</p>
+      </div>
+    </div>
+
+    <div class="vibe-grid">
+      <div class="vibe-card reveal">
+        <div class="vk mono">Insight 01</div>
+        <h3>도메인이 방향을 만든다</h3>
+        <p>처음엔 AI가 다 해줄 것 같았다. 실제로 해보니 AI 출력물의 품질은 질문의 품질에 달려 있고, 좋은 질문은 개발 도메인 지식에서 나왔다. 바이브코딩도 꾸준히 공부해야 하고, 개발을 아는 사람이 훨씬 효율적이었다.</p>
+      </div>
+      <div class="vibe-card reveal d1">
+        <div class="vk mono">Insight 02</div>
+        <h3>바이브 코딩의 발전은 빠르다</h3>
+        <p>단순 채팅으로 HTML 받는 것부터 시작해, DB 구축 → API 연동 → Claude Code → TDD 구조까지 매주 새로운 툴을 받아들이며 레벨업했다. AI와 대화하면 다 알아낼 수 있다는 생각보다, AI를 오래 사용한 사람들의 기술을 먼저 받아들이려는 자세가 더 중요하다는 걸 깨달았다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ 05 NEXT ━━━━━━━━━━━━━━━━━━━━ -->
+<section id="next">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="idx">05</span>
       <div class="t">
         <h2>NEXT</h2>
         <p class="sub">앞으로의 방향</p>

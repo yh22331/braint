@@ -86,7 +86,8 @@ main{flex:1;width:100%;max-width:920px;margin:0 auto;padding:120px 40px 80px}
 .post-card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .post-tag{padding:4px 11px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);
   border-radius:99px;font-family:var(--mono);font-size:.64rem;color:var(--blue);letter-spacing:.5px}
-.post-card-title{font-size:1.12rem;font-weight:700;line-height:1.45;margin-bottom:14px;letter-spacing:-.3px}
+.post-card-title{font-size:1.12rem;font-weight:700;line-height:1.45;margin-bottom:10px;letter-spacing:-.3px}
+.post-card-summary{font-size:.84rem;font-weight:300;color:var(--muted);line-height:1.6;margin-bottom:14px}
 .post-card-meta{display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:.68rem;color:var(--dim);letter-spacing:.5px;flex-wrap:wrap}
 .post-card-meta .pm-author{color:var(--muted)}
 .post-like{display:inline-flex;align-items:center;gap:5px;margin-left:auto;padding:6px 12px;
@@ -102,6 +103,15 @@ main{flex:1;width:100%;max-width:920px;margin:0 auto;padding:120px 40px 80px}
 .ep-detail-meta{display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:.68rem;color:var(--dim);letter-spacing:.5px;margin-bottom:24px;flex-wrap:wrap}
 .ep-detail-body{font-size:.92rem;font-weight:300;color:rgba(245,244,239,.8);line-height:1.85}
 .ep-detail-body p{margin-bottom:14px}
+.ep-detail-h{font-size:1.05rem;font-weight:700;color:var(--white);letter-spacing:-.2px;margin:28px 0 12px}
+.ep-detail-sub{font-weight:700;color:var(--blue);margin-bottom:6px!important}
+.ep-detail-list{list-style:none;margin:0 0 14px;padding:16px 18px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius)}
+.ep-detail-list li{font-family:var(--mono);font-size:.8rem;color:rgba(245,244,239,.75);line-height:1.6;padding:5px 0;border-bottom:1px solid var(--border)}
+.ep-detail-list li:last-child{border-bottom:none}
+.ep-detail-note{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;margin-bottom:24px;
+  background:rgba(240,200,70,.06);border:1px solid rgba(240,200,70,.3);border-radius:var(--radius)}
+.ep-detail-note .di{font-size:1.1rem;line-height:1.3;flex-shrink:0}
+.ep-detail-note .dt{font-size:.78rem;font-weight:300;color:rgba(245,244,239,.7);line-height:1.6}
 
 /* 댓글 */
 .comments{margin-top:40px;border-top:1px solid var(--border);padding-top:28px}
@@ -177,61 +187,61 @@ footer{padding:48px 40px;border-top:1px solid var(--border);display:flex;align-i
       <button type="button" class="ep-write-btn" id="write-btn">메모 작성</button>
     </div>
     <div class="post-list" id="ep-post-list">
-      <a href="#" class="post-card">
-        <div class="post-card-tags"><span class="post-tag">삼성전자</span><span class="post-tag">반도체</span></div>
-        <h3 class="post-card-title">HBM 사이클 관점에서 본 삼성전자 — 지금이 바닥일까?</h3>
+      <a href="#post-detail" class="post-card">
+        <div class="post-card-tags"><span class="post-tag">기업정리</span></div>
+        <h3 class="post-card-title">세일스포스 (Salesforce, NYSE: CRM) — 기업 메모</h3>
+        <p class="post-card-summary">AI 에이전트 사이클의 수혜주, SW 섹터 수급 공백에서 주목</p>
         <div class="post-card-meta">
-          <span class="pm-author">가치투자러</span>
-          <span>2026.05.28</span>
+          <span>2026.06.01</span>
           <button class="post-like" type="button" data-like aria-label="추천">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.2C.3 8.4 2 5 5.2 5c2 0 3.3 1.1 4.1 2.3C10.5 6.1 11.8 5 13.8 5 17 5 18.7 8.4 17 11.8 14.5 16.4 12 21 12 21z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            <span>42</span>
-          </button>
-        </div>
-      </a>
-      <a href="#" class="post-card">
-        <div class="post-card-tags"><span class="post-tag">에코프로</span><span class="post-tag">2차전지</span></div>
-        <h3 class="post-card-title">2차전지 과열은 끝났나 — 에코프로 실적 컨센서스 다시 보기</h3>
-        <div class="post-card-meta">
-          <span class="pm-author">차트보는개미</span>
-          <span>2026.05.25</span>
-          <button class="post-like" type="button" data-like aria-label="추천">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.2C.3 8.4 2 5 5.2 5c2 0 3.3 1.1 4.1 2.3C10.5 6.1 11.8 5 13.8 5 17 5 18.7 8.4 17 11.8 14.5 16.4 12 21 12 21z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            <span>28</span>
-          </button>
-        </div>
-      </a>
-      <a href="#" class="post-card">
-        <div class="post-card-tags"><span class="post-tag">현대차</span><span class="post-tag">배당주</span></div>
-        <h3 class="post-card-title">배당수익률 5% 시대 — 현대차를 장기 보유 관점에서 뜯어봤다</h3>
-        <div class="post-card-meta">
-          <span class="pm-author">월배당파이어</span>
-          <span>2026.05.21</span>
-          <button class="post-like" type="button" data-like aria-label="추천">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.2C.3 8.4 2 5 5.2 5c2 0 3.3 1.1 4.1 2.3C10.5 6.1 11.8 5 13.8 5 17 5 18.7 8.4 17 11.8 14.5 16.4 12 21 12 21z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            <span>17</span>
+            <span>0</span>
           </button>
         </div>
       </a>
     </div>
   </section>
 
-  <!-- 글 상세 (예시) + 댓글 -->
-  <section>
+  <!-- 글 상세 + 댓글 -->
+  <section id="post-detail">
     <div class="ep-section-head">
       <h2 class="ep-section-title">글 상세</h2>
-      <span class="ep-section-tag">Preview</span>
+      <span class="ep-section-tag">Post</span>
     </div>
     <article class="ep-detail">
-      <h3 class="ep-detail-title">HBM 사이클 관점에서 본 삼성전자 — 지금이 바닥일까?</h3>
+      <h3 class="ep-detail-title">세일스포스 (Salesforce, NYSE: CRM) — 기업 메모</h3>
       <div class="ep-detail-meta">
-        <span class="pm-author">가치투자러</span>
-        <span>2026.05.28</span>
-        <span>추천 42</span>
+        <span>2026.06.01</span>
+        <span>추천 0</span>
       </div>
       <div class="ep-detail-body">
-        <p>최근 메모리 반도체 사이클이 바닥을 지나고 있다는 신호가 곳곳에서 나오고 있습니다. 본 글은 개인적인 분석이며 투자 권유가 아닙니다.</p>
-        <p>HBM 수요와 재고 사이클, 그리고 공급사별 캐파 증설 계획을 종합해 보면…</p>
+        <div class="ep-detail-note" role="note">
+          <span class="di" aria-hidden="true">⚠️</span>
+          <span class="dt">본 글은 개인적인 투자 메모이며 투자 권유가 아닙니다. 투자 손실에 대한 책임은 투자자 본인에게 있습니다.</span>
+        </div>
+
+        <h4 class="ep-detail-h">기업 개요</h4>
+        <p>세일스포스(Salesforce, NYSE: CRM)는 1999년 마크 베니오프가 창업한 세계 최대 CRM(고객관계관리) SaaS 기업이다. 영업·마케팅·서비스·커머스·데이터 분석 등 기업용 클라우드 솔루션을 제공하며, 전 세계 150,000개 이상의 기업 고객을 보유하고 있다. 최근에는 AI 에이전트 플랫폼 'Agentforce'를 전면에 내세우며 AI 전환에 공격적으로 베팅하고 있다.</p>
+
+        <h4 class="ep-detail-h">밸류에이션 — 2026.06.01 기준</h4>
+        <ul class="ep-detail-list">
+          <li>주가: $191.10 (5/29 종가 기준)</li>
+          <li>52주 범위: $163.52 ~ $276.80</li>
+          <li>시가총액: 약 $186B</li>
+          <li>FY2026 연간 매출: $41.5B</li>
+          <li>Q1 FY2027 EPS: $3.88 (예상치 +24% 상회)</li>
+          <li>Q1 FY2027 매출: $11.13B (YoY +13%)</li>
+          <li>Non-GAAP 영업마진: 34.8%</li>
+          <li>애널리스트 평균 목표가: $255.55 (상승여력 +33%)</li>
+        </ul>
+
+        <h4 class="ep-detail-h">투자 판단 메모</h4>
+        <p class="ep-detail-sub">미국 SW 업계 수급 공백</p>
+        <p>최근 마이크로소프트, 팔란티어 등 주요 SW 기업들이 약세를 보이며 SW 섹터 전반에 수급 공백이 발생하고 있다고 판단한다. 시장이 과도하게 비워진 구간일 수 있다.</p>
+        <p class="ep-detail-sub">"AI가 SW를 대체한다"는 내러티브의 과장</p>
+        <p>AI가 SW 기업을 모두 대체할 것이라는 내러티브로 SW 섹터 전반이 약세였다. 그러나 직접 바이브코딩을 해보니 생각이 달라졌다. 바이브코딩도 결국 하나의 프롬프트 엔지니어링 기술이 필요하고, 단순히 생성형 AI를 공급한다고 해결될 일이 아니다. 각 기업들이 자체 AI 엔지니어 영입과 내재화를 시도하고 있지만, 결국 세일스포스·팔란티어 같은 검증된 엔터프라이즈 솔루션사의 힘을 필요로 하게 될 것이라 본다.</p>
+        <p class="ep-detail-sub">세일스포스의 포지션</p>
+        <p>기존 고객사를 가장 많이 확보하고 있는 세일스포스 같은 기업이 AI 에이전트(Agentforce)로 공급하는 사이클이 올 것이라 생각한다. 엔터프라이즈 고객 기반 + AI 에이전트 레이어가 결합되는 구조는 단순 AI 툴이 침범하기 어려운 해자(moat)다.</p>
       </div>
 
       <!-- 댓글 -->
