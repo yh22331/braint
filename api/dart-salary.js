@@ -1,16 +1,4 @@
-export const config = { runtime: 'edge' };
-
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
-}
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
-}
+export const config = { runtime: 'nodejs' };
 
 // ━━ 회사명 → DART 기업 평균연봉 조회 ━━
 // GET /api/dart-salary?company=삼성전자
@@ -64,52 +52,52 @@ const CORP_MAP = {
   'ibk기업은행': '00254045',
 };
 
-export default async function handler(req) {
-  // CORS preflight
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
-  // GET 메서드만 허용
-  if (req.method !== 'GET') return json({ error: 'METHOD', message: 'GET only' }, 405);
+export default async function handler(req, res) {
+  // CORS 헤더
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
+
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  if (req.method !== 'GET') { res.status(405).json({ error: 'METHOD', message: 'GET only' }); return; }
 
   const key = process.env.DART_API_KEY;
-  if (!key) return json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }, 500);
+  if (!key) { res.status(500).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return; }
 
-  const url = new URL(req.url, 'http://localhost');
-  const company = (url.searchParams.get('company') || '').trim();
-  if (!company) return json({ error: 'BAD_REQUEST', message: '회사명을 입력해주세요' }, 400);
+  const company = (req.query.company || '').trim();
+  if (!company) { res.status(400).json({ error: 'BAD_REQUEST', message: '회사명을 입력해주세요' }); return; }
 
-  // 1) 회사명 normalize → CORP_MAP에서 corp_code 조회
   const query = company.toLowerCase().trim();
   const corpCode = CORP_MAP[query] || CORP_MAP[company];
-  if (!corpCode) return json({ error: 'NOT_FOUND', message: '검색 결과가 없어요' }, 404);
+  if (!corpCode) { res.status(404).json({ error: 'NOT_FOUND', message: '검색 결과가 없어요' }); return; }
 
   const bsnsYear = '2023';
 
   try {
-    // 2) corp_code로 직원현황(empSttus) 직접 조회 → 평균급여 계산
     const empUrl = `${DART_BASE}/empSttus.json?crtfc_key=${key}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=11011`;
     const empRes = await fetch(empUrl);
-    if (!empRes.ok) return json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }, 502);
+    if (!empRes.ok) { res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return; }
     const empData = await empRes.json();
 
     if (empData.status === '013' || !Array.isArray(empData.list) || empData.list.length === 0) {
-      return json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }, 404);
+      res.status(404).json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }); return;
     }
     if (empData.status && empData.status !== '000') {
-      return json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }, 502);
+      res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return;
     }
 
-    // 3) 성별합계 행들의 fyer_salary_totamt 합 / sm 합 → 평균연봉(만원)
     const { avg: avgSalaryMan, count: employeeCount } = calcAvgSalary(empData.list);
-    if (!avgSalaryMan) return json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }, 404);
+    if (!avgSalaryMan) { res.status(404).json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }); return; }
 
-    return json({
+    res.status(200).json({
       corp_name: company,
       avg_salary_man: avgSalaryMan,
       employee_count: employeeCount || null,
       bsns_year: bsnsYear,
     });
   } catch (e) {
-    return json({ error: 'DART_ERROR', message: e.message || String(e), stack: String(e.stack || '').split('\n').slice(0,3).join(' | ') }, 502);
+    res.status(502).json({ error: 'DART_ERROR', message: e.message || String(e) });
   }
 }
 
