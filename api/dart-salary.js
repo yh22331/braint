@@ -106,8 +106,18 @@ export default async function handler(req, res) {
 
 // 직원현황 list에서 성별합계 행들의 총급여액 합 / 인원 합 → 평균연봉(만원)
 function calcAvgSalary(list) {
-  const rows = list.filter(r => r.fo_bbm && r.fo_bbm.includes('성별합계'));
-  if (!rows.length) return { avg: 0, count: 0 };
+  const valid = list.filter(r => toNum(r.fyer_salary_totamt) > 0 && toNum(r.sm) > 0);
+  if (!valid.length) return { avg: 0, count: 0 };
+
+  // fo_bbm(부문)별로 그룹화. 같은 부문에 '합계' 행이 있으면 그것만, 없으면 성별 행을 모두 합산
+  // 단순화: fo_bbm 값들을 보고 '합계/소계/전체' 행이 있으면 그것만 사용
+  const summaryRows = valid.filter(r => {
+    const b = r.fo_bbm || '';
+    return b.includes('합계') || b.includes('소계') || b.includes('전체');
+  });
+
+  // 합계 행이 있으면 사용, 없으면 전체 유효행 합산 (성별 분리 케이스)
+  const rows = summaryRows.length ? summaryRows : valid;
   const totalAmt = rows.reduce((s, r) => s + toNum(r.fyer_salary_totamt), 0);
   const totalCnt = rows.reduce((s, r) => s + toNum(r.sm), 0);
   if (!totalCnt) return { avg: 0, count: 0 };
