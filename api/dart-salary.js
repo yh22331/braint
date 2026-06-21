@@ -109,7 +109,7 @@ export default async function handler(req) {
       bsns_year: bsnsYear,
     });
   } catch (e) {
-    return json({ error: 'DART_ERROR', message: e.message || String(e) }, 502);
+    return json({ error: 'DART_ERROR', message: e.message || String(e), stack: String(e.stack || '').split('\n').slice(0,3).join(' | ') }, 502);
   }
 }
 
