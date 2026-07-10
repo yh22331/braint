@@ -10,3 +10,7 @@ tests/
 playwright-report/
 test-results/
 .last-run.json
+
+# macOS
+.DS_Store
+**/.DS_Store

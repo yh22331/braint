@@ -54,3 +54,41 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
 - When changing a simulation formula, update both the relevant `api/simulate-*.js` **and** any place in the HTML that displays a derived value (e.g. `monthlySave`, `savingRate`, `totalEventCost`) — the HTML often re-derives these for display.
 - CORS headers are set per-handler (`Access-Control-Allow-Origin: *`). Preserve the `OPTIONS` short-circuit when adding a new edge route.
 - Don't commit a `.env` file. The only server-side secrets are `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`, which must be set in the Vercel project, not in the repo.
+
+## 작업 정책 (사용자 약속 — 반드시 준수)
+
+### Git
+- **자동 commit/push 절대 X** — 각 단계 사용자 OK 받고 실행
+- `git add -A` 절대 X — 항상 파일명 콕 집어서 (`git add path/to/file`)
+- git 명령어 묶어 실행 X — `git status`, `git add`, `git commit`를 `&&`로 연결하지 말 것
+- 각 명령어 사용자 OK 받고 실행
+- commit 메시지: 짧은 한국어 한 줄
+- `Co-Authored-By: Claude` 라인 빼기
+- push는 사용자가 직접 결정 (별도 터미널 또는 VSCode Source Control)
+
+### 작업 단계
+- 큰 작업은 Phase 분리 (Phase A-1, A-2, A-3...)
+- 각 Phase 끝나면 멈춰서 보고
+- 사용자 검증 후 다음 Phase
+- 각 Phase 끝마다 commit 가능 (안전 지점)
+
+### 분석 우선
+- 코드 수정 전 항상 분석 단계
+- 영향 범위 파악, 변경 라인 수 추정, 위험 평가
+- 사용자 OK 후 코드 수정
+- 추측으로 진행 절대 X
+
+### 안 건드릴 것
+- 현재 Phase 작업 대상 외 페이지/파일 수정 X
+- 잘 작동하는 기능 무관한 리팩토링 X
+- `api/` 폴더 함부로 수정 X (영향 큼)
+
+### 보고 형식
+- 변경 라인 수 + 핵심 변경 요약
+- 검증 가이드 (구체적 체크리스트)
+- "Phase N 완료, 다음 진행할까요?" 명시적 멈춤
+
+### 사용자 컨디션
+- 새 작업 시작 시 시간/컨디션 확인
+- 한 번에 다 하려 욕심 부릴 때 단계 분리 권유
+- 사고 위험 신호 시 멈춤 권유
