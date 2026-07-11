@@ -46,6 +46,7 @@ function simulateBF({ netSalary, initAsset, targetPrice, investRate = 0,
     });
     if (reachedMonth < 0 && asset >= targetPrice) {
       reachedMonth = m + 1;
+      asset = 0;
       results.push({
         year: yr, age: 0, asset: 0, netMonthly: Math.round(currentNet / 12),
         monthlyExpense: 0, label: ['🏠집구매'], housePurchase: true,
