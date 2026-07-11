@@ -92,3 +92,50 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
 - 새 작업 시작 시 시간/컨디션 확인
 - 한 번에 다 하려 욕심 부릴 때 단계 분리 권유
 - 사고 위험 신호 시 멈춤 권유
+
+## 다음 세션 할 일 (2026-07-11 작업 후)
+
+### 최우선 — 대출 상환 시점 재검토
+- 현재: 대출 상환이 집 구매 전부터 적용됨 (처음부터 받는 주식담보대출 모델)
+- 확인 필요: "집 구매 후부터 상환 시작"이 사용자 직관에 더 맞는지 재검토
+- 결정 사항: 대출 모델 자체(주식담보대출 vs 주택담보대출)를 어떤 걸로 할지부터 정할 것
+
+### housecheck 반영 대기 목록 (작업 3 착수 시 일괄 반영)
+- 육아비 신모델 (구간별 고정비: 0-5세 500만/6-11세 1000만/12-17세 2000만/18-21세 3000만)
+  — housecheck는 구모델(3%복리·26년) 그대로 보존 중. `api/simulate-housecheck.js:62`가 자체 루프로
+  `A.babyYears`(26) + `A.babyInflation` + `A.babyAnnualCapManwon`을 계속 참조하므로 이 상수들 삭제 금지
+- 생활비 결혼 시 1.5배 + 연 2.5% 인플레이션 반영 (`calcLivingCost`)
+- 인생이벤트 나이 오프셋 방식 (age+3/+5/+1)
+- 차트 이벤트 마커 이모지 단순화
+- 연도별 항목 breakdown 막대그래프 (슬라이더 연동)
+- housecheck는 API를 안 쓰고 로컬 JS 자체 계산 (`housecheck/index.html`의 `simulateMonthly`) —
+  `api/simulate-housecheck.js`는 아무도 fetch하지 않는 사실상 죽은 코드. 재디자인 시 API 통합도 함께 검토
+
+### couple 화면 검증 필요
+- `api/_utils.js` 공용 함수 중 **육아비 신모델**(`calcBabyTotal` / `getEventData`)이 couple에도 적용됨
+  (`api/simulate.js`, `api/simulate-couple.js`가 이 함수들을 import). `simulate-couple.js:76`의
+  월 육아비 평균은 `A.babyYearsNew`(22)로 나누도록 함께 수정함
+- **`calcLivingCost`(결혼 1.5배 + 인플레)는 couple에 적용 안 됨** — bf-home 전용. couple/housecheck/simulate.js는
+  기존 고정 생활비 유지 (의도된 분리)
+- 실제 화면 열어서 정상 작동 확인 안 함, 다음 세션에 확인 필요
+
+### 텍스트 수정 (가벼운 작업, 계속 밀림)
+- 인스타스토리 공유화면 "Xalysis" → "BrainT", 상호명도 "브레인티(BrainT)"
+- bf-home "내 연봉" → "남친 연봉" 표현 변경
+
+### 완료된 것 (2026-07-11)
+- DART 회사 목록 API + bf-home 연봉 자동입력 UI
+- DART 평균연봉 남성 기준 + 기준연도 2025
+- DART 임시 진단 로그([DBG]/[DART-DEBUG]) 제거
+- 집 구매 후 자산 초기화 버그 수정 (`api/simulate-bf.js`에 `asset = 0` 누락돼 있던 것)
+- 인생이벤트 나이 오프셋 변경 (`EVENT_AGES`를 절대나이 → 오프셋 의미로 통일, 참조 9곳 전부)
+- 차트 이벤트 마커 이모지 단순화, 나이 라벨 중복 제거, 우측 축 타이틀 제거, 카드 패딩 축소
+- 연도별 항목 breakdown 막대그래프 추가 (슬라이더 연동, `yearlyBreakdown` + `renderBreakdownChart`)
+- 육아비 신모델 (구간별 고정비 + `startCost/500` 비율 스케일링) — 프론트/서버 동일 로직으로 통일
+- 생활비 신모델 (결혼 1.5배 + 연 2.5% 인플레) — `calcLivingCost`, bf-home 전용
+
+### 중복 로직 주의 (한쪽만 고치면 어긋남)
+- 육아비: `api/_utils.js`의 `BABY_COST_BY_STAGE`/`babyAnnualByYear` ↔ `bf-home/index.html`의 `calcBabyByYear`
+- 생활비: `api/_utils.js`의 `calcLivingCost` ↔ `bf-home/index.html`의 `calcLivingCost`
+- bf-home은 API 실패 시 로컬 폴백(`simulateMonthly`)으로 계산하므로, 공식 변경 시 **API + 폴백 + `renderChart` 3곳** 모두 반영해야 함
+- 월지출 차트/breakdown은 API 응답의 `monthlyExpense`를 쓰지 않고 `renderChart`가 항상 프론트에서 재계산함
