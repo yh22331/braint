@@ -6,6 +6,7 @@ import {
   MY_ASSETS,
   calcTakehome,
   calcBabyTotal,
+  calcLivingCost,
   monthlyRate,
   getEventData,
   buildEventMarkers,
@@ -16,7 +17,8 @@ import {
 function simulateBF({ netSalary, initAsset, targetPrice, investRate = 0,
   extraByYear = {}, monthlyBabyByYr = {}, loanAmt = 0, loanRate = A.loanRate,
   annualRaisePct = 0, promoRaise = false, promoBasePct = 3, maxNetSalary = A.unlimitedSalarySentinel,
-  carStartYr = A.carStartNeverSentinel, carMonthlyMaint = 0, livingCost = A.livingDefault, maxMonths = A.defaultMaxMonths }) {
+  carStartYr = A.carStartNeverSentinel, carMonthlyMaint = 0, livingCost = A.livingDefault,
+  weddingStartYr = A.weddingStartNeverSentinel, maxMonths = A.defaultMaxMonths }) {
   const monthlyR = monthlyRate(investRate);
   const r30 = loanAmt > 0 ? loanRate / 100 / 12 : 0;
   const monthlyLoanPayment = (loanAmt > 0 && r30 > 0)
@@ -38,10 +40,11 @@ function simulateBF({ netSalary, initAsset, targetPrice, investRate = 0,
     }
     const netM = currentNet / 12, carM = yr >= carStartYr ? carMonthlyMaint : 0;
     const babyM = monthlyBabyByYr[yr] || 0, evCost = mon === 0 ? (extraByYear[yr] || 0) : 0;
-    asset = Math.max(0, asset) * (1 + monthlyR) + (netM - livingCost - monthlyLoanPayment - carM - babyM) - evCost;
+    const livingM = calcLivingCost(livingCost, yr >= weddingStartYr, yr);
+    asset = Math.max(0, asset) * (1 + monthlyR) + (netM - livingM - monthlyLoanPayment - carM - babyM) - evCost;
     results.push({
       year: yr, age: 0, asset: Math.round(asset), netMonthly: Math.round(currentNet / 12),
-      monthlyExpense: Math.round(livingCost + monthlyLoanPayment + carM + babyM),
+      monthlyExpense: Math.round(livingM + monthlyLoanPayment + carM + babyM),
       label: mon === 0 && extraByYear[yr] ? ['이벤트'] : null, housePurchase: false,
     });
     if (reachedMonth < 0 && asset >= targetPrice) {
@@ -85,6 +88,7 @@ export default async function handler(req) {
     const carMonthlyMaint = ev.carMonthly;
 
     const maxNetSalary = calcTakehome(maxSalary) * 12;
+    const weddingStartYr = weddingOn ? Math.max(0, weddingAge - age) : A.weddingStartNeverSentinel;
     const sim = simulateBF({
       netSalary, initAsset, targetPrice: effectiveTarget, investRate,
       extraByYear: ev.extraByYear, monthlyBabyByYr: ev.monthlyBabyByYr,
@@ -92,11 +96,14 @@ export default async function handler(req) {
       annualRaisePct: promoRaise ? 0 : raisePct, promoRaise, promoBasePct: raisePct,
       maxNetSalary,
       carStartYr: carOn ? Math.max(0, carAge - age) : A.carStartNeverSentinel,
-      carMonthlyMaint, livingCost: living,
+      carMonthlyMaint, livingCost: living, weddingStartYr,
     });
 
     const years = sim.reachedMonth >= 0 ? Math.ceil(sim.reachedMonth / 12) : null;
     const netMonthly = calcTakehome(salary);
+    // monthlySave/savingRate 기준 시점: 집 구매 시점(못 사면 0년차)
+    const refYr = sim.reachedMonth >= 0 ? Math.floor(sim.reachedMonth / 12) : 0;
+    const refLiving = calcLivingCost(living, refYr >= weddingStartYr, refYr);
     const babyTotal = babyOn ? calcBabyTotal(babyCost) : 0;
     const totalEventCost = (weddingOn ? weddingCost : 0) + babyTotal + (carOn ? carCost : 0);
     // 연간 데이터만 추출 (집구매 마커는 보존)
@@ -106,8 +113,8 @@ export default async function handler(req) {
     return json({
       years, reachedMonth: sim.reachedMonth, targetPrice, effectiveTarget, loanAmt,
       monthlyLoanPayment: sim.monthlyLoanPayment, netMonthly,
-      monthlySave: netMonthly - living - carMonthlyMaint,
-      savingRate: Math.round((netMonthly - living) / netMonthly * 100),
+      monthlySave: netMonthly - refLiving - carMonthlyMaint,
+      savingRate: Math.max(0, Math.round((netMonthly - refLiving) / netMonthly * 100)),
       carMonthly: carMonthlyMaint, totalEventCost,
       weddingCost: weddingOn ? weddingCost : 0, babyTotal, carCost: carOn ? carCost : 0,
       chartData, eventMarkers,

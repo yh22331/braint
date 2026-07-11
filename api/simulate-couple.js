@@ -73,7 +73,7 @@ export default async function handler(req) {
     const avg = (me.investRate + partner.investRate) / 2;
     const cmi = Math.round((me.asset + partner.asset) * monthlyRate(avg));
     const bt = me.events.babyOn ? calcBabyTotal(me.events.babyCost || A.babyCostDefault) : 0;
-    const bma = me.events.babyOn ? Math.round(bt / A.babyYears / 12) : 0;
+    const bma = me.events.babyOn ? Math.round(bt / A.babyYearsNew / 12) : 0;
     const mc = me.events.carOn ? me.events.carCost : 0, pc = partner.events.carOn ? partner.events.carCost : 0;
     const wc = me.events.weddingOn ? (me.events.weddingCost || A.weddingCostDefault) : 0;
     const saved = r.soloYears && r.coupleYears ? r.soloYears - r.coupleYears : null;

@@ -16,9 +16,13 @@ export const ASSUMPTIONS = {
   promoEveryYears: 5,
   unlimitedSalarySentinel: 999999, // maxSalary 미지정 시 사실상 무제한
   carStartNeverSentinel: 999,      // carOn=false일 때 carStartYr
+  weddingStartNeverSentinel: 999,  // weddingOn=false일 때 weddingStartYr
   maxSalaryCapManwon: 15000,       // bf-home / housecheck 연봉 상한 (만원)
 
-  // 육아비
+  // 육아비 (신모델) — 자녀 나이 구간별 고정 테이블(BABY_COST_BY_STAGE) 기반
+  babyYearsNew: 22,                // 출산 후 22년 (자녀 0~21세)
+
+  // 육아비 (구모델) — simulate-housecheck.js의 자체 복리 루프 전용. 신모델 함수는 참조하지 않음.
   babyInflation: 1.03,             // 연 3% 상승
   babyYears: 26,                   // 출산 후 26년
   babyAnnualCapManwon: 2000,       // 연 최대 2,000만원
@@ -65,16 +69,39 @@ export function calcTakehome(gross) {
   return Math.round(gross * rate / 12);
 }
 
-// ── 26년 누적 육아비 총합(만원). 연 3% 상승, 연 2,000만원 상한.
-export function calcBabyTotal(initCost) {
-  let total = 0;
-  for (let i = 0; i < ASSUMPTIONS.babyYears; i++) {
-    total += Math.min(
-      Math.round(initCost * Math.pow(ASSUMPTIONS.babyInflation, i)),
-      ASSUMPTIONS.babyAnnualCapManwon,
-    );
+// ── 자녀 나이 구간별 연간 육아비(만원). BABY_COST_BASE 기준값 대비 비율로 스케일링.
+//    ※ bf-home/index.html의 calcBabyByYear와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+export const BABY_COST_BASE = 500; // 스케일링 기준 (입력 기본값)
+export const BABY_COST_BY_STAGE = [
+  { from: 0,  to: 5,  annual: 500 },   // 영유아
+  { from: 6,  to: 11, annual: 1000 },  // 초등
+  { from: 12, to: 17, annual: 2000 },  // 중고등
+  { from: 18, to: 21, annual: 3000 },  // 대학
+];
+
+// ── 자녀 나이(0 ~ babyYearsNew-1)별 연간 육아비 배열(만원)
+export function babyAnnualByYear(initCost) {
+  const ratio = (initCost || BABY_COST_BASE) / BABY_COST_BASE;
+  const out = [];
+  for (let i = 0; i < ASSUMPTIONS.babyYearsNew; i++) {
+    const stage = BABY_COST_BY_STAGE.find(s => i >= s.from && i <= s.to);
+    out.push(stage ? Math.round(stage.annual * ratio) : 0);
   }
-  return total;
+  return out;
+}
+
+// ── 22년 누적 육아비 총합(만원). 구간 테이블 기반.
+export function calcBabyTotal(initCost) {
+  return babyAnnualByYear(initCost).reduce((s, c) => s + c, 0);
+}
+
+// ── 시점별 월 생활비(만원). 결혼 시 1.5배 + 연 2.5% 물가상승.
+//    ※ bf-home/index.html의 calcLivingCost와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+//    ※ simulate.js / simulate-housecheck.js / simulate-couple.js는 호출하지 않음 (기존 고정 생활비 유지).
+export function calcLivingCost(baseLivingCost, isMarried, yearsElapsed) {
+  const marriageMultiplier = isMarried ? 1.5 : 1.0;
+  const inflationMultiplier = Math.pow(1.025, yearsElapsed);
+  return Math.round(baseLivingCost * marriageMultiplier * inflationMultiplier);
 }
 
 // ── 연 수익률(%) → 월 수익률(소수)
@@ -96,14 +123,10 @@ export function getEventData(cfg, age) {
   if (cfg.babyOn) {
     const startYr = Math.max(0, (cfg.babyAge || ASSUMPTIONS.babyAgeDefault) - age);
     const baseCost = cfg.babyCost || ASSUMPTIONS.babyCostDefault;
-    for (let i = 0; i < ASSUMPTIONS.babyYears; i++) {
+    babyAnnualByYear(baseCost).forEach((annual, i) => {
       const yr = startYr + i;
-      const annual = Math.min(
-        Math.round(baseCost * Math.pow(ASSUMPTIONS.babyInflation, i)),
-        ASSUMPTIONS.babyAnnualCapManwon,
-      );
       monthlyBabyByYr[yr] = (monthlyBabyByYr[yr] || 0) + Math.round(annual / 12);
-    }
+    });
   }
 
   if (cfg.carOn) {

@@ -708,6 +708,12 @@
           </div>
           <canvas id="asset-chart" height="240"></canvas>
         </div>
+        <div style="background:#fff;border-radius:16px;padding:14px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
+          <div style="font-size:.82rem;font-weight:900;color:var(--text);margin-bottom:10px">📊 이 나이엔 이렇게 씁니다</div>
+          <input type="range" id="breakdown-age-slider" style="width:100%">
+          <div style="text-align:center;font-size:.9rem;font-weight:900;color:var(--pink);margin:6px 0" id="breakdown-age-label"></div>
+          <canvas id="breakdown-chart" height="180"></canvas>
+        </div>
         <div class="pdf-preview" id="pdf-preview">
           <div class="pdf-preview-header">
             <div class="pdf-preview-logo">🏠</div>
@@ -881,7 +887,7 @@ async function saveAnalysis(result){
 }
 
 const state={region:'seoul',size:'mid',myAsset:'none',investMode:'deposit'};
-let calcResult={},chartInstance=null;
+let calcResult={},chartInstance=null,breakdownChartInstance=null,yearlyBreakdown={};
 let _analyzeNeedsRefresh=true; // 입력값 변경 시 재분석 필요
 
 // ━━ 대화형 UI 스텝 (Phase 4: 검증 + 자유 점프) ━━
@@ -1062,18 +1068,24 @@ function updateEventAgeLabels(){
   updateBabyTotal();
 }
 function calcBabyByYear(startCost){
-  // 초기 연 육아비에서 매년 3% 상승, MAX 2000만원, 26년 지속
-  const BABY_YEARS = 26;
-  const BABY_GROW  = 0.03;
-  const BABY_MAX   = 2000; // 만원/년
+  // 자녀 나이 구간별 고정 연간 육아비. startCost로 비율 스케일링(기준 500).
+  // ※ api/_utils.js의 BABY_COST_BY_STAGE / babyAnnualByYear와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+  const BABY_YEARS = 22; // 자녀 0~21세
+  const BABY_COST_BASE = 500;
+  const BABY_COST_BY_STAGE = [
+    { from: 0,  to: 5,  annual: 500 },   // 영유아
+    { from: 6,  to: 11, annual: 1000 },  // 초등
+    { from: 12, to: 17, annual: 2000 },  // 중고등
+    { from: 18, to: 21, annual: 3000 },  // 대학
+  ];
+  const ratio = (startCost || BABY_COST_BASE) / BABY_COST_BASE;
   const result = {};
-  let cost = startCost;
   let total = 0;
   for(let i = 0; i < BABY_YEARS; i++){
-    const c = Math.min(Math.round(cost), BABY_MAX);
+    const stage = BABY_COST_BY_STAGE.find(s => i >= s.from && i <= s.to);
+    const c = stage ? Math.round(stage.annual * ratio) : 0;
     result[i] = c;
     total += c;
-    cost *= (1 + BABY_GROW);
   }
   return { byOffset: result, total };
 }
@@ -1250,6 +1262,19 @@ function updateLivingBadge(){
   if(b) b.textContent = `✓ 월 ${monthlyLivingCost.toLocaleString()}만원 적용 중`;
 }
 
+// 시점별 월 생활비(만원). 결혼 시 1.5배 + 연 2.5% 물가상승.
+// ※ api/_utils.js의 calcLivingCost와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+function calcLivingCost(baseLivingCost, isMarried, yearsElapsed){
+  const marriageMultiplier = isMarried ? 1.5 : 1.0;
+  const inflationMultiplier = Math.pow(1.025, yearsElapsed);
+  return Math.round(baseLivingCost * marriageMultiplier * inflationMultiplier);
+}
+
+// 결혼 시작 연차 (미체크 시 Infinity) — carStartYr와 동일 패턴
+function getWeddingStartYr(){
+  return document.getElementById('ev-wedding')?.checked ? EVENT_AGES.wedding : Infinity;
+}
+
 // ━━ 월별 CF 시뮬레이션 ━━
 // 월 단위로 계산, 이벤트는 해당 연도 1월(month=0)에 발생
 // extraByYear: { yr: 만원 } 형태
@@ -1270,6 +1295,7 @@ function simulateMonthly({
   maxNetSalary = Infinity,
   carStartYr = Infinity,
   carMonthlyMaint = 0,
+  weddingStartYr = Infinity,
   maxMonths = 360,
 }){
   const monthlyR       = Math.pow(1 + investRate / 100, 1/12) - 1;
@@ -1312,7 +1338,7 @@ function simulateMonthly({
 
     // 월 수입 / 지출 계산
     const monthlyIncome  = currentNetSalary / 12;
-    const livingExpense  = monthlyLivingCost;
+    const livingExpense  = calcLivingCost(monthlyLivingCost, yr >= weddingStartYr, yr);
     const carMaint       = yr >= carStartYr ? carMonthlyMaint : 0;
     const babyMonthly    = monthlyBabyByYr[yr] || 0; // 육아비 월 균등
     const netCashflow    = monthlyIncome - livingExpense - monthlyLoanPayment - carMaint - babyMonthly;
@@ -1782,6 +1808,7 @@ async function calcAll(){
       investRate,extraByYear,monthlyBabyByYr,loanAmt,loanRate,
       annualRaisePct:ar,promoRaise:raiseState.promo,promoBasePct:ar,
       maxNetSalary:getMaxNetSalary(),carStartYr,carMonthlyMaint,
+      weddingStartYr:getWeddingStartYr(),
     });
     const reachedYr=monthlySimResult.reachedMonth>=0?Math.ceil(monthlySimResult.reachedMonth/12):61;
     const addedYears=reachedYr-naiveYears;
@@ -1910,6 +1937,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
   const evArr      = []; // 자산 (억원, 좌축 y)
   const costArr    = []; // 월 지출 (만원, 우측 yFlow)
   const incomeArr  = []; // 월 수익 (만원, 우측 yFlow)
+  yearlyBreakdown  = {}; // 나이별 항목 breakdown (만원, 매 렌더마다 갱신)
 
   const lastEv = evResults.length > 0 ? evResults[evResults.length-1].asset : totalAsset;
 
@@ -1917,6 +1945,9 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
   const carOnChart    = document.getElementById('ev-car')?.checked;
   const carStartChart = carOnChart ? EVENT_AGES.car : Infinity;
   const carMaintChart = carOnChart ? getCarMonthlyMaintenance() : 0;
+
+  // 결혼 시작 연차 (생활비 1.5배 적용 시점)
+  const weddingStartChart = getWeddingStartYr();
 
   for(let m = 0; m <= maxM; m++){
     const yr     = Math.floor(m / 12);
@@ -1935,10 +1966,24 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
 
     // 월 지출 = 생활비 + 대출상환 + 육아비(월균등) + 차량유지비
     // ※ 결혼/차량 일시금은 자산에서만 차감 → 월지출 그래프 제외
+    // ※ 생활비는 결혼(1.5배) + 연 2.5% 물가상승 반영 (시점별 변동)
+    const livingMonth    = calcLivingCost(monthlyLivingCost, yr >= weddingStartChart, yr);
     const babyMonthChart = chartBabyByYr[yr] || 0;
     const carMaintMonth  = yr >= carStartChart ? carMaintChart : 0;
-    const monthCostMan   = monthlyLivingCost + monthlyLoanPay + babyMonthChart + carMaintMonth;
+    const monthCostMan   = livingMonth + monthlyLoanPay + babyMonthChart + carMaintMonth;
     costArr.push(monthCostMan); // 만원
+
+    // 나이별 breakdown: 각 연도 1월(mon===0) 시점 값으로 기록
+    if(mon === 0){
+      yearlyBreakdown[curAge] = {
+        income:     monthlyIncome,
+        living:     livingMonth,
+        loan:       monthlyLoanPay,
+        baby:       babyMonthChart,
+        car:        carMaintMonth,
+        netSaving:  monthlyIncome - monthCostMan,
+      };
+    }
 
     // 자산 라인은 억원 단위이므로 costArr/incomeArr은 yFlow축(만원)으로 분리
   }
@@ -2145,7 +2190,89 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
     },
     plugins: [markerPlugin]
   });
+
+  // ── 나이별 breakdown 슬라이더 초기화 + 초기 렌더
+  const bdAges = Object.keys(yearlyBreakdown).map(Number).sort((a,b) => a-b);
+  const slider = document.getElementById('breakdown-age-slider');
+  if(slider && bdAges.length){
+    slider.min  = bdAges[0];
+    slider.max  = bdAges[bdAges.length-1];
+    slider.step = 1;
+    // 집구매 나이가 있으면 그 시점, 없으면 시작 나이
+    const initAge = homeMonth >= 0 ? age + Math.floor(homeMonth / 12) : bdAges[0];
+    slider.value = Math.min(Math.max(initAge, bdAges[0]), bdAges[bdAges.length-1]);
+    renderBreakdownChart(Number(slider.value));
+  }
 }
+
+// ━━ 나이별 항목 breakdown 막대그래프 ━━
+function renderBreakdownChart(targetAge){
+  const ages = Object.keys(yearlyBreakdown).map(Number).sort((a,b) => a-b);
+  if(!ages.length) return;
+
+  // 해당 나이 데이터 없으면 가장 가까운 연도로 폴백
+  let d = yearlyBreakdown[targetAge];
+  let usedAge = targetAge;
+  if(!d){
+    usedAge = ages.reduce((best, a) =>
+      Math.abs(a - targetAge) < Math.abs(best - targetAge) ? a : best, ages[0]);
+    d = yearlyBreakdown[usedAge];
+  }
+
+  const label = document.getElementById('breakdown-age-label');
+  if(label) label.textContent = `${usedAge}세 · 월 기준`;
+
+  const canvas = document.getElementById('breakdown-chart');
+  if(!canvas) return;
+
+  if(breakdownChartInstance) breakdownChartInstance.destroy();
+  breakdownChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['월급', '생활비', '대출상환', '육아비', '차량유지비', '순저축'],
+      datasets: [{
+        data: [d.income, d.living, d.loan, d.baby, d.car, d.netSaving],
+        backgroundColor: ['#6CB4E4', '#FFB3CC', '#FF9AB8', '#FF80A8', '#FF6B9D', '#3DB88A'],
+        borderRadius: 5,
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => `${c.parsed.x.toLocaleString()}만원`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { size: 9 },
+            color: '#9B7B8A',
+            callback: v => `${v.toLocaleString()}만`,
+          },
+          grid: { color: 'rgba(0,0,0,.04)' },
+        },
+        y: {
+          ticks: { font: { size: 10 }, color: '#9B7B8A' },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
+// 슬라이더 이벤트 (위임 — 카드가 post-analyze로 나중에 노출되어도 동작)
+document.addEventListener('input', e => {
+  if(e.target?.id !== 'breakdown-age-slider') return;
+  renderBreakdownChart(Number(e.target.value));
+});
 
 // ━━ 원리금균등상환 계산 ━━
 function calcMortgage(loanAmt, annualRate, years){
