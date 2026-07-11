@@ -78,7 +78,9 @@ export default async function handler(req, res) {
   try {
     const empUrl = `${DART_BASE}/empSttus.json?crtfc_key=${key}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=11011`;
     const empRes = await fetch(empUrl);
-    if (!empRes.ok) { res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return; }
+    if (!empRes.ok) {
+      res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return;
+    }
     const empData = await empRes.json();
 
     if (empData.status === '013' || !Array.isArray(empData.list) || empData.list.length === 0) {
@@ -88,7 +90,8 @@ export default async function handler(req, res) {
       res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return;
     }
 
-    const { avg: avgSalaryMan, count: employeeCount } = calcAvgSalary(empData.list);
+    const result = calcAvgSalary(empData.list);
+    const { avg: avgSalaryMan, count: employeeCount } = result;
     if (!avgSalaryMan) { res.status(404).json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }); return; }
 
     res.status(200).json({
@@ -98,25 +101,51 @@ export default async function handler(req, res) {
       bsns_year: bsnsYear,
     });
   } catch (e) {
+    console.error('[DART-DEBUG]', e.message);
+    console.error('[DART-DEBUG] stack:', e.stack);
+    console.error('[DART] ERROR:', e.message, e.stack);
     res.status(502).json({ error: 'DART_ERROR', message: e.message || String(e) });
   }
 }
 
 // ━━ helpers ━━
 
-// 직원현황 list에서 성별합계 행들의 총급여액 합 / 인원 합 → 평균연봉(만원)
+// 직원현황 list에서 남성 기준 평균연봉(만원) 산출
+// 우선순위: ① 남성 합계행 총급여/인원 → ② jan_salary_am → ③ 남성 전체행 → ④ 기존 로직(안전망)
 function calcAvgSalary(list) {
+  const SUMMARY_KW = ['합계', '소계', '전체'];
+  const isSummary = r => SUMMARY_KW.some(k => (r.fo_bbm || '').includes(k));
+  const isMale    = r => (r.sexdstn || '').trim() === '남';
+
+  // ① 남성 합계행: sexdstn="남" AND fo_bbm이 합계류
+  const maleSumRows = list.filter(r => isMale(r) && isSummary(r));
+  if (maleSumRows.length) {
+    const withAmt = maleSumRows.filter(r => toNum(r.fyer_salary_totamt) > 0 && toNum(r.sm) > 0);
+    if (withAmt.length) {
+      const totalAmt = withAmt.reduce((s, r) => s + toNum(r.fyer_salary_totamt), 0);
+      const totalCnt = withAmt.reduce((s, r) => s + toNum(r.sm), 0);
+      return { avg: Math.round(totalAmt / totalCnt / 10000), count: totalCnt };
+    }
+    // 폴백 1: fyer_salary_totamt="-" → jan_salary_am(원 단위) 사용
+    const withJan = maleSumRows.filter(r => toNum(r.jan_salary_am) > 0);
+    if (withJan.length) {
+      const avg = Math.round(withJan.reduce((s, r) => s + toNum(r.jan_salary_am), 0) / withJan.length / 10000);
+      return { avg, count: null };
+    }
+  }
+
+  // 폴백 2: 남성 합계행 없음 → sexdstn="남" 전체 행 합산
+  const maleAll = list.filter(r => isMale(r) && toNum(r.fyer_salary_totamt) > 0 && toNum(r.sm) > 0);
+  if (maleAll.length) {
+    const totalAmt = maleAll.reduce((s, r) => s + toNum(r.fyer_salary_totamt), 0);
+    const totalCnt = maleAll.reduce((s, r) => s + toNum(r.sm), 0);
+    return { avg: Math.round(totalAmt / totalCnt / 10000), count: totalCnt };
+  }
+
+  // 폴백 3: 남성 행 자체 없음 → 기존 로직(안전망, 퇴행 방지)
   const valid = list.filter(r => toNum(r.fyer_salary_totamt) > 0 && toNum(r.sm) > 0);
   if (!valid.length) return { avg: 0, count: 0 };
-
-  // fo_bbm(부문)별로 그룹화. 같은 부문에 '합계' 행이 있으면 그것만, 없으면 성별 행을 모두 합산
-  // 단순화: fo_bbm 값들을 보고 '합계/소계/전체' 행이 있으면 그것만 사용
-  const summaryRows = valid.filter(r => {
-    const b = r.fo_bbm || '';
-    return b.includes('합계') || b.includes('소계') || b.includes('전체');
-  });
-
-  // 합계 행이 있으면 사용, 없으면 전체 유효행 합산 (성별 분리 케이스)
+  const summaryRows = valid.filter(r => SUMMARY_KW.some(k => (r.fo_bbm || '').includes(k)));
   const rows = summaryRows.length ? summaryRows : valid;
   const totalAmt = rows.reduce((s, r) => s + toNum(r.fyer_salary_totamt), 0);
   const totalCnt = rows.reduce((s, r) => s + toNum(r.sm), 0);
