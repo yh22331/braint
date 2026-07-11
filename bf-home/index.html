@@ -830,7 +830,7 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 // ━━ 상수 & 상태 ━━
 const PRICES={gangnam:{small:90000,mid:140000,big:220000},seoul:{small:55000,mid:90000,big:150000},gyeonggi:{small:30000,mid:55000,big:90000},local:{small:15000,mid:25000,big:45000}};
 const MY_ASSETS={none:0,small:8000,mid:25000,big:40000};
-const EVENT_AGES={wedding:33,baby:35,car:30};
+const EVENT_AGES={wedding:3,baby:5,car:1};
 const LS_MY='bfhc_my_data',LS_PARTNER='bfhc_partner_data';
 
 // ━━ Supabase 초기화 ━━
@@ -1050,15 +1050,15 @@ function onAgeInput(el){
 function getAge(){return Math.max(20,Math.min(70,parseInt(document.getElementById('age').value)||30))}
 function updateEventAgeLabels(){
   const age=getAge();
-  const wA=age>=EVENT_AGES.wedding?age+1:EVENT_AGES.wedding;
-  const bA=age>=EVENT_AGES.baby?age+1:EVENT_AGES.baby;
-  const cA=age>=EVENT_AGES.car?age:EVENT_AGES.car;
+  const wA=age+EVENT_AGES.wedding;
+  const bA=age+EVENT_AGES.baby;
+  const cA=age+EVENT_AGES.car;
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('age-wedding',wA+'세');set('age-baby',bA+'세');set('age-car',cA+'세');
   const ws=document.getElementById('wedding-status');
-  if(ws)ws.innerHTML=age>=EVENT_AGES.wedding?'이미 지난 이벤트 — 비용만 즉시 반영':'결혼 예정: <strong id="age-wedding">'+wA+'세</strong>';
+  if(ws)ws.innerHTML='결혼 예정: <strong id="age-wedding">'+wA+'세</strong>';
   const bs=document.getElementById('baby-status');
-  if(bs)bs.innerHTML=age>=EVENT_AGES.baby?'이미 지난 이벤트 — 비용만 즉시 반영':'출산 예정: <strong id="age-baby">'+bA+'세</strong>';
+  if(bs)bs.innerHTML='출산 예정: <strong id="age-baby">'+bA+'세</strong>';
   updateBabyTotal();
 }
 function calcBabyByYear(startCost){
@@ -1361,14 +1361,14 @@ function getEventDataWithLabels(){
   // 결혼 — 일시금 (자산 차감)
   if(document.getElementById('ev-wedding')?.checked){
     const c  = parseInt(document.getElementById('cost-wedding')?.value) || 5000;
-    const ea = age >= EVENT_AGES.wedding ? 0 : EVENT_AGES.wedding - age;
+    const ea = EVENT_AGES.wedding;
     addAt(ea, c, '💍결혼');
   }
 
   // 출산·육아 — 월 균등 분할 (netCashflow 차감)
   if(document.getElementById('ev-baby')?.checked){
     const startCost = parseInt(document.getElementById('cost-baby-yr')?.value) || 500;
-    const startYr   = age >= EVENT_AGES.baby ? 0 : EVENT_AGES.baby - age;
+    const startYr   = EVENT_AGES.baby;
     const { byOffset } = calcBabyByYear(startCost);
     Object.entries(byOffset).forEach(([offset, annualCost]) => {
       const yr = startYr + Number(offset);
@@ -1383,7 +1383,7 @@ function getEventDataWithLabels(){
   // 차량 구매 — 일시금 (자산 차감)
   if(document.getElementById('ev-car')?.checked){
     const c  = parseInt(document.getElementById('cost-car')?.value) || 3500;
-    const ea = EVENT_AGES.car <= age ? 0 : EVENT_AGES.car - age;
+    const ea = EVENT_AGES.car;
     addAt(ea, c, '🚗차량');
   }
 
@@ -1776,7 +1776,7 @@ async function calcAll(){
     const effectiveTarget=targetPrice-loanAmt;
     const ar=raiseState.rate||0;
     const carMonthlyMaint=carOn?getCarMonthlyMaintenance():0;
-    const carStartYr=carOn?Math.max(0,EVENT_AGES.car-age):Infinity;
+    const carStartYr=carOn?EVENT_AGES.car:Infinity;
     const monthlySimResult=simulateMonthly({
       netSalary:salary,initAsset:totalAsset,targetPrice:effectiveTarget,
       investRate,extraByYear,monthlyBabyByYr,loanAmt,loanRate,
@@ -1874,14 +1874,13 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
   // ── 이벤트 마커 월 수집
   const eventAnnotations = {};
   const evDefs = [
-    { id:'ev-wedding', label:'💍결혼', defAge:EVENT_AGES.wedding },
-    { id:'ev-baby',    label:'👶출산', defAge:EVENT_AGES.baby    },
-    { id:'ev-car',     label:'🚗차량',  defAge:EVENT_AGES.car     },
+    { id:'ev-wedding', label:'💍결혼', offset:EVENT_AGES.wedding },
+    { id:'ev-baby',    label:'👶출산', offset:EVENT_AGES.baby    },
+    { id:'ev-car',     label:'🚗차량',  offset:EVENT_AGES.car     },
   ];
   evDefs.forEach(ev => {
     if(!document.getElementById(ev.id)?.checked) return;
-    const evAge = Math.max(ev.defAge, age >= ev.defAge ? age : ev.defAge);
-    const m = (evAge - age) * 12;
+    const m = ev.offset * 12;
     if(m >= 0 && m <= maxM){
       if(!eventAnnotations[m]) eventAnnotations[m] = [];
       eventAnnotations[m].push(ev.label);
@@ -1917,7 +1916,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
 
   // 차량 관련 사전 계산
   const carOnChart    = document.getElementById('ev-car')?.checked;
-  const carStartChart = carOnChart ? Math.max(0, EVENT_AGES.car - age) : Infinity;
+  const carStartChart = carOnChart ? EVENT_AGES.car : Infinity;
   const carMaintChart = carOnChart ? getCarMonthlyMaintenance() : 0;
 
   for(let m = 0; m <= maxM; m++){
