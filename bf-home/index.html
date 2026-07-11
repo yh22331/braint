@@ -339,6 +339,23 @@
         <div id="salary-takehome" style="margin-top:8px;font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;background:rgba(255,179,204,.1);border-radius:10px;padding:6px 12px;display:inline-block">
           세후 월 실수령 약 <strong id="takehome-val" style="color:var(--pink)">334만원</strong>
         </div>
+        <div id="dart-search-block" style="margin-top:12px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="dart-company-input" placeholder="🔍 회사명으로 연봉 자동입력"
+              oninput="filterDartDropdown(this.value)"
+              onfocus="filterDartDropdown(this.value)"
+              autocomplete="off"
+              style="flex:1;padding:10px 14px;border:2px solid #F0D0DC;border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:.85rem;font-weight:600;color:var(--text);background:#fff;outline:none;transition:border-color .2s"
+              onfocusin="this.style.borderColor='var(--pink)';this.style.boxShadow='0 0 0 3px rgba(255,107,157,.1)'"
+              onfocusout="this.style.borderColor='#F0D0DC';this.style.boxShadow='none'">
+            <button onclick="fetchDartSalary()"
+              style="padding:10px 16px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:14px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(255,107,157,.3);flex-shrink:0">
+              연봉 조회
+            </button>
+          </div>
+          <div id="dart-dropdown" style="display:none;margin-top:4px;background:#fff;border:1.5px solid #F0D0DC;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(255,107,157,.12);max-height:180px;overflow-y:auto"></div>
+          <div id="dart-status" style="display:none;margin-top:6px;font-size:.75rem;font-family:'Gowun Dodum',sans-serif;padding:6px 12px;border-radius:10px"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -2676,6 +2693,96 @@ function showToast(msg){const t=document.createElement('div');t.textContent=msg;
 // 초기화
 updateSalary(document.getElementById('salary'));
 updateRange(document.getElementById('asset'),'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));
+
+// ━━ DART 회사 연봉 자동입력 ━━
+let _dartCompanies = null;
+
+async function loadDartCompanies() {
+  if (_dartCompanies) return _dartCompanies;
+  try {
+    const res = await fetch('/api/dart-companies');
+    const data = await res.json();
+    _dartCompanies = data.companies || [];
+  } catch(e) {
+    _dartCompanies = [];
+  }
+  return _dartCompanies;
+}
+
+function filterDartDropdown(q) {
+  const dd = document.getElementById('dart-dropdown');
+  if (!dd) return;
+  loadDartCompanies().then(list => {
+    const trimmed = q.trim();
+    if (!trimmed) { dd.style.display = 'none'; return; }
+    const matched = list.filter(n => n.includes(trimmed)).slice(0, 8);
+    if (!matched.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = '';
+    matched.forEach(name => {
+      const item = document.createElement('div');
+      item.textContent = name;
+      item.style.cssText = 'padding:10px 14px;font-size:.85rem;font-family:\'Noto Sans KR\',sans-serif;cursor:pointer;border-bottom:1px solid #FFF0F5;color:var(--text)';
+      item.addEventListener('mouseover', () => { item.style.background = 'rgba(255,179,204,.15)'; });
+      item.addEventListener('mouseout', () => { item.style.background = ''; });
+      item.addEventListener('click', () => selectDartCompany(name));
+      dd.appendChild(item);
+    });
+    dd.style.display = 'block';
+  });
+}
+
+function selectDartCompany(name) {
+  const inp = document.getElementById('dart-company-input');
+  if (inp) inp.value = name;
+  const dd = document.getElementById('dart-dropdown');
+  if (dd) dd.style.display = 'none';
+  fetchDartSalary();
+}
+
+async function fetchDartSalary() {
+  const inp = document.getElementById('dart-company-input');
+  const statusEl = document.getElementById('dart-status');
+  const dd = document.getElementById('dart-dropdown');
+  const company = inp?.value.trim();
+  if (!company) { showToast('회사명을 입력해주세요'); return; }
+  if (dd) dd.style.display = 'none';
+
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(255,179,204,.1)';
+  statusEl.style.color = 'var(--text-soft)';
+  statusEl.textContent = '⏳ 조회 중...';
+
+  try {
+    const res = await fetch(`/api/dart-salary?company=${encodeURIComponent(company)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      const isNotFound = data.error === 'NOT_FOUND' || data.error === 'NO_DATA';
+      statusEl.style.background = isNotFound ? 'rgba(255,179,204,.1)' : 'rgba(220,80,80,.08)';
+      statusEl.style.color = isNotFound ? 'var(--text-soft)' : '#B83A3A';
+      statusEl.textContent = isNotFound
+        ? '목록에 없어요. 연봉을 직접 입력해주세요 🎚️'
+        : `⚠️ ${data.message || '잠시 후 다시 시도해주세요'}`;
+      return;
+    }
+    const s = document.getElementById('salary');
+    s.value = data.avg_salary_man;
+    updateSalary(s);
+    statusEl.style.background = 'rgba(67,233,123,.1)';
+    statusEl.style.color = '#2A7A4A';
+    statusEl.textContent = `✅ ${data.corp_name} ${data.bsns_year}년 평균연봉 ${data.avg_salary_man.toLocaleString()}만원 반영됨`;
+  } catch(e) {
+    statusEl.style.background = 'rgba(220,80,80,.08)';
+    statusEl.style.color = '#B83A3A';
+    statusEl.textContent = '⚠️ 잠시 후 다시 시도해주세요';
+  }
+}
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('dart-dropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'dart-company-input') {
+    dd.style.display = 'none';
+  }
+});
 
 </script>
 <script>
