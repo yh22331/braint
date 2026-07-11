@@ -73,7 +73,7 @@ export default async function handler(req, res) {
   const corpCode = CORP_MAP[query] || CORP_MAP[company];
   if (!corpCode) { res.status(404).json({ error: 'NOT_FOUND', message: '검색 결과가 없어요' }); return; }
 
-  const bsnsYear = '2023';
+  const bsnsYear = '2025';
 
   try {
     const empUrl = `${DART_BASE}/empSttus.json?crtfc_key=${key}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=11011`;
