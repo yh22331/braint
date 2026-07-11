@@ -696,7 +696,7 @@
       <div class="section-wrap post-analyze">
         <div class="section-title">📊 나이별 자산 흐름 차트</div>
         <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:12px">수입(급여+투자수익) - 지출(생활비+이벤트) = 순자산 변화 · 이벤트 발생 연도에 자산 감소 반영</div>
-        <div style="background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
+        <div style="background:#fff;border-radius:16px;padding:8px 4px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <span style="font-size:.82rem;font-weight:900;color:var(--text)">💰 자산 성장 시뮬레이션</span>
             <div style="display:flex;gap:10px;font-size:.65rem;color:var(--text-soft)">
@@ -1896,7 +1896,6 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
   labelAges.add(age + Math.floor(maxM / 12));
   if(homeMonth >= 0)      labelAges.add(age + Math.floor(homeMonth / 12));
   if(maxSalaryMonth >= 0) labelAges.add(age + Math.floor(maxSalaryMonth / 12));
-  Object.keys(eventAnnotations).forEach(m => labelAges.add(age + Math.floor(Number(m) / 12)));
 
   // ── 월 지출 계산 준비
   const { monthlyBabyByYr: chartBabyByYr } = getEventDataWithLabels();
@@ -1952,7 +1951,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
     afterDraw(chart){
       const { ctx: c, scales: { x, y } } = chart;
 
-      // 이벤트 수직선 + 라벨
+      // 이벤트 수직선 + 이모지 마커
       Object.entries(eventAnnotations).forEach(([m, evLabels]) => {
         const xPos    = x.getPixelForValue(Number(m));
         const yBottom = y.bottom;
@@ -1964,9 +1963,13 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
         c.save();
         c.fillStyle = '#FF6B9D';
         c.beginPath(); c.arc(xPos, yBottom, 4, 0, Math.PI*2); c.fill();
-        c.font = 'bold 9px sans-serif';
+        c.font = '16px sans-serif';
         c.textAlign = 'center';
-        c.fillText(evLabels.join(' '), xPos, yBottom + 15);
+        const emojiY = yBottom + 20;
+        evLabels.forEach((label, j) => {
+          const xOffset = (j - (evLabels.length - 1) / 2) * 20;
+          c.fillText(label.slice(0, 2), xPos + xOffset, emojiY);
+        });
         c.restore();
       });
 
@@ -2083,7 +2086,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
       responsive: true,
       maintainAspectRatio: true,
       animation: { duration: 600 },
-      layout: { padding: { bottom: 24 } },
+      layout: { padding: { bottom: 24, left: 0, right: 0 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -2136,7 +2139,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
             maxTicksLimit: 5,
           },
           grid: { display: false },
-          title: { display: true, text: '월 수익·지출', color: '#9B7B8A', font: { size: 8 } }
+          title: { display: false }
         }
       }
     },
