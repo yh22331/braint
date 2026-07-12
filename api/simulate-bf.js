@@ -41,10 +41,11 @@ function simulateBF({ netSalary, initAsset, targetPrice, investRate = 0,
     const netM = currentNet / 12, carM = yr >= carStartYr ? carMonthlyMaint : 0;
     const babyM = monthlyBabyByYr[yr] || 0, evCost = mon === 0 ? (extraByYear[yr] || 0) : 0;
     const livingM = calcLivingCost(livingCost, yr >= weddingStartYr, yr);
-    asset = Math.max(0, asset) * (1 + monthlyR) + (netM - livingM - monthlyLoanPayment - carM - babyM) - evCost;
+    const loanM = reachedMonth >= 0 ? monthlyLoanPayment : 0; // 주택담보대출: 집 구매 후부터 상환
+    asset = Math.max(0, asset) * (1 + monthlyR) + (netM - livingM - loanM - carM - babyM) - evCost;
     results.push({
       year: yr, age: 0, asset: Math.round(asset), netMonthly: Math.round(currentNet / 12),
-      monthlyExpense: Math.round(livingM + monthlyLoanPayment + carM + babyM),
+      monthlyExpense: Math.round(livingM + loanM + carM + babyM),
       label: mon === 0 && extraByYear[yr] ? ['이벤트'] : null, housePurchase: false,
     });
     if (reachedMonth < 0 && asset >= targetPrice) {

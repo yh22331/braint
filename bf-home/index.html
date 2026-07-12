@@ -1341,7 +1341,8 @@ function simulateMonthly({
     const livingExpense  = calcLivingCost(monthlyLivingCost, yr >= weddingStartYr, yr);
     const carMaint       = yr >= carStartYr ? carMonthlyMaint : 0;
     const babyMonthly    = monthlyBabyByYr[yr] || 0; // 육아비 월 균등
-    const netCashflow    = monthlyIncome - livingExpense - monthlyLoanPayment - carMaint - babyMonthly;
+    const loanPay        = reachedMonth >= 0 ? monthlyLoanPayment : 0; // 주택담보대출: 집 구매 후부터 상환
+    const netCashflow    = monthlyIncome - livingExpense - loanPay - carMaint - babyMonthly;
 
     // 일시금 이벤트: 해당 연도 1월에 자산 차감 (netCashflow와 별도)
     const eventCost = (mon === 0 && extraByYear[yr]) ? extraByYear[yr] : 0;
@@ -1967,10 +1968,12 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
     // 월 지출 = 생활비 + 대출상환 + 육아비(월균등) + 차량유지비
     // ※ 결혼/차량 일시금은 자산에서만 차감 → 월지출 그래프 제외
     // ※ 생활비는 결혼(1.5배) + 연 2.5% 물가상승 반영 (시점별 변동)
+    // ※ 대출상환은 집 구매 후부터만 반영 (주택담보대출)
     const livingMonth    = calcLivingCost(monthlyLivingCost, yr >= weddingStartChart, yr);
     const babyMonthChart = chartBabyByYr[yr] || 0;
     const carMaintMonth  = yr >= carStartChart ? carMaintChart : 0;
-    const monthCostMan   = livingMonth + monthlyLoanPay + babyMonthChart + carMaintMonth;
+    const loanPayMonth   = (reachedMonth >= 0 && m >= reachedMonth) ? monthlyLoanPay : 0;
+    const monthCostMan   = livingMonth + loanPayMonth + babyMonthChart + carMaintMonth;
     costArr.push(monthCostMan); // 만원
 
     // 나이별 breakdown: 각 연도 1월(mon===0) 시점 값으로 기록
@@ -1978,7 +1981,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
       yearlyBreakdown[curAge] = {
         income:     monthlyIncome,
         living:     livingMonth,
-        loan:       monthlyLoanPay,
+        loan:       loanPayMonth,
         baby:       babyMonthChart,
         car:        carMaintMonth,
         netSaving:  monthlyIncome - monthCostMan,
@@ -2303,10 +2306,10 @@ function renderPDFPreview(newYears,totalExtra,loanAmt){
   const totalIncome   = monthlyNet + monthlyInvest;                    // 월 수익 합계
 
   const carMonthly   = document.getElementById('ev-car')?.checked ? getCarMonthlyMaintenance() : 0;
+  // 월 지출 합계 = 집 구매 전 기준 → 대출 상환액 제외 (구매 후부터 발생)
   const totalExpense = monthlyLivingCost
     + (babyOn ? babyMonthly : 0)
-    + carMonthly
-    + (loanAmt > 0 ? mortgage.monthly : 0);                            // 월 지출 합계
+    + carMonthly;
 
   const sections=[
     {title:'🏠 목표',rows:[
@@ -2326,8 +2329,8 @@ function renderPDFPreview(newYears,totalExtra,loanAmt){
       ['월 생활비',`${monthlyLivingCost.toLocaleString()}만원`],
       ['월 육아비',babyOn?`약 ${babyMonthly.toLocaleString()}만원 (월평균·26년)`:'미반영'],
       ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원 (구매 후 매월)`:'미반영'],
-      ['월 대출 상환액',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (원리금균등, 30년)`:'없음'],
-      ['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원`],
+      ['월 대출 상환액',loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (집 구매 후부터·원리금균등 30년)`:'없음'],
+      ['📤 월 지출 합계',`약 ${totalExpense.toLocaleString()}만원 (구매 전 기준)`],
     ]},
     {title:'📊 결과',rows:[
       ['집 구매 가능 기간',newYears<=0?'지금 바로 가능! 🎉':`약 ${newYears}년 후`],
@@ -2367,7 +2370,8 @@ function downloadPDF(){
   const babyMonthly=babyOn?Math.round(babyTotal/26/12):0;
   const carM=document.getElementById('ev-car')?.checked?getCarMonthlyMaintenance():0;
   const totalInc=(monthlyTakehome||0)+Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
-  const totalExp=monthlyLivingCost+(babyOn?babyMonthly:0)+carM+(loanAmt>0?mortgage.monthly:0);
+  // 대출 상환액은 집 구매 후부터 발생 → 구매 전 기준 월 지출에서 제외
+  const totalExp=monthlyLivingCost+(babyOn?babyMonthly:0)+carM;
 
   // Canvas로 한글 PDF 생성
   const W=794, PD=40;
@@ -2389,8 +2393,8 @@ function downloadPDF(){
       ['월 생활비', `${monthlyLivingCost.toLocaleString()}만원`],
       ['월 육아비', babyOn?`약 ${babyMonthly.toLocaleString()}만원`:'미반영'],
       ['월 차량 유지비', carM>0?`약 ${carM.toLocaleString()}만원`:'미반영'],
-      ['월 대출 상환', loanAmt>0?`${mortgage.monthly.toLocaleString()}만원`:'없음'],
-      ['📤 월 지출 합계', `약 ${totalExp.toLocaleString()}만원`],
+      ['월 대출 상환', loanAmt>0?`${mortgage.monthly.toLocaleString()}만원 (집 구매 후부터)`:'없음'],
+      ['📤 월 지출 합계', `약 ${totalExp.toLocaleString()}만원 (구매 전 기준)`],
     ]},
     {title:'📊 결과', color:'#E3F2FD', rows:[
       ['집 구매 가능', yearsNeeded<=0?'지금 바로!':yearsNeeded+'년 후'],
@@ -2659,7 +2663,8 @@ function buildReportData(){
   const monthlyNet = monthlyTakehome||0;
   const monthlyInvest = Math.round(totalAsset*(Math.pow(1+investRate/100,1/12)-1));
   const totalIncome = monthlyNet + monthlyInvest;
-  const totalExpense = monthlyLivingCost+(babyOn?babyMonthly:0)+carMonthly+(loanAmt>0?mortgage.monthly:0);
+  // 대출 상환액은 집 구매 후부터 발생 → 구매 전 기준 월 지출에서 제외
+  const totalExpense = monthlyLivingCost+(babyOn?babyMonthly:0)+carMonthly;
 
   return [
     {title:'🏠 목표', rows:[
@@ -2678,8 +2683,8 @@ function buildReportData(){
       ['월 생활비', `${monthlyLivingCost}만원`],
       ['월 육아비', babyOn?`약 ${babyMonthly}만원 (월평균)`:'미반영'],
       ['월 차량 유지비', carMonthly>0?`약 ${carMonthly}만원`:'미반영'],
-      ['월 대출 상환', loanAmt>0?`${mortgage.monthly}만원`:'없음'],
-      ['📤 월 지출 합계', `약 ${totalExpense}만원`],
+      ['월 대출 상환', loanAmt>0?`${mortgage.monthly}만원 (집 구매 후부터)`:'없음'],
+      ['📤 월 지출 합계', `약 ${totalExpense}만원 (구매 전 기준)`],
     ]},
     {title:'📊 결과', rows:[
       ['집 구매 가능 기간', yearsNeeded<=0?'지금 바로! 🎉':`약 ${yearsNeeded}년 후`],
