@@ -1950,6 +1950,9 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
   // 결혼 시작 연차 (생활비 1.5배 적용 시점)
   const weddingStartChart = getWeddingStartYr();
 
+  // 투자수익 역산용 월 수익률 (simulateMonthly의 monthlyR과 동일 식)
+  const monthlyRChart = Math.pow(1 + investRate / 100, 1/12) - 1;
+
   for(let m = 0; m <= maxM; m++){
     const yr     = Math.floor(m / 12);
     const curAge = age + yr;
@@ -1960,10 +1963,17 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
     const e = evResults.find(d => d.month === m);
     evArr.push(+(((e ? e.asset : lastEv) / 10000).toFixed(2)));
 
-    // 월 수익 = 세후 월급
+    // 월 급여 = 세후 월급
     const eSalary = (e && e.salary) ? e.salary : (evResults.length > 0 ? evResults[evResults.length-1].salary || 0 : salary);
     const monthlyIncome = Math.round(eSalary / 12);
-    incomeArr.push(monthlyIncome); // 만원
+
+    // 월 투자수익 = 직전 달 말 자산 × 월 수익률 (자산 시계열에서 역산)
+    const prevAsset   = m === 0 ? totalAsset
+                      : (evResults.find(d => d.month === m-1)?.asset ?? lastEv);
+    const investMonth = Math.round(Math.max(0, prevAsset) * monthlyRChart);
+
+    // 월 수익 = 세후 월급 + 투자수익 (breakdown 막대와 동일 정의)
+    incomeArr.push(monthlyIncome + investMonth); // 만원
 
     // 월 지출 = 생활비 + 대출상환 + 육아비(월균등) + 차량유지비
     // ※ 결혼/차량 일시금은 자산에서만 차감 → 월지출 그래프 제외
@@ -1980,11 +1990,12 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
     if(mon === 0){
       yearlyBreakdown[curAge] = {
         income:     monthlyIncome,
+        invest:     investMonth,
         living:     livingMonth,
         loan:       loanPayMonth,
         baby:       babyMonthChart,
         car:        carMaintMonth,
-        netSaving:  monthlyIncome - monthCostMan,
+        netSaving:  monthlyIncome + investMonth - monthCostMan,
       };
     }
 
@@ -2153,7 +2164,7 @@ function renderChart(monthlySimResult, effectiveTarget, totalAsset, salary, inve
                 return `월 지출: ${c.parsed.y.toLocaleString()}만원`;
               }
               if(c.dataset.label === '월 수익'){
-                return `월 수익(세후월급): ${c.parsed.y.toLocaleString()}만원`;
+                return `월 수익(월급+투자수익): ${c.parsed.y.toLocaleString()}만원`;
               }
               return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}억원`;
             },
@@ -2232,10 +2243,10 @@ function renderBreakdownChart(targetAge){
   breakdownChartInstance = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: ['월급', '생활비', '대출상환', '육아비', '차량유지비', '순저축'],
+      labels: ['월급', '투자수익', '생활비', '대출상환', '육아비', '차량유지비', '순저축'],
       datasets: [{
-        data: [d.income, d.living, d.loan, d.baby, d.car, d.netSaving],
-        backgroundColor: ['#6CB4E4', '#FFB3CC', '#FF9AB8', '#FF80A8', '#FF6B9D', '#3DB88A'],
+        data: [d.income, d.invest, d.living, d.loan, d.baby, d.car, d.netSaving],
+        backgroundColor: ['#6CB4E4', '#A8D4F0', '#FFB3CC', '#FF9AB8', '#FF80A8', '#FF6B9D', '#3DB88A'],
         borderRadius: 5,
         borderWidth: 0,
       }],
