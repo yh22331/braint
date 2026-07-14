@@ -53,6 +53,18 @@ export const PRICES = {
 // ── '내 자산' 프리셋 (bf-home 전용, 만원)
 export const MY_ASSETS = { none: 0, small: 8000, mid: 25000, big: 40000 };
 
+// ── 대출 한도: LTV 40% + 구간별 정부 규제 상한 (2026.7 기준)
+// ⚠️ 이 함수는 bf-home/index.html에 동일 복제됨. 수정 시 양쪽 동기화 필수.
+export function calcLoanAmount(targetPrice) {
+  // targetPrice: 만원 단위
+  const ltv = targetPrice * 0.4;
+  let cap;
+  if (targetPrice <= 150000) cap = 60000;       // 15억 이하 → 최대 6억
+  else if (targetPrice <= 250000) cap = 40000;  // 15~25억 → 최대 4억
+  else cap = 20000;                             // 25억 초과 → 최대 2억
+  return Math.min(ltv, cap);
+}
+
 // ── 연봉(만원) → 세후 월급(만원). 누진 단순화.
 export function calcTakehome(gross) {
   let rate;

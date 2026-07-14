@@ -7,6 +7,7 @@ import {
   calcTakehome,
   calcBabyTotal,
   calcLivingCost,
+  calcLoanAmount,
   monthlyRate,
   getEventData,
   buildEventMarkers,
@@ -80,7 +81,7 @@ export default async function handler(req) {
 
     const initAsset = (MY_ASSETS[myAsset] || 0) + (asset || 0);
     const netSalary = calcTakehome(salary) * 12;
-    const loanAmt = loanOn ? Math.round(targetPrice * A.ltvRatio) : 0;
+    const loanAmt = loanOn ? Math.round(calcLoanAmount(targetPrice)) : 0;
     const effectiveTarget = targetPrice - loanAmt;
 
     const evCfg = { weddingOn, weddingCost, weddingAge, babyOn, babyCost, babyAge, carOn, carCost, carAge };

@@ -510,7 +510,7 @@
           <span style="font-size:.88rem;font-weight:900;color:var(--text)">📊 주택담보대출 활용</span>
           <label class="event-toggle"><input type="checkbox" id="loan-toggle" onchange="markDirty()" checked><span class="event-slider"></span></label>
         </div>
-        <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:8px">LTV 40% 기준 · 금리 연 4% 고정<br>집값의 40%를 대출 → 집 구매 시점부터 상환 (금리 연 4%, 원리금균등 30년)</div>
+        <div style="font-size:.68rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.6;margin-bottom:8px">집값의 40%를 대출 (최대 6억 · 15억 초과 주택은 규제로 한도 축소) → 구매 시점부터 상환 (연 4%, 원리금균등 30년)</div>
         <!-- 대출 계산 표시 박스 -->
         <div id="loan-calc-box" style="display:none;background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(245,166,35,.3)">
           <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
@@ -527,6 +527,7 @@
             <span style="font-weight:900;color:var(--gold);font-size:1rem" id="loan-net-display">-</span>
           </div>
           <div style="font-size:.68rem;color:var(--text-soft);margin-top:6px;font-family:'Gowun Dodum',sans-serif" id="loan-interest-note"></div>
+          <div style="display:none;font-size:.68rem;color:#CC6600;margin-top:4px;font-family:'Gowun Dodum',sans-serif" id="loan-cap-note">⚠️ 대출 규제로 한도 제한 적용</div>
         </div>
       </div>
 
@@ -1711,9 +1712,19 @@ function shareCoupleKakao(){
 }
 
 // ━━ ③ 이벤트 + 주택담보대출 ━━
+function calcLoanAmount(targetPrice){
+  // targetPrice: 만원 단위. LTV 40% + 구간별 정부 규제 상한 (2026.7 기준)
+  // ※ api/_utils.js의 calcLoanAmount와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+  const ltv = targetPrice * 0.4;
+  let cap;
+  if (targetPrice <= 150000) cap = 60000;       // 15억 이하 → 최대 6억
+  else if (targetPrice <= 250000) cap = 40000;  // 15~25억 → 최대 4억
+  else cap = 20000;                             // 25억 초과 → 최대 2억
+  return Math.min(ltv, cap);
+}
 function getLoanData(){
   if(!document.getElementById('loan-toggle')?.checked||!calcResult.targetPrice)return{loanAmt:0,loanRate:0};
-  return{loanAmt:Math.round(calcResult.targetPrice*0.40),loanRate:4};
+  return{loanAmt:Math.round(calcLoanAmount(calcResult.targetPrice)),loanRate:4};
 }
 function updateLoanBox(){
   const{loanAmt,loanRate}=getLoanData();
@@ -1726,6 +1737,8 @@ function updateLoanBox(){
     document.getElementById('loan-amount-display').textContent=`-${fmt(loanAmt)}`;
     document.getElementById('loan-net-display').textContent=fmt(hp-loanAmt);
     document.getElementById('loan-interest-note').textContent=`연 이자 ${fmt(Math.round(loanAmt*loanRate/100))} (금리 ${loanRate}%, 고정)`;
+    const capNote=document.getElementById('loan-cap-note');
+    if(capNote)capNote.style.display=loanAmt<Math.round(hp*0.4)?'block':'none';
   } else {
     calcBox.style.display='none';
   }
