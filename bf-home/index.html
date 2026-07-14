@@ -712,11 +712,11 @@
         </div>
         <!-- LLM 심층 보고서 (Phase 3: 훅 무료 → 설문 → 블러 본문 + 결제 유도) -->
         <div id="deep-report" style="display:none;background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
-          <div style="font-size:.92rem;font-weight:900;color:var(--pink);margin-bottom:12px">💌 짝꿍 재력 심층 보고서</div>
+          <div style="font-size:.92rem;font-weight:900;color:var(--pink);margin-bottom:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-right:4px" aria-hidden="true"><rect x="4.5" y="3" width="15" height="18" rx="3.5" fill="#FFE8EF" stroke="#FF6B9D" stroke-width="2" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h3.5" stroke="#FFB3CC" stroke-width="2" stroke-linecap="round"/></svg>짝꿍 재력 심층 보고서</div>
           <div id="deep-report-hooks" style="margin-bottom:14px"></div>
           <!-- 1단계: 설문 유도 -->
           <div id="deep-report-cta">
-            <button type="button" class="btn-cta" onclick="startReportSurvey()">📋 1분 설문하고 짝꿍 맞춤 부동산 솔루션 받기</button>
+            <button type="button" class="btn-cta" onclick="startReportSurvey()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-right:6px" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="9" y="2.5" width="6" height="4" rx="2" fill="#FFE8EF" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M9 13l2 2 4-4.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>1분 설문하고 짝꿍 맞춤 부동산 솔루션 받기</button>
           </div>
           <!-- 2단계: 설문 (문항은 JS 생성) -->
           <div id="deep-report-survey" style="display:none">
@@ -735,7 +735,7 @@
             <div style="position:relative">
               <div id="deep-report-sections"></div>
               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
-                <button type="button" onclick="alert('결제 기능 준비 중입니다')" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기 🔓</button>
+                <button type="button" onclick="alert('결제 기능 준비 중입니다')" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-left:6px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5V7.5a3.5 3.5 0 016.8-1.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.6" fill="#fff"/></svg></button>
               </div>
             </div>
           </div>
@@ -2818,8 +2818,9 @@ function renderDeepReportHooks(rep){
   const box=document.getElementById('deep-report');
   const hooksEl=document.getElementById('deep-report-hooks');
   if(!box||!hooksEl||!Array.isArray(rep?.hooks))return;
+  const hiNum=s=>escHtml(s).replace(/(\d+(\.\d+)?(세|년))/g,'<strong style="color:var(--pink)">$1</strong>');
   hooksEl.innerHTML=rep.hooks.map(h=>
-    `<div style="font-size:.95rem;font-weight:900;color:var(--text);line-height:1.6;padding:10px 14px;background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:12px;border:1px solid rgba(255,179,204,.3);margin-bottom:8px">📌 ${escHtml(h)}</div>`).join('');
+    `<div style="font-size:.95rem;font-weight:900;color:var(--text);line-height:1.6;padding:10px 14px;background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:12px;border:1px solid rgba(255,179,204,.3);border-left:3px solid var(--pink);margin-bottom:8px">${hiNum(h)}</div>`).join('');
   setReportStage('cta');
   box.style.display='block';
 }
