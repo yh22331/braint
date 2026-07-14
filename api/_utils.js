@@ -20,7 +20,7 @@ export const ASSUMPTIONS = {
   maxSalaryCapManwon: 15000,       // bf-home / housecheck 연봉 상한 (만원)
 
   // 육아비 (신모델) — 자녀 나이 구간별 고정 테이블(BABY_COST_BY_STAGE) 기반
-  babyYearsNew: 22,                // 출산 후 22년 (자녀 0~21세)
+  babyYearsNew: 28,                // 출산 후 28년 (한국식 나이 1~28세)
 
   // 육아비 (구모델) — simulate-housecheck.js의 자체 복리 루프 전용. 신모델 함수는 참조하지 않음.
   babyInflation: 1.03,             // 연 3% 상승
@@ -72,25 +72,27 @@ export function calcTakehome(gross) {
 // ── 자녀 나이 구간별 연간 육아비(만원). BABY_COST_BASE 기준값 대비 비율로 스케일링.
 //    ※ bf-home/index.html의 calcBabyByYear와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
 export const BABY_COST_BASE = 500; // 스케일링 기준 (입력 기본값)
-export const BABY_COST_BY_STAGE = [
-  { from: 0,  to: 5,  annual: 500 },   // 영유아
-  { from: 6,  to: 11, annual: 1000 },  // 초등
-  { from: 12, to: 17, annual: 2000 },  // 중고등
-  { from: 18, to: 21, annual: 3000 },  // 대학
+export const BABY_COST_BY_STAGE = [   // from/to는 한국식 나이
+  { from: 1,  to: 7,  annual: 500 },   // 영유아 (7년)
+  { from: 8,  to: 13, annual: 1000 },  // 초등 (6년)
+  { from: 14, to: 19, annual: 2000 },  // 중고등 (6년)
+  { from: 20, to: 26, annual: 2000 },  // 대학·군대 (7년, 등록금+군대 평균)
+  { from: 27, to: 28, annual: 800 },   // 졸업·취준 (2년)
 ];
 
-// ── 자녀 나이(0 ~ babyYearsNew-1)별 연간 육아비 배열(만원)
+// ── 출산 후 경과연차(0 ~ babyYearsNew-1)별 연간 육아비 배열(만원)
 export function babyAnnualByYear(initCost) {
   const ratio = (initCost || BABY_COST_BASE) / BABY_COST_BASE;
   const out = [];
   for (let i = 0; i < ASSUMPTIONS.babyYearsNew; i++) {
-    const stage = BABY_COST_BY_STAGE.find(s => i >= s.from && i <= s.to);
+    const age = i + 1; // 한국식 나이
+    const stage = BABY_COST_BY_STAGE.find(s => age >= s.from && age <= s.to);
     out.push(stage ? Math.round(stage.annual * ratio) : 0);
   }
   return out;
 }
 
-// ── 22년 누적 육아비 총합(만원). 구간 테이블 기반.
+// ── 28년 누적 육아비 총합(만원). 구간 테이블 기반.
 export function calcBabyTotal(initCost) {
   return babyAnnualByYear(initCost).reduce((s, c) => s + c, 0);
 }
