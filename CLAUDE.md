@@ -101,6 +101,7 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
 - 결정 사항: 대출 모델 자체(주식담보대출 vs 주택담보대출)를 어떤 걸로 할지부터 정할 것
 
 ### housecheck 반영 대기 목록 (작업 3 착수 시 일괄 반영)
+- 대출 구간별 상한 (calcLoanAmount — 15억↓6억/25억↓4억/초과2억, 2026.7 규제)
 - 육아비 신모델 (구간별 고정비: 0-5세 500만/6-11세 1000만/12-17세 2000만/18-21세 3000만)
   — housecheck는 구모델(3%복리·26년) 그대로 보존 중. `api/simulate-housecheck.js:62`가 자체 루프로
   `A.babyYears`(26) + `A.babyInflation` + `A.babyAnnualCapManwon`을 계속 참조하므로 이 상수들 삭제 금지
