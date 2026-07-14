@@ -148,3 +148,9 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
   - admin/index.html이 자체 인증 사용, 기본 키(sb-<ref>-auth-token)에 세션 저장 (일반 사용자와 무관)
   - bf-home/housecheck/admin/bf-new의 로컬 sb 클라이언트 4곳이 persistSession/detectSessionInUrl 옵션 미지정 (기본값 true) → 방어적으로 false 주는 게 안전
 - 문제 재발 시(로그인했는데 헤더 인식 안 됨 등) 이 메모부터 확인할 것
+
+## 다음 세션 — 커플계산기 개편 (2026-07-14 분석 완료)
+- Phase 1 (최우선): 계산 로직 bf-home 동기화 — 대출(집값40%+구간상한+구매후상환), 생활비(결혼1.5x+인플레2.5%), 자산리셋, 육아비 확인. 서버(simulate-couple.js)+프론트 양쪽
+- Phase 2: 보안 H-1(세션코드 crypto 고엔트로피화)·H-2(만료 검사) — 링크 공유 기능의 전제
+- Phase 3: bf-home 보고서 구조 이식 (훅→설문→블러→990원), 커플 관점 문구로
+- 잔여: bf-home 이모지 SVG 전체 확산 (보고서 카드 시범 스타일 확정 후)
