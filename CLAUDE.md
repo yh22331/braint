@@ -139,3 +139,11 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
 - 생활비: `api/_utils.js`의 `calcLivingCost` ↔ `bf-home/index.html`의 `calcLivingCost`
 - bf-home은 API 실패 시 로컬 폴백(`simulateMonthly`)으로 계산하므로, 공식 변경 시 **API + 폴백 + `renderChart` 3곳** 모두 반영해야 함
 - 월지출 차트/breakdown은 API 응답의 `monthlyExpense`를 쓰지 않고 `renderChart`가 항상 프론트에서 재계산함
+
+## storageKey 불일치 버그 — 상태 업데이트 (2026-07-13)
+- 원래 버그(홈 헤더 세션 미인식)는 인증이 js/auth.js + braint-auth 키로 일원화되면서
+  코드 근거상 해소된 것으로 판단. 실제 브라우저 검증은 안 함(코드 분석만).
+- 잔존 이슈(낮은 우선순위):
+  - admin/index.html이 자체 인증 사용, 기본 키(sb-<ref>-auth-token)에 세션 저장 (일반 사용자와 무관)
+  - bf-home/housecheck/admin/bf-new의 로컬 sb 클라이언트 4곳이 persistSession/detectSessionInUrl 옵션 미지정 (기본값 true) → 방어적으로 false 주는 게 안전
+- 문제 재발 시(로그인했는데 헤더 인식 안 됨 등) 이 메모부터 확인할 것
