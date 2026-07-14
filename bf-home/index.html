@@ -186,6 +186,11 @@
   .event-result-label{color:var(--text-soft)}
   .event-result-val{font-weight:700;color:var(--text)}
   .event-result-val.diff{color:var(--pink)}
+  /* 심층 보고서 설문 */
+  .survey-q{font-size:.82rem;font-weight:900;color:var(--text);margin:14px 0 8px;text-align:left}
+  .survey-opts{display:flex;gap:6px;flex-wrap:wrap}
+  .survey-opt{flex:1;min-width:88px;padding:10px 8px;background:#FFF5F9;border:1.5px solid rgba(255,107,157,.25);border-radius:12px;font-family:'Noto Sans KR',sans-serif;font-size:.74rem;font-weight:700;color:var(--text-soft);cursor:pointer;transition:all .15s}
+  .survey-opt.active{background:linear-gradient(135deg,var(--pink),#FF9EC4);border-color:var(--pink);color:#fff;box-shadow:0 4px 12px rgba(255,107,157,.3)}
   /* PDF */
   .pdf-preview{background:#fff;border-radius:16px;padding:20px;border:2px solid rgba(255,179,204,.3);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
   .pdf-preview-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #F0E0E8}
@@ -704,6 +709,36 @@
           <div style="text-align:center;font-size:.7rem;color:var(--text-soft);margin:2px 0 0">👉 옆으로 움직여 다른 나이도 확인해보세요</div>
           <div style="text-align:center;font-size:.9rem;font-weight:900;color:var(--pink);margin:6px 0" id="breakdown-age-label"></div>
           <canvas id="breakdown-chart" height="180"></canvas>
+        </div>
+        <!-- LLM 심층 보고서 (Phase 3: 훅 무료 → 설문 → 블러 본문 + 결제 유도) -->
+        <div id="deep-report" style="display:none;background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
+          <div style="font-size:.92rem;font-weight:900;color:var(--pink);margin-bottom:12px">💌 짝꿍 재력 심층 보고서</div>
+          <div id="deep-report-hooks" style="margin-bottom:14px"></div>
+          <!-- 1단계: 설문 유도 -->
+          <div id="deep-report-cta">
+            <button type="button" class="btn-cta" onclick="startReportSurvey()">📋 1분 설문하고 짝꿍 맞춤 부동산 솔루션 받기</button>
+          </div>
+          <!-- 2단계: 설문 (문항은 JS 생성) -->
+          <div id="deep-report-survey" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:.78rem;font-weight:900;color:var(--pink)">📋 짝꿍 맞춤 설문</span>
+              <span id="survey-progress" style="font-size:.72rem;font-weight:700;color:var(--text-soft)">0/5</span>
+            </div>
+            <div id="survey-questions"></div>
+            <div class="survey-q">Q5. 짝꿍 직장(출퇴근 기준) 지역은? <span style="font-weight:400;color:var(--text-soft)">(선택)</span></div>
+            <input type="text" id="survey-workplace" placeholder="예: 강남, 판교" oninput="updateSurveyProgress()"
+              style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,107,157,.25);border-radius:12px;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:600;color:var(--text);background:#FFF5F9;outline:none">
+            <button type="button" class="btn-cta" id="survey-submit" disabled onclick="submitReportSurvey()" style="margin-top:14px;opacity:.45">솔루션 받기</button>
+          </div>
+          <!-- 3단계: 블러 본문 + 결제 유도 -->
+          <div id="deep-report-locked" style="display:none">
+            <div style="position:relative">
+              <div id="deep-report-sections"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                <button type="button" onclick="alert('결제 기능 준비 중입니다')" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기 🔓</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="pdf-preview" id="pdf-preview">
           <div class="pdf-preview-header">
@@ -1821,6 +1856,7 @@ async function calcAll(){
     // Phase B: 보라색 카드 + 저장값 + 컨페티 모두 sim 결과 기반으로 일관 처리
     renderVerdict(reachedYr);
     saveAnalysis({age:calcResult.age,grossSalary:calcResult.grossSalary,totalAsset,region:calcResult.region,size:calcResult.size,targetPrice,yearsNeeded:reachedYr,verdict:calcResult.verdict});
+    fetchDeepReport(reachedYr); // 심층 보고서 (비동기, 실패해도 결과 화면 무관)
     if(reachedYr<=3 && reachedYr>=0 && !document.body.classList.contains('analyzed')) launchConfetti();
     return;
   }
@@ -1883,6 +1919,7 @@ async function calcAll(){
   // Phase B: 보라색 카드 + 저장값 + 컨페티 모두 sim 결과 기반으로 일관 처리
   renderVerdict(reachedYr);
   saveAnalysis({age:calcResult.age,grossSalary:calcResult.grossSalary,totalAsset,region:calcResult.region,size:calcResult.size,targetPrice,yearsNeeded:reachedYr,verdict:calcResult.verdict});
+  fetchDeepReport(reachedYr); // 심층 보고서 (비동기, 실패해도 결과 화면 무관)
   if(reachedYr<=3 && reachedYr>=0 && !document.body.classList.contains('analyzed')) launchConfetti();
 }
 
@@ -2697,6 +2734,157 @@ function buildReportData(){
       ['총 이자', loanAmt>0?fmt(mortgage.totalInterest):'해당없음'],
     ]},
   ];
+}
+
+// ━━ LLM 심층 보고서 (Phase 3: Mock API 연동 — 훅 무료 + 본문 블러) ━━
+function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// 보고서 시나리오용 로컬 시뮬 1회 (calcAll 폴백과 동일 인자 조립 — baseline/+2%p를 같은 엔진으로 비교)
+function runReportSim(rate){
+  const{salary,totalAsset,targetPrice}=calcResult;
+  const{loanAmt,loanRate}=getLoanData();
+  const{extraByYear,monthlyBabyByYr}=getEventDataWithLabels();
+  const carOn=document.getElementById('ev-car')?.checked;
+  const ar=raiseState.rate||0;
+  return simulateMonthly({
+    netSalary:salary,initAsset:totalAsset,targetPrice:targetPrice-loanAmt,
+    investRate:rate,extraByYear,monthlyBabyByYr,loanAmt,loanRate,
+    annualRaisePct:ar,promoRaise:raiseState.promo,promoBasePct:ar,
+    maxNetSalary:getMaxNetSalary(),
+    carStartYr:carOn?EVENT_AGES.car:Infinity,
+    carMonthlyMaint:carOn?getCarMonthlyMaintenance():0,
+    weddingStartYr:getWeddingStartYr(),
+  });
+}
+
+function buildReportPayload(reachedYr){
+  if(!calcResult.salary)return null;
+  const{age,grossSalary,netSalary,monthlyTakehome,totalAsset,region,size,targetPrice,verdict}=calcResult;
+  const investRate=getInvestRate();
+  const{loanAmt}=getLoanData();
+  // 적자 전환 첫 나이 (yearlyBreakdown은 renderChart에서 이미 채워짐)
+  let firstDeficitAge=null;
+  for(const a of Object.keys(yearlyBreakdown).map(Number).sort((x,y)=>x-y)){
+    if(yearlyBreakdown[a].netSaving<0){firstDeficitAge=a;break}
+  }
+  // 대표 시점만 발췌 (토큰 절약): 현재, +5년, +10년, 구매 나이
+  const reachedAge=age+Math.max(reachedYr,0);
+  const bd={};
+  [age,age+5,age+10,reachedAge].forEach(a=>{if(yearlyBreakdown[a])bd[a]=yearlyBreakdown[a]});
+  // +2%p 시나리오: baseline도 로컬로 돌려 같은 엔진끼리 델타 산출
+  const yearsOf=s=>s.reachedMonth>=0?Math.ceil(s.reachedMonth/12):61;
+  const baseYears=yearsOf(runReportSim(investRate));
+  const plusYears=yearsOf(runReportSim(investRate+2));
+  return{
+    profile:{age,grossSalary,netSalary,monthlyTakehome,totalAsset,region,size},
+    goal:{targetPrice,effectiveTarget:targetPrice-loanAmt,loanAmt,investRate,monthlyLiving:monthlyLivingCost},
+    result:{yearsNeeded:reachedYr,reachedAge,verdict},
+    events:{
+      wedding:{on:!!document.getElementById('ev-wedding')?.checked,cost:parseInt(document.getElementById('cost-wedding')?.value)||5000},
+      baby:{on:!!document.getElementById('ev-baby')?.checked},
+      car:{on:!!document.getElementById('ev-car')?.checked,cost:parseInt(document.getElementById('cost-car')?.value)||3500},
+    },
+    deficit:firstDeficitAge!=null?{firstDeficitAge}:null,
+    yearlyBreakdown:bd,
+    scenario:{plusTwo:{investRate:investRate+2,yearsNeeded:plusYears,yearsSaved:Math.max(0,baseYears-plusYears)}},
+  };
+}
+
+// 설문 문항 정의 (Q5 직장 지역은 마크업의 텍스트 입력, 선택사항)
+const REPORT_SURVEY_QS=[
+  {key:'region', q:'Q1. 어느 지역까지 고려해요?',        opts:['서울 필수','수도권까지 OK','어디든 좋아요']},
+  {key:'station',q:'Q2. 역세권 얼마나 중요해요?',        opts:['도보 5분 필수','10분까지 OK','상관없어요']},
+  {key:'build',  q:'Q3. 신축 vs 구축?',                 opts:['신축만','구축도 OK','재개발 기대 구축도 좋아요']},
+  {key:'invest', q:'Q4. 투자 성향은?',                  opts:['안전하게','균형있게','공격적으로']},
+];
+const reportSurveyState={region:null,station:null,build:null,invest:null};
+let _lastReportYears=null; // 설문 완료 시 재호출용
+
+async function fetchDeepReport(reachedYr){
+  _lastReportYears=reachedYr;
+  const box=document.getElementById('deep-report');
+  if(box)box.style.display='none'; // 재분석 시 이전 보고서 숨기고 새로 로드
+  try{
+    const payload=buildReportPayload(reachedYr);
+    if(!payload)return;
+    const res=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)return; // 실패 시 보고서 섹션 숨김 유지 — 기존 결과 화면 영향 없음
+    renderDeepReportHooks(await res.json());
+  }catch(e){}
+}
+
+// 1단계: 훅 2줄(무료) + 설문 유도 버튼
+function renderDeepReportHooks(rep){
+  const box=document.getElementById('deep-report');
+  const hooksEl=document.getElementById('deep-report-hooks');
+  if(!box||!hooksEl||!Array.isArray(rep?.hooks))return;
+  hooksEl.innerHTML=rep.hooks.map(h=>
+    `<div style="font-size:.95rem;font-weight:900;color:var(--text);line-height:1.6;padding:10px 14px;background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:12px;border:1px solid rgba(255,179,204,.3);margin-bottom:8px">📌 ${escHtml(h)}</div>`).join('');
+  setReportStage('cta');
+  box.style.display='block';
+}
+
+function setReportStage(stage){ // 'cta' | 'survey' | 'locked'
+  ['cta','survey','locked'].forEach(s=>{
+    const el=document.getElementById('deep-report-'+s);
+    if(el)el.style.display=s===stage?'block':'none';
+  });
+}
+
+// 2단계: 설문
+function startReportSurvey(){
+  const wrap=document.getElementById('survey-questions');
+  if(wrap&&wrap.childElementCount===0){ // 문항 1회 생성
+    wrap.innerHTML=REPORT_SURVEY_QS.map(q=>
+      `<div class="survey-q">${q.q}</div><div class="survey-opts">`+
+      q.opts.map(o=>`<button type="button" class="survey-opt" onclick="selectSurveyOpt('${q.key}','${o}',this)">${o}</button>`).join('')+
+      `</div>`).join('');
+  }
+  setReportStage('survey');
+}
+function selectSurveyOpt(key,val,el){
+  reportSurveyState[key]=val;
+  [...el.parentElement.children].forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  updateSurveyProgress();
+}
+function updateSurveyProgress(){
+  const answered=REPORT_SURVEY_QS.filter(q=>reportSurveyState[q.key]).length;
+  const wp=(document.getElementById('survey-workplace')?.value||'').trim();
+  const prog=document.getElementById('survey-progress');
+  if(prog)prog.textContent=`${answered+(wp?1:0)}/5`;
+  const btn=document.getElementById('survey-submit'); // Q1~Q4 필수, Q5 선택
+  if(btn){const ok=answered===REPORT_SURVEY_QS.length;btn.disabled=!ok;btn.style.opacity=ok?'1':'.45'}
+}
+
+// 3단계: survey 포함 재호출 → 블러 본문 + 결제 유도
+async function submitReportSurvey(){
+  const btn=document.getElementById('survey-submit');
+  if(btn){btn.disabled=true;btn.textContent='분석 중...'}
+  try{
+    const payload=buildReportPayload(_lastReportYears??61);
+    if(!payload)throw new Error('no payload');
+    payload.survey={
+      ...reportSurveyState,
+      workplace:(document.getElementById('survey-workplace')?.value||'').trim()||null,
+    };
+    const res=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error('bad response');
+    const rep=await res.json();
+    if(!renderDeepReportSections(rep))throw new Error('bad shape');
+  }catch(e){
+    showToast('⚠️ 잠시 후 다시 시도해주세요');
+  }
+  if(btn){btn.textContent='솔루션 받기';updateSurveyProgress()} // 성공/실패 모두 버튼 복원
+}
+function renderDeepReportSections(rep){
+  const secEl=document.getElementById('deep-report-sections');
+  if(!secEl||!Array.isArray(rep?.sections))return false;
+  secEl.innerHTML=rep.sections.map(s=>
+    `<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:900;color:var(--text);margin-bottom:6px">${escHtml(s.title)}</div>`+
+    `<div style="font-size:.8rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.7;filter:blur(6px);user-select:none;-webkit-user-select:none;pointer-events:none">${escHtml(s.body)}</div></div>`).join('');
+  setReportStage('locked');
+  return true;
 }
 
 // 공유 링크로 접속 시 설정 복원

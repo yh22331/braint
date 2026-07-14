@@ -10,6 +10,7 @@ export const config = { runtime: 'nodejs' };
 //   deficit: { firstDeficitAge } | null
 //   yearlyBreakdown: { [나이]: { income, invest, living, loan, baby, car, netSaving } }
 //   scenario: { plusTwo: { investRate, yearsNeeded, yearsSaved } }
+//   survey: { region, station, build, invest, workplace } (선택 — 설문 완료 후 재호출 시에만 포함)
 // 응답: { hooks: string[], sections: [{ title, body }], _mock: true }
 //
 // ⚠️ 현재 Mock. 실제 LLM 연동 시 generateReport() 내부만 교체.
@@ -47,7 +48,7 @@ export default async function handler(req, res) {
 
 // ━━ 보고서 생성 ━━
 // ⚠️ Mock 구현. 실제 LLM 연동 시 이 함수 내부만 교체 (시그니처/응답 스키마 유지).
-function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario }) {
+function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey }) {
   const fmtEok = man => man >= 10000 ? `${(man / 10000).toFixed(1)}억` : `${man.toLocaleString()}만원`;
   const plusTwo = scenario.plusTwo;
 
@@ -73,7 +74,10 @@ function generateReport({ profile, goal, result, events, deficit, yearlyBreakdow
     },
     {
       title: '실행 제안',
-      body: `① 매달 고정 저축액을 자동이체로 먼저 떼어두세요. `
+      body: (survey?.region
+          ? `선택하신 "${survey.region}${survey.workplace ? ` · ${survey.workplace} 출퇴근` : ''}" 조건 기준 — `
+          : '')
+        + `① 매달 고정 저축액을 자동이체로 먼저 떼어두세요. `
         + `② 예적금에 머물러 있다면 분산 투자로 수익률을 단계적으로 올려보세요. `
         + `③ 이벤트(결혼·출산·차량) 시점을 조정하면 적자 구간을 완화할 수 있어요. `
         + `(Mock 응답 — 실제 LLM 연동 시 맞춤 제안으로 교체됩니다)`,
