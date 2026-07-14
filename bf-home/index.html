@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>내 연봉으로 집 살 수 있을까? 🏠💕</title>
+<title>짝꿍 연봉으로 집 살 수 있을까? 🏠💕</title>
+<meta property="og:title" content="짝꿍 연봉으로 집 살 수 있을까? 🏠💕">
+<meta property="og:description" content="짝꿍 스펙 넣으면 30초 만에 미래가 보여요 💕">
+<meta property="og:image" content="https://braint.net/og-image.png">
+<meta property="og:url" content="https://braint.net/bf-home/">
+<meta property="og:type" content="website">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -291,8 +296,8 @@
   <div class="header">
     <div id="bf-auth-area" class="bf-auth-area"></div>
     <span class="emoji-big">🏠💕</span>
-    <h1>내 연봉으로<br>집 살 수 있을까?</h1>
-    <p>내 재정 상태, 솔직하게 알아보자 🔍</p>
+    <h1>짝꿍 연봉으로<br>집 살 수 있을까?</h1>
+    <p>짝꿍 스펙 넣으면 30초 만에 미래가 보여요 💕</p>
   </div>
 
   <!-- 스텝 인디케이터 (Phase 1: UI 골격, Phase 2에서 입력 분할) -->
@@ -306,7 +311,7 @@
     <div class="card">
       <div style="font-size:3rem;margin-bottom:10px">🏠✨</div>
       <h2 style="font-size:1.2rem;font-weight:900;color:var(--pink);margin-bottom:10px;line-height:1.4">집 살 수 있을까?<br>같이 알아봐요</h2>
-      <p style="font-size:.85rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.7;margin-bottom:18px">7개 질문에 답하면<br>내 재정 상황을 현실적으로 분석해드려요 💕</p>
+      <p style="font-size:.85rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;line-height:1.7;margin-bottom:18px">7개 질문에 답하면<br>짝꿍 재정 상황을 현실적으로 분석해드려요 💕</p>
       <button class="btn-cta" type="button" onclick="goNext()">시작하기 →</button>
     </div>
   </section>
@@ -314,10 +319,10 @@
   <!-- ══ Step 1: 나 소개 (나이 + 연봉) ══ -->
   <section class="step-section" data-step="1">
     <div class="card">
-      <div class="card-title">📋 나 소개</div>
+      <div class="card-title">📋 짝꿍 소개</div>
 
       <div class="input-group">
-        <label>🎂 내 나이</label>
+        <label>🎂 짝꿍 나이</label>
         <div style="position:relative">
           <input type="number" id="age" min="20" max="70" value="30" placeholder="30"
             oninput="onAgeInput(this)"
@@ -328,7 +333,7 @@
       </div>
 
       <div class="input-group">
-        <label>💰 내 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
+        <label>💰 짝꿍 연봉 <span style="font-size:.72rem;font-weight:400;color:var(--text-soft)">(세전)</span></label>
         <div class="input-wrap" style="padding-top:30px">
           <span class="range-val" id="salary-val">5,000만원</span>
           <input type="range" id="salary" min="2000" max="20000" step="100" value="5000"
@@ -341,7 +346,7 @@
         </div>
         <div id="dart-search-block" style="margin-top:12px">
           <div style="display:flex;gap:8px;align-items:center">
-            <input type="text" id="dart-company-input" placeholder="🔍 회사명으로 연봉 자동입력"
+            <input type="text" id="dart-company-input" placeholder="🔍 짝꿍 회사 검색하면 연봉 자동입력"
               oninput="filterDartDropdown(this.value)"
               onfocus="filterDartDropdown(this.value)"
               autocomplete="off"
@@ -366,7 +371,7 @@
       <div class="card-title">💳 자산 현황</div>
 
       <div class="input-group">
-        <label>💳 내 자산 (현재 모은 돈)</label>
+        <label>💳 짝꿍 자산 (현재 모은 돈)</label>
         <div class="input-wrap" style="padding-top:30px">
           <span class="range-val" id="asset-val">5,000만원</span>
           <input type="range" id="asset" min="0" max="100000" step="1000" value="5000"
@@ -444,7 +449,7 @@
       <div style="font-size:.75rem;color:var(--text-soft);font-family:'Gowun Dodum',sans-serif;margin-bottom:14px;line-height:1.5">저축액을 어떻게 굴리는지 선택하세요 → 아래 그래프와 최종 기간에 반영돼요</div>
       <div class="invest-tabs">
         <button class="invest-tab active" onclick="selectInvest('deposit',this)">🏦 예적금 3%</button>
-        <button class="invest-tab" onclick="selectInvest('custom',this)">📊 내 주식 수익률</button>
+        <button class="invest-tab" onclick="selectInvest('custom',this)">📊 짝꿍 주식 수익률</button>
       </div>
       <div class="invest-custom-wrap" id="invest-custom-wrap">
         <div style="display:flex;gap:8px;align-items:center">
@@ -703,7 +708,7 @@
           <div class="pdf-preview-header">
             <div class="pdf-preview-logo">🏠</div>
             <div>
-              <div class="pdf-preview-title">내 재력 분석 리포트</div>
+              <div class="pdf-preview-title">짝꿍 재력 분석 리포트</div>
               <div class="pdf-preview-date" id="pdf-date">-</div>
             </div>
           </div>
@@ -2417,7 +2422,7 @@ function downloadPDF(){
   // 헤더 텍스트
   ctx.textAlign='center';
   ctx.fillStyle='#FF6B9D'; ctx.font='bold 22px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
-  ctx.fillText('내 재력 분석 리포트', W/2, 80);
+  ctx.fillText('짝꿍 재력 분석 리포트', W/2, 80);
   ctx.fillStyle='#9B7B8A'; ctx.font='13px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
   ctx.fillText(`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 · by Xalysis`, W/2, 108);
   ctx.fillStyle='#3D2C35'; ctx.font='bold 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
@@ -2488,7 +2493,7 @@ function downloadPDF(){
       srcY+=pageH;
     }
   }
-  const fn=`내재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
+  const fn=`짝꿍재력분석_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
   doc.save(fn);
   showToast('📥 PDF 저장 완료!');
 }
@@ -2509,7 +2514,7 @@ function copyReportText(){
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
   const lines=[
-    '🏠 내 재력 분석 리포트','─'.repeat(22),
+    '🏠 짝꿍 재력 분석 리포트','─'.repeat(22),
     `[목표] ${rN[region]} ${sN[size]} ${fmt(targetPrice)}`,
     `[현재자산] ${fmt(totalAsset)}`,
     `[연봉] 세전 ${fmt(grossSalary)} / 월 실수령 약 ${monthlyTakehome}만원`,
@@ -2741,11 +2746,11 @@ function drawShareCard(){
   ctx.fillStyle='rgba(255,240,248,.9)';roundRect(ctx,70,720,W-140,120,24);ctx.fill();
   ctx.strokeStyle='#FFB3CC';ctx.lineWidth=2;roundRect(ctx,70,720,W-140,120,24);ctx.stroke();
   ctx.font='20px sans-serif';ctx.fillStyle='#3D2C35';ctx.textAlign='center';
-  ['💌 이 결과를 잊지 말고 다짐해봐요!','매달 한 번씩 내 자산 점검 어때요? 📊'].forEach((l,i)=>ctx.fillText(l,W/2,775+i*34));
-  ctx.font='18px sans-serif';ctx.fillStyle='rgba(155,123,138,.5)';ctx.fillText('🏠 내 연봉 집계산기 · Xalysis',W/2,H-95);
+  ['💌 이 결과를 잊지 말고 다짐해봐요!','매달 한 번씩 짝꿍 자산 점검 어때요? 📊'].forEach((l,i)=>ctx.fillText(l,W/2,775+i*34));
+  ctx.font='18px sans-serif';ctx.fillStyle='rgba(155,123,138,.5)';ctx.fillText('🏠 짝꿍 연봉 집계산기 · Xalysis',W/2,H-95);
 }
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath()}
-function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='내연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
+function downloadShareImage(){const c=document.getElementById('share-canvas'),l=document.createElement('a');l.download='짝꿍연봉_집계산기.png';l.href=c.toDataURL('image/png');l.click()}
 function shareKakao(){
   if(!calcResult.salary){ showToast('먼저 분석하기를 눌러주세요!'); return; }
   const{verdict,pushMsg,targetPrice,yearsNeeded}=calcResult;
@@ -2754,7 +2759,7 @@ function shareKakao(){
     Kakao.Share.sendDefault({
       objectType:'feed',
       content:{
-        title:'내 연봉으로 집 살 수 있을까? 🏠',
+        title:'짝꿍 연봉으로 집 살 수 있을까? 🏠',
         description: verdict + (pushMsg ? '\n' + pushMsg : ''),
         imageUrl:'https://braint.net/og-image.png',
         imageWidth: 800,
