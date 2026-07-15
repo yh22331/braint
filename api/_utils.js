@@ -111,7 +111,7 @@ export function calcBabyTotal(initCost) {
 
 // ── 시점별 월 생활비(만원). 결혼 시 1.5배 + 연 2.5% 물가상승.
 //    ※ bf-home/index.html의 calcLivingCost와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
-//    ※ simulate.js / simulate-housecheck.js / simulate-couple.js는 호출하지 않음 (기존 고정 생활비 유지).
+//    ※ simulate-housecheck.js만 호출하지 않음 (구모델 고정 생활비 유지). bf-home/simulate.js/simulate-couple.js 사용.
 export function calcLivingCost(baseLivingCost, isMarried, yearsElapsed) {
   const marriageMultiplier = isMarried ? 1.5 : 1.0;
   const inflationMultiplier = Math.pow(1.025, yearsElapsed);
