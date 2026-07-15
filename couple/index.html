@@ -403,6 +403,32 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
   <div class="section-card">
     <div class="section-title">🎯 현실 시나리오 반영</div>
 
+    <!-- 주택담보대출 (호스트 전용 — 짝꿍 링크 진입 시 숨김) -->
+    <div id="loan-card" style="background:linear-gradient(135deg,#FFF8DC,#FFF3CC);border-radius:16px;padding:16px;border:1.5px solid rgba(245,166,35,.3);margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:.88rem;font-weight:900;color:var(--text)">📊 주택담보대출 활용</span>
+        <label class="event-toggle"><input type="checkbox" id="loan-toggle" onchange="updateLoanBox()" checked><span class="event-slider"></span></label>
+      </div>
+      <div style="font-size:.68rem;color:var(--text-soft);font-family:var(--soft);line-height:1.6;margin-bottom:8px">집값의 40%를 대출 (최대 6억 · 15억 초과 주택은 규제로 한도 축소) → 구매 시점부터 상환 (연 4%, 원리금균등 30년)</div>
+      <div id="loan-calc-box" style="display:none;background:rgba(255,255,255,.7);border-radius:12px;padding:10px 14px;border:1px solid rgba(245,166,35,.3)">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+          <span style="color:var(--text-soft)">목표 집값 (내 선택 기준)</span>
+          <span style="font-weight:700;color:var(--text)" id="loan-house-price">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+          <span style="color:var(--text-soft)">주택담보대출 (LTV 40%)</span>
+          <span style="font-weight:700;color:#3DB88A" id="loan-amount-display">-</span>
+        </div>
+        <div style="height:1px;background:rgba(245,166,35,.3);margin:6px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem">
+          <span style="font-weight:700;color:var(--text)">실제 필요 현금</span>
+          <span style="font-weight:900;color:#CC8800;font-size:1rem" id="loan-net-display">-</span>
+        </div>
+        <div style="font-size:.68rem;color:var(--text-soft);margin-top:6px;font-family:var(--soft)" id="loan-interest-note"></div>
+        <div style="display:none;font-size:.68rem;color:#CC6600;margin-top:4px;font-family:var(--soft)" id="loan-cap-note">⚠️ 대출 규제로 한도 제한 적용</div>
+      </div>
+    </div>
+
     <!-- 결혼 -->
     <div class="event-item">
       <div class="event-item-header">
@@ -433,7 +459,7 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
         <div class="event-icon">👶</div>
         <div class="event-info">
           <div class="event-name">출산·육아 비용</div>
-          <div class="event-cost-note">출생~26세까지 · 매년 3% 증가 · MAX 연 2,000만원</div>
+          <div class="event-cost-note">자녀 1~28세까지 · 영유아 500만 → 초등 1,000만 → 중고등·대학 2,000만 → 취준 800만 (연간)</div>
         </div>
         <label class="event-toggle"><input type="checkbox" id="ev-baby" onchange="toggleEventDetail('baby',this)" checked><span class="event-slider"></span></label>
       </div>
@@ -442,7 +468,7 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
           <div class="event-field">
             <label>초기 연 육아비 (0세)</label>
             <div style="position:relative"><input type="number" id="cost-baby-yr" value="500" oninput="updateBabyTotal()" class="ev-input"><span class="num-input-suffix" style="font-size:.65rem">만/년</span></div>
-            <div style="font-size:.65rem;color:var(--text-soft);margin-top:3px">매년 3% 상승 · MAX 2,000만원 · 총 <span id="baby-total-cost">-</span></div>
+            <div style="font-size:.65rem;color:var(--text-soft);margin-top:3px">1~28세 구간별 자동 반영 · 총 <span id="baby-total-cost">-</span></div>
           </div>
           <div class="event-field">
             <label>예정 나이</label>
@@ -740,6 +766,8 @@ function collectMyInputs() {
     carOn:      document.getElementById('ev-car')?.checked  || false,
     carCost:    parseInt(document.getElementById('cost-car')?.value)        || 3500,
     carAge:     parseInt(document.getElementById('c-age-car-val')?.value)   || 30,
+    // 대출: 호스트 토글 하나 → 합산/solo 동일 적용. 짝꿍(게스트)은 호스트 설정을 따름
+    loanOn:     S.isPartner ? (S.partnerData?.loanOn ?? true) : (document.getElementById('loan-toggle')?.checked || false),
   };
 }
 
@@ -937,6 +965,7 @@ function selectOpt(btn,key,val){
   btn.closest('.option-grid').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   S[key]=val;
+  if(key==='region'||key==='size')updateLoanBox();
 }
 function selectInvest(mode,el){
   document.querySelectorAll('.opt-btn[onclick*="selectInvest"]').forEach(b=>b.classList.remove('active'));
@@ -1003,10 +1032,60 @@ function selectCar(el,type,cost){
   updateCarMaintenance();
 }
 function toggleEventDetail(name,cb){const d=document.getElementById('detail-'+name);if(d)d.classList.toggle('show',cb.checked);}
+function calcBabyByYear(startCost){
+  // 자녀 나이 구간별 고정 연간 육아비. startCost로 비율 스케일링(기준 500).
+  // ※ api/_utils.js의 BABY_COST_BY_STAGE/babyAnnualByYear, bf-home/index.html의 calcBabyByYear와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+  const BABY_YEARS = 28; // 한국식 나이 1~28세
+  const BABY_COST_BASE = 500;
+  const BABY_COST_BY_STAGE = [   // from/to는 한국식 나이
+    { from: 1,  to: 7,  annual: 500 },   // 영유아 (7년)
+    { from: 8,  to: 13, annual: 1000 },  // 초등 (6년)
+    { from: 14, to: 19, annual: 2000 },  // 중고등 (6년)
+    { from: 20, to: 26, annual: 2000 },  // 대학·군대 (7년, 등록금+군대 평균)
+    { from: 27, to: 28, annual: 800 },   // 졸업·취준 (2년)
+  ];
+  const ratio = (startCost || BABY_COST_BASE) / BABY_COST_BASE;
+  const result = {};
+  let total = 0;
+  for(let i = 0; i < BABY_YEARS; i++){
+    const age = i + 1; // 한국식 나이
+    const stage = BABY_COST_BY_STAGE.find(s => age >= s.from && age <= s.to);
+    const c = stage ? Math.round(stage.annual * ratio) : 0;
+    result[i] = c;
+    total += c;
+  }
+  return { byOffset: result, total };
+}
 function updateBabyTotal(){
   const startCost=parseInt(document.getElementById('cost-baby-yr')?.value)||500;
-  let total=0;for(let i=0;i<26;i++)total+=Math.min(Math.round(startCost*Math.pow(1.03,i)),2000);
+  const total=calcBabyByYear(startCost).total;
   const el=document.getElementById('baby-total-cost');if(el)el.textContent=total>=10000?(total/10000).toFixed(1)+'억원':total.toLocaleString()+'만원';
+}
+function calcLoanAmount(targetPrice){
+  // targetPrice: 만원 단위. LTV 40% + 구간별 정부 규제 상한 (2026.7 기준)
+  // ※ api/_utils.js의 calcLoanAmount, bf-home/index.html의 calcLoanAmount와 동일 로직 — 한쪽 바꾸면 반드시 같이 수정.
+  const ltv = targetPrice * 0.4;
+  let cap;
+  if (targetPrice <= 150000) cap = 60000;       // 15억 이하 → 최대 6억
+  else if (targetPrice <= 250000) cap = 40000;  // 15~25억 → 최대 4억
+  else cap = 20000;                             // 25억 초과 → 최대 2억
+  return Math.min(ltv, cap);
+}
+function updateLoanBox(){
+  // 대출 계산 박스: 내 지역/평수 선택 기준 미리보기 (합산 목표가는 두 사람 선택 평균 — 결과 카드에 서버값 표시)
+  const box=document.getElementById('loan-calc-box');
+  if(!box)return;
+  const on=document.getElementById('loan-toggle')?.checked;
+  const hp=PRICES[S.region||'seoul']?.[S.size||'mid'];
+  if(!on||!hp){box.style.display='none';return;}
+  const loanAmt=Math.round(calcLoanAmount(hp)),loanRate=4;
+  box.style.display='block';
+  document.getElementById('loan-house-price').textContent=fmt(hp);
+  document.getElementById('loan-amount-display').textContent=`-${fmt(loanAmt)}`;
+  document.getElementById('loan-net-display').textContent=fmt(hp-loanAmt);
+  document.getElementById('loan-interest-note').textContent=`연 이자 ${fmt(Math.round(loanAmt*loanRate/100))} (금리 ${loanRate}%, 고정)`;
+  const capNote=document.getElementById('loan-cap-note');
+  if(capNote)capNote.style.display=loanAmt<Math.round(hp*0.4)?'block':'none';
 }
 
 // ━━ 탭 전환 ━━
@@ -1022,27 +1101,31 @@ function switchTab(tab){
 let myChartInstance=null;
 function renderMyResult(result, inputs){
   const {years,netMonthly,monthlySave,savingRate,monthlyInvest,totalIncome,carMonthly,chartData,eventMarkers,targetPrice,weddingCost,babyTotal,carCost,totalEventCost}=result;
-  const babyMonthlyAvg = inputs.babyOn ? Math.round(babyTotal/26/12) : 0;
+  const loanAmt = result.loanAmt || 0;
+  const effectiveTarget = result.effectiveTarget ?? targetPrice;
+  const monthlyLoanPayment = result.monthlyLoanPayment || 0;
+  const babyMonthlyAvg = inputs.babyOn ? Math.round(babyTotal/28/12) : 0; // 28년 = api/_utils.js babyYearsNew
   const totalMonthlyExpense = inputs.living + babyMonthlyAvg + (carMonthly||0);
 
   // 헤더 결과
   document.getElementById('my-years-display').textContent=years<=0?'지금 바로 가능! 🎉':years?`${years}년 후 🏠`:'30년 내 어려워요 😢';
   document.getElementById('my-result-label').textContent='혼자라면';
-  document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표 · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
+  document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표${loanAmt>0?` · 대출 ${fmt(loanAmt)} 반영`:''} · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
 
   // 핵심 스탯
   document.getElementById('stat-net').textContent=`${netMonthly.toLocaleString()}만`;
   document.getElementById('stat-save').textContent=monthlySave>0?`${monthlySave.toLocaleString()}만`:'부족';
   document.getElementById('stat-rate').textContent=`${savingRate}%`;
 
-  // 차트
-  renderMyChart(chartData, eventMarkers, targetPrice, years);
+  // 차트 (목표선은 대출 차감 후 실제 필요 현금 기준)
+  renderMyChart(chartData, eventMarkers, effectiveTarget, years, loanAmt);
 
   // 리포트
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
   const sections=[
-    {title:'🏠 목표',rows:[['지역',rN[inputs.region]],['평수',sN[inputs.size]],['목표 집값',fmt(targetPrice)]]},
+    {title:'🏠 목표',rows:[['지역',rN[inputs.region]],['평수',sN[inputs.size]],['목표 집값',fmt(targetPrice)],
+      ...(loanAmt>0?[['주택담보대출 (LTV 40%)',`-${fmt(loanAmt)}`],['실제 필요 현금',fmt(effectiveTarget)]]:[])]},
     {title:'💰 수익',rows:[
       ['현재 자산',fmt(inputs.asset)],['연봉 (세전)',fmt(inputs.salary)],
       ['월 실수령',`약 ${netMonthly.toLocaleString()}만원`],
@@ -1052,8 +1135,9 @@ function renderMyResult(result, inputs){
     ]},
     {title:'💸 지출',rows:[
       ['월 생활비',`${inputs.living.toLocaleString()}만원`],
-      ['월 육아비',inputs.babyOn?`약 ${Math.round(babyTotal/26/12).toLocaleString()}만원 (월평균·26년)`:'미반영'],
+      ['월 육아비',inputs.babyOn?`약 ${babyMonthlyAvg.toLocaleString()}만원 (월평균·28년)`:'미반영'],
       ['월 차량 유지비',carMonthly>0?`약 ${carMonthly}만원`:'미반영'],
+      ...(loanAmt>0?[['월 대출 상환 (구매 후)',`약 ${monthlyLoanPayment.toLocaleString()}만원`]]:[]),
       ['📤 월 지출 합계',`약 ${totalMonthlyExpense.toLocaleString()}만원`],
     ]},
     {title:'📊 결과',rows:[
@@ -1073,7 +1157,8 @@ function renderMyResult(result, inputs){
 }
 
 // ━━ 내 차트 렌더링 ━━
-function renderMyChart(chartData, eventMarkers, targetPrice, years){
+// targetPrice = 대출 차감 후 실제 필요 현금(effectiveTarget) 기준
+function renderMyChart(chartData, eventMarkers, targetPrice, years, loanAmt){
   const labels=chartData.map(d=>`${d.age}세`);
   const assetArr=chartData.map(d=>+(d.asset/10000).toFixed(2));
   const targetArr=chartData.map(()=>+(targetPrice/10000).toFixed(2));
@@ -1110,7 +1195,7 @@ function renderMyChart(chartData, eventMarkers, targetPrice, years){
   const ctx=document.getElementById('my-chart').getContext('2d');
   myChartInstance=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'자산',data:assetArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true,yAxisID:'y'},
-    {label:'목표',data:targetArr,borderColor:'#3DB88A',borderWidth:1.5,pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
+    {label:loanAmt>0?'목표(대출 반영)':'목표',data:targetArr,borderColor:'#3DB88A',borderWidth:1.5,pointRadius:0,borderDash:[6,3],fill:false,yAxisID:'y'},
     {label:'월 지출',data:expenseArr,borderColor:'#FF9966',borderWidth:1.8,pointRadius:0,tension:.1,fill:false,borderDash:[3,2],yAxisID:'yFlow'},
     {label:'월 수익',data:incomeArr,borderColor:'#6CB4E4',borderWidth:1.8,pointRadius:0,tension:.3,fill:false,borderDash:[5,2],yAxisID:'yFlow'},
   ]},options:{responsive:true,maintainAspectRatio:true,animation:{duration:600},layout:{padding:{bottom:20}},
@@ -1127,6 +1212,9 @@ function renderMyChart(chartData, eventMarkers, targetPrice, years){
 let coupleChart=null;
 function renderCoupleUI(result, me, partner){
   const{coupleYears,soloYears,saved,targetPrice,avgInvestRate,report,coupleChart:cData,soloChart:sData}=result;
+  const loanAmt = result.loanAmt || 0;
+  const effectiveTarget = result.effectiveTarget ?? targetPrice;
+  const monthlyLoanPayment = result.monthlyLoanPayment || 0;
   const{meNet,pNet,meSalary,pSalary,meAsset,pAsset,meLiving,pLiving,meCarMonthly,pCarMonthly,meCarCost,pCarCost,
         combinedMonthlyInvest,totalIncome,totalExpense,weddingCost,babyTotal,babyMonthlyAvg,totalEventCost,
         meRaisePct,mePromo,pRaisePct,pPromo}=report;
@@ -1135,7 +1223,7 @@ function renderCoupleUI(result, me, partner){
   document.getElementById('cr-solo').textContent=soloYears>=31?'30년+':soloYears<=0?'즉시':soloYears;
   document.getElementById('cr-couple').textContent=coupleYears>=31?'30년+':coupleYears<=0?'즉시':coupleYears;
   document.getElementById('cr-saved').textContent=saved>0?`${saved}년 단축! 🎉`:saved===0?'비슷해요':'혼자가 더 빠를 수도';
-  document.getElementById('cr-detail').textContent=`합산 연봉 ${fmt(meSalary+pSalary)} · 합산 자산 ${fmt(meAsset+pAsset)} · 목표 ${fmt(targetPrice)}`;
+  document.getElementById('cr-detail').textContent=`합산 연봉 ${fmt(meSalary+pSalary)} · 합산 자산 ${fmt(meAsset+pAsset)} · 목표 ${fmt(targetPrice)}${loanAmt>0?` · 대출 ${fmt(loanAmt)} 반영`:''}`;
 
   // 개인별 카드
   const fmtV=v=>v>=10000?`${(v/10000).toFixed(1)}억`:`${v.toLocaleString()}만원`;
@@ -1152,7 +1240,9 @@ function renderCoupleUI(result, me, partner){
   const rN={gangnam:'강남권',seoul:'서울기타',gyeonggi:'수도권',local:'지방'};
   const sN={small:'20평 이하',mid:'25~33평',big:'40평 이상'};
   const coupleSections=[
-    {title:'🏠 목표',rows:[['지역',rN[me.region||'seoul']],['평수',sN[me.size||'mid']],['목표 집값',fmt(targetPrice)]]},
+    {title:'🏠 목표',rows:[['지역',rN[me.region||'seoul']],['평수',sN[me.size||'mid']],['목표 집값',fmt(targetPrice)],
+      loanAmt>0?['주택담보대출 (LTV 40%)',`-${fmt(loanAmt)}`]:null,
+      loanAmt>0?['실제 필요 현금',fmt(effectiveTarget)]:null]},
     {title:'💰 수익',rows:[
       ['현재 자산',fmtPairV(meAsset,pAsset)],
       ['연봉 (세전)',fmtPairV(meSalary,pSalary)],
@@ -1163,8 +1253,9 @@ function renderCoupleUI(result, me, partner){
     ]},
     {title:'💸 지출',rows:[
       ['월 생활비',fmtPairV(meLiving,pLiving)],
-      ['월 육아비',babyMonthlyAvg>0?`약 ${babyMonthlyAvg.toLocaleString()}만원 (월평균·26년)`:'미반영'],
+      ['월 육아비',babyMonthlyAvg>0?`약 ${babyMonthlyAvg.toLocaleString()}만원 (월평균·28년)`:'미반영'],
       ['월 차량 유지비',meCarMonthly+pCarMonthly>0?fmtPairV(meCarMonthly,pCarMonthly):'미반영'],
+      loanAmt>0?['월 대출 상환 (구매 후)',`약 ${monthlyLoanPayment.toLocaleString()}만원`]:null,
       ['📤 합산 월 지출',`약 ${totalExpense.toLocaleString()}만원`],
     ]},
     {title:'🎯 이벤트 비용',rows:[
@@ -1185,8 +1276,8 @@ function renderCoupleUI(result, me, partner){
     ${sec.rows.filter(Boolean).map(([l,v])=>`<div class="pdf-row"><span class="pdf-row-label">${l}</span><span class="pdf-row-val" style="${l.includes('둘이')||l.includes('⚡')?'color:var(--pink);font-weight:900':''}">${v}</span></div>`).join('')}
     </div>`).join('');
 
-  // 합산 차트
-  renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloYears);
+  // 합산 차트 (목표선은 대출 차감 후 실제 필요 현금 기준)
+  renderCoupleChartFromData(cData, sData, effectiveTarget, coupleYears, soloYears, loanAmt);
 
   // 잠금 해제
   document.getElementById('partner-lock').style.display='none';
@@ -1197,7 +1288,8 @@ function renderCoupleUI(result, me, partner){
 }
 
 // ━━ 합산 차트 렌더링 ━━
-function renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloYears){
+// targetPrice = 대출 차감 후 실제 필요 현금(effectiveTarget) 기준
+function renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloYears, loanAmt){
   const labels=cData.map(d=>`${d.age}세`);
   const coupleArr=cData.map(d=>+(d.asset/10000).toFixed(2));
   const soloArr=sData.map(d=>+(d.asset/10000).toFixed(2));
@@ -1232,7 +1324,7 @@ function renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloY
   coupleChart=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'💑 둘이',data:coupleArr,borderColor:'#FF6B9D',backgroundColor:'rgba(255,107,157,.1)',borderWidth:2.5,pointRadius:0,tension:.3,fill:true},
     {label:'👤 혼자',data:soloArr,borderColor:'#C8A8E9',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3,borderDash:[5,3]},
-    {label:'🏠 목표',data:targetLine,borderColor:'rgba(61,184,138,.7)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
+    {label:loanAmt>0?'🏠 목표(대출 반영)':'🏠 목표',data:targetLine,borderColor:'rgba(61,184,138,.7)',borderWidth:1.5,pointRadius:0,borderDash:[4,4],fill:false},
   ]},options:{responsive:true,maintainAspectRatio:true,animation:{duration:600},layout:{padding:{bottom:20}},
     plugins:{legend:{labels:{font:{size:11},boxWidth:16}}},
     scales:{
@@ -1286,7 +1378,11 @@ function initGate(){
   const code=params.get('couple');
   // 항상 게이트 숨김 (프리미엄 게이트는 결제 연동 후 활성화)
   document.getElementById('premium-gate').style.display='none';
-  if(code){S.isPartner=true;S.coupleCode=code;loadPartnerSession(code);return;}
+  if(code){
+    S.isPartner=true;S.coupleCode=code;
+    const lc=document.getElementById('loan-card');if(lc)lc.style.display='none'; // 대출 토글은 호스트 전용
+    loadPartnerSession(code);return;
+  }
   restoreData();
 }
 
@@ -1300,6 +1396,7 @@ function showToast(msg,duration=2200){
 // ━━ 초기화 ━━
 window.addEventListener('DOMContentLoaded',async()=>{
   initGate();
+  updateLoanBox();
   if(S.isPartner){
     const btn=document.querySelector('#page-me .analyze-btn');
     if(btn)btn.onclick=async()=>{await analyzeMe();if(S.partnerData)await saveGuestAndRender();};
