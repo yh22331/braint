@@ -707,7 +707,7 @@ async function callAPI(url, method='GET', body=null) {
   if(body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
   const data = await res.json();
-  if(!res.ok) throw new Error(data.error || 'API 오류');
+  if(!res.ok){ const err=new Error(data.error || 'API 오류'); err.status=res.status; throw err; }
   return data;
 }
 
@@ -908,7 +908,7 @@ async function loadPartnerSession(code) {
     window.history.replaceState({}, '', location.pathname);
     showToast('💌 짝꿍이 공유한 링크예요! 내 정보를 입력해주세요');
   } catch(e) {
-    showToast('링크가 만료됐거나 올바르지 않아요');
+    showToast(e.status===410?'링크가 만료됐어요. 새로 만들어주세요 🔄':'링크가 만료됐거나 올바르지 않아요');
   }
 }
 
