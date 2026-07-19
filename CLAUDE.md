@@ -136,6 +136,8 @@ All money inputs are in **만원** (10,000 KRW). Several helpers are duplicated 
 - 생활비 신모델 (결혼 1.5배 + 연 2.5% 인플레) — `calcLivingCost`, bf-home 전용
 
 ### 중복 로직 주의 (한쪽만 고치면 어긋남)
+- ⚠️ 서버 응답의 years 계열(soloYears/coupleYears/years)은 미도달 시 null. 표시 로직에서 반드시 `== null` 분기를 첫 번째로 둘 것. JS에서 null <= 0 이 true라 "미도달"이 "즉시 가능"으로 뒤집히는 버그 이력 (2026.7.16)
+- 별건 검토: bf-home 미도달 시 "61년 (+31년)" 표시 → "30년 내 어려워요"류가 더 자연스러움
 - 육아비: `api/_utils.js`의 `BABY_COST_BY_STAGE`/`babyAnnualByYear` ↔ `bf-home/index.html`의 `calcBabyByYear`
 - 생활비: `api/_utils.js`의 `calcLivingCost` ↔ `bf-home/index.html`의 `calcLivingCost`
 - bf-home은 API 실패 시 로컬 폴백(`simulateMonthly`)으로 계산하므로, 공식 변경 시 **API + 폴백 + `renderChart` 3곳** 모두 반영해야 함
