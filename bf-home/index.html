@@ -2771,10 +2771,15 @@ function buildReportPayload(reachedYr){
   const reachedAge=age+Math.max(reachedYr,0);
   const bd={};
   [age,age+5,age+10,reachedAge].forEach(a=>{if(yearlyBreakdown[a])bd[a]=yearlyBreakdown[a]});
-  // +2%p 시나리오: baseline도 로컬로 돌려 같은 엔진끼리 델타 산출
-  const yearsOf=s=>s.reachedMonth>=0?Math.ceil(s.reachedMonth/12):61;
+  // 수익률 시나리오(+1~+4%p): baseline도 로컬로 돌려 같은 엔진끼리 델타 산출 (순수 함수 재실행이라 비용 없음)
+  const yearsOf=s=>s.reachedMonth>=0?Math.ceil(s.reachedMonth/12):null; // null = 30년 내 미도달
+  const cap=y=>y==null?61:y;
   const baseYears=yearsOf(runReportSim(investRate));
-  const plusYears=yearsOf(runReportSim(investRate+2));
+  const rateScenarios=[1,2,3,4].map(d=>{
+    const y=yearsOf(runReportSim(investRate+d));
+    return{deltaRate:d,newRate:investRate+d,reachedYears:y,reachedAge:y==null?null:age+y,yearsSaved:Math.max(0,cap(baseYears)-cap(y))};
+  });
+  const p2=rateScenarios[1]; // 하위호환: plusTwo = +2%p 시나리오와 동일값
   return{
     profile:{age,grossSalary,netSalary,monthlyTakehome,totalAsset,region,size},
     goal:{targetPrice,effectiveTarget:targetPrice-loanAmt,loanAmt,investRate,monthlyLiving:monthlyLivingCost},
@@ -2786,7 +2791,7 @@ function buildReportPayload(reachedYr){
     },
     deficit:firstDeficitAge!=null?{firstDeficitAge}:null,
     yearlyBreakdown:bd,
-    scenario:{plusTwo:{investRate:investRate+2,yearsNeeded:plusYears,yearsSaved:Math.max(0,baseYears-plusYears)}},
+    scenario:{plusTwo:{investRate:p2.newRate,yearsNeeded:cap(p2.reachedYears),yearsSaved:p2.yearsSaved},rateScenarios},
   };
 }
 

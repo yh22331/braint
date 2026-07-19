@@ -10,7 +10,9 @@ export const config = { runtime: 'nodejs' };
 //   deficit: { firstDeficitAge } | null
 //   yearlyBreakdown: { [나이]: { income, invest, living, loan, baby, car, netSaving } }
 //   couple: { soloYears, combinedYears, yearsSaved } | 생략 — couple 서비스에서만 전달 (deficit 대신, 훅 분기용. years null = 30년+)
-//   scenario: { plusTwo: { investRate, yearsNeeded, yearsSaved } }
+//   scenario: { plusTwo: { investRate, yearsNeeded, yearsSaved },
+//               rateScenarios: [{ deltaRate, newRate, reachedYears, reachedAge, yearsSaved }] }
+//               — rateScenarios는 +1~+4%p 각 시나리오 (선택, reachedYears null = 30년 내 미도달). plusTwo는 하위호환 유지
 //   survey: { region, station, build, invest, workplace } (선택 — 설문 완료 후 재호출 시에만 포함)
 // 응답: { hooks: string[], sections: [{ title, body }], _mock: true }
 //
@@ -52,12 +54,17 @@ export default async function handler(req, res) {
 function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey, couple }) {
   const fmtEok = man => man >= 10000 ? `${(man / 10000).toFixed(1)}억` : `${man.toLocaleString()}만원`;
   const plusTwo = scenario.plusTwo;
+  // rateScenarios 있으면 "도달 가능 + 단축 효과 있는" 최소 인상폭 시나리오를 훅/복리 문구에 활용
+  const rs = Array.isArray(scenario.rateScenarios) ? scenario.rateScenarios : null;
+  const best = rs?.find(s => s.reachedYears != null && s.yearsSaved > 0) || null;
 
   // couple 서비스: deficit 대신 혼자 vs 둘이 비교 훅 (years null = 30년 내 도달 못함)
   const fmtY = y => y == null ? '30년+' : `${y}년`;
   const hooks = couple ? [
     `혼자라면 ${fmtY(couple.soloYears)} 걸리지만, 두 분이 합치면 ${fmtY(couple.combinedYears)}${couple.yearsSaved > 0 ? ` — ${couple.yearsSaved}년 단축돼요` : '이에요'}`,
-    `투자수익률을 ${plusTwo.investRate}%로 2%p만 올리면 내 집 마련을 ${plusTwo.yearsSaved}년 더 앞당길 수 있어요`,
+    best
+      ? `투자수익률을 ${best.deltaRate}%p만 올리면 내 집 마련을 ${best.yearsSaved}년 더 앞당길 수 있어요`
+      : `투자수익률을 ${plusTwo.investRate}%로 2%p만 올리면 내 집 마련을 ${plusTwo.yearsSaved}년 더 앞당길 수 있어요`,
   ] : [
     `짝꿍은 ${deficit?.firstDeficitAge || 'XX'}세부터 적자로 전환됩니다`,
     `이대로면 ${result.reachedAge}세에 내 집 마련 — 하지만 ${plusTwo.yearsSaved}년 앞당길 수 있어요`,
@@ -73,8 +80,11 @@ function generateReport({ profile, goal, result, events, deficit, yearlyBreakdow
     },
     {
       title: '복리의 힘',
-      body: `투자수익률을 ${goal.investRate || 0}%에서 ${plusTwo.investRate}%로 2%p만 올려도 `
-        + `내 집 마련 시점이 ${result.yearsNeeded}년에서 ${plusTwo.yearsNeeded}년으로, 무려 ${plusTwo.yearsSaved}년 앞당겨져요. `
+      body: (best
+          ? `투자수익률을 ${goal.investRate || 0}%에서 ${best.newRate}%로 ${best.deltaRate}%p만 올려도 `
+            + `내 집 마련이 ${best.reachedYears}년 후로, ${best.yearsSaved}년 앞당겨져요. `
+          : `투자수익률을 ${goal.investRate || 0}%에서 ${plusTwo.investRate}%로 2%p만 올려도 `
+            + `내 집 마련 시점이 ${result.yearsNeeded}년에서 ${plusTwo.yearsNeeded}년으로, 무려 ${plusTwo.yearsSaved}년 앞당겨져요. `)
         + `복리는 시간이 길수록 격차가 커지기 때문에, 수익률 개선은 빠를수록 효과가 커요. `
         + `(Mock 응답 — 실제 LLM 연동 시 시나리오 비교 분석으로 교체됩니다)`,
     },
