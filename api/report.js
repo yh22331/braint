@@ -51,7 +51,8 @@ export default async function handler(req, res) {
 
 // ━━ 보고서 생성 ━━
 // ⚠️ Mock 구현. 실제 LLM 연동 시 이 함수 내부만 교체 (시그니처/응답 스키마 유지).
-function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey, couple }) {
+// pay-confirm.js가 import해서 재사용 — 로직 복제 금지.
+export function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey, couple }) {
   const fmtEok = man => man >= 10000 ? `${(man / 10000).toFixed(1)}억` : `${man.toLocaleString()}만원`;
   const plusTwo = scenario.plusTwo;
   // rateScenarios 있으면 "도달 가능 + 단축 효과 있는" 최소 인상폭 시나리오를 훅/복리 문구에 활용
