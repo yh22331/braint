@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>짝꿍 재력 심층 보고서 — BrainT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF5F9;--card:#fff;--text:#3D2C35;--text-soft:#9B7B8A;
+  --pink:#FF6B9D;--pink-light:#FFE4EF;
+  --border:rgba(255,179,204,.25);
+  --font:'Noto Sans KR',sans-serif;--soft:'Gowun Dodum',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:16px}
+
+/* ── 헤더 (작게) ── */
+.top{max-width:680px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.top a{font-size:.85rem;font-weight:900;color:var(--pink);text-decoration:none;display:flex;align-items:center;gap:6px}
+
+/* ── 본문: 읽기 최적화 (최대 680px 중앙) ── */
+main{max-width:680px;margin:0 auto;padding:8px 20px 64px}
+.panel{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+
+/* 로딩/에러 상태 */
+.state{text-align:center;padding:64px 24px}
+.state .big{font-size:2.4rem;margin-bottom:14px}
+.state .msg{font-size:1rem;font-weight:700;line-height:1.7}
+.state .sub{font-size:.85rem;color:var(--text-soft);font-family:var(--soft);margin-top:8px;line-height:1.7}
+.spinner{width:36px;height:36px;border:4px solid var(--pink-light);border-top-color:var(--pink);border-radius:50%;margin:0 auto 18px;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.btn{display:inline-block;padding:13px 22px;border:none;border-radius:14px;font-family:var(--font);font-size:.9rem;font-weight:900;cursor:pointer;text-decoration:none;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn-pink{background:linear-gradient(135deg,var(--pink),#FF9EC4);color:#fff;box-shadow:0 6px 20px rgba(255,107,157,.35)}
+.btn-line{background:#fff;color:var(--pink);border:1.5px solid rgba(255,107,157,.4)}
+
+/* 보고서 */
+.report-head{text-align:center;margin:18px 0 26px}
+.report-title{font-size:1.5rem;font-weight:900;line-height:1.4}
+.report-title .icon{color:var(--pink)}
+.report-date{font-size:.8rem;color:var(--text-soft);font-family:var(--soft);margin-top:8px}
+.hook{font-size:1.02rem;font-weight:900;line-height:1.65;padding:14px 18px;background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:14px;border:1px solid rgba(255,179,204,.3);border-left:4px solid var(--pink);margin-bottom:10px}
+.hook .hl{color:var(--pink)}
+.sec{margin-top:28px}
+.sec h2{font-size:1.08rem;font-weight:900;padding-bottom:8px;margin-bottom:12px;border-bottom:2px solid var(--pink-light)}
+.sec p{font-size:.97rem;color:var(--text);font-family:var(--soft);line-height:1.9;white-space:pre-wrap;word-break:keep-all}
+.disclaimer{margin-top:34px;padding-top:16px;border-top:1px dashed var(--border);font-size:.74rem;color:var(--text-soft);font-family:var(--soft);line-height:1.7}
+.foot{text-align:center;margin-top:30px}
+
+@media (max-width:480px){
+  main{padding:4px 14px 48px}
+  .panel{padding:22px 16px;border-radius:16px}
+  .report-title{font-size:1.3rem}
+  .hook{font-size:.95rem}
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a href="/">🧠 BrainT</a>
+  <a href="/bf-home/" style="font-size:.78rem;color:var(--text-soft)">짝꿍 연봉 계산기 →</a>
+</div>
+
+<main>
+  <!-- 결제 확인/조회 로딩 -->
+  <div class="panel state" id="state-loading">
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="msg" id="loading-msg">💳 결제 확인 중...</div>
+    <div class="sub">잠시만 기다려주세요. 화면을 닫지 마세요!</div>
+  </div>
+
+  <!-- 에러 -->
+  <div class="panel state" id="state-error" hidden>
+    <div class="big" aria-hidden="true">😢</div>
+    <div class="msg" id="error-msg">문제가 발생했어요</div>
+    <div class="sub" id="error-sub"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-pink" id="btn-retry" hidden>다시 시도</button>
+      <button type="button" class="btn btn-pink" id="btn-login" hidden>카카오 로그인</button>
+      <a class="btn btn-line" href="/">홈으로</a>
+    </div>
+  </div>
+
+  <!-- 보고서 본문 (블러 없이 전부 공개) -->
+  <article class="panel" id="report-view" hidden>
+    <div class="report-head">
+      <h1 class="report-title"><span class="icon">📋</span> 짝꿍 재력 심층 보고서</h1>
+      <div class="report-date" id="report-date"></div>
+    </div>
+    <div id="report-hooks"></div>
+    <div id="report-sections"></div>
+    <p class="disclaimer" id="report-disclaimer"></p>
+    <div class="foot"><a class="btn btn-pink" href="/bf-home/">🔄 분석 다시 하기</a></div>
+  </article>
+</main>
+
+<script type="module">
+// ━━ 보고서 페이지 (Phase B-2) ━━
+// 진입 A: /report/?paymentKey=...&orderId=...&amount=... (토스 successUrl) → pay-confirm 승인 → 표시
+// 진입 B: /report/?id={reportId} → reports 테이블 본인 행 조회(RLS 보호) → 표시
+import { supabase } from '/js/supabase-client.js';
+import { getCurrentUser, loginWithKakao } from '/js/auth.js';
+
+const $=id=>document.getElementById(id);
+const qs=new URLSearchParams(location.search);
+const orderId=qs.get('orderId')||qs.get('order'); // 토스는 orderId로 붙임. order도 방어적으로 수용
+const paymentKey=qs.get('paymentKey');
+const amount=Number(qs.get('amount'));
+const reportId=qs.get('id');
+const SNAPSHOT_KEY='bfhc_pay_analysis'; // bf-home이 결제 직전 저장하는 {analysisPayload, survey}
+
+function show(stateId){
+  ['state-loading','state-error','report-view'].forEach(id=>{$(id).hidden=id!==stateId;});
+}
+function showError(msg,{sub='',retry=false,login=false}={}){
+  $('error-msg').textContent=msg;
+  $('error-sub').textContent=sub;
+  $('btn-retry').hidden=!retry;
+  $('btn-login').hidden=!login;
+  show('state-error');
+}
+
+// 재시도 = 같은 파라미터로 전체 재실행 (pay-confirm이 멱등이라 안전)
+$('btn-retry').addEventListener('click',()=>location.reload());
+// 로그인 후 이 페이지(쿼리 포함)로 복귀 — auth/callback의 braint-next 메커니즘 재사용
+$('btn-login').addEventListener('click',()=>{
+  const p=location.pathname+location.search;
+  try{ localStorage.setItem('braint-next',(p.startsWith('/')&&!p.startsWith('//')&&!p.startsWith('/\\'))?p:'/'); }catch(e){}
+  loginWithKakao();
+});
+
+// ── 숫자 하이라이트: bf-home 훅과 동일 정규식, innerHTML 대신 DOM 노드로 안전하게
+function appendHighlighted(el,text){
+  const re=/(\d+(?:\.\d+)?(?:세|년))/g;
+  let last=0,m;
+  while((m=re.exec(text))!==null){
+    if(m.index>last)el.appendChild(document.createTextNode(text.slice(last,m.index)));
+    const s=document.createElement('strong');s.className='hl';s.textContent=m[0];
+    el.appendChild(s);
+    last=m.index+m[0].length;
+  }
+  if(last<text.length)el.appendChild(document.createTextNode(text.slice(last)));
+}
+
+// ── 보고서 렌더 (모든 텍스트 textContent/텍스트노드 — innerHTML 미사용)
+function renderReport(reportJson,createdAt){
+  const d=createdAt?new Date(createdAt):null;
+  $('report-date').textContent=d?`생성일 ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`:'';
+  const hooksEl=$('report-hooks');
+  (Array.isArray(reportJson?.hooks)?reportJson.hooks:[]).forEach(h=>{
+    const div=document.createElement('div');div.className='hook';
+    appendHighlighted(div,String(h));
+    hooksEl.appendChild(div);
+  });
+  const secsEl=$('report-sections');
+  (Array.isArray(reportJson?.sections)?reportJson.sections:[]).forEach(sec=>{
+    const wrap=document.createElement('section');wrap.className='sec';
+    const h2=document.createElement('h2');h2.textContent=String(sec?.title??'');
+    const p=document.createElement('p');p.textContent=String(sec?.body??'');
+    wrap.appendChild(h2);wrap.appendChild(p);
+    secsEl.appendChild(wrap);
+  });
+  $('report-disclaimer').textContent=String(reportJson?.disclaimer??'본 보고서는 정보 제공 목적이며 특정 상품·지역의 투자 권유가 아닙니다.');
+  show('report-view');
+}
+
+// ── 진입 B: reportId로 본인 보고서 조회 (RLS가 남의 행 차단)
+async function viewFlow(id){
+  $('loading-msg').textContent='📋 보고서 불러오는 중...';
+  show('state-loading');
+  const user=await getCurrentUser();
+  if(!user){showError('로그인 후 볼 수 있어요',{sub:'구매하신 계정으로 카카오 로그인해주세요',login:true});return;}
+  const {data,error}=await supabase.from('reports').select('report_json,created_at').eq('id',id).maybeSingle();
+  if(error||!data){showError('보고서를 찾을 수 없어요',{sub:'주소가 잘못됐거나, 구매한 계정이 아니에요'});return;}
+  renderReport(data.report_json,data.created_at);
+}
+
+// ── 진입 A: 결제 복귀 → pay-confirm 승인 → 보고서 표시
+async function confirmFlow(){
+  show('state-loading');
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){showError('로그인 확인이 필요해요',{sub:'결제하신 계정으로 로그인하면 이어서 진행돼요',login:true});return;}
+  // bf-home이 결제 직전 저장한 분석 스냅샷 (없어도 승인은 진행 — 보고서 내용만 축소될 수 있음)
+  let snapshot={};
+  try{ snapshot=JSON.parse(sessionStorage.getItem(SNAPSHOT_KEY)||'{}'); }catch(e){}
+  let res,data;
+  try{
+    res=await fetch('/api/pay-confirm',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({paymentKey,orderId,amount,analysisPayload:snapshot.analysisPayload||null,survey:snapshot.survey||null}),
+    });
+    data=await res.json();
+  }catch(e){
+    showError('결제 확인 중 오류가 발생했어요',{sub:'네트워크 상태를 확인한 뒤 다시 시도해주세요',retry:true});return;
+  }
+  if(!res.ok){
+    if(res.status===401){showError('로그인 확인이 필요해요',{sub:'결제하신 계정으로 로그인하면 이어서 진행돼요',login:true});return;}
+    showError('결제 승인에 실패했어요',{sub:(data?.message||'')+' 문제가 계속되면 hello@braint.net으로 문의해주세요',retry:true});return;
+  }
+  try{ sessionStorage.removeItem(SNAPSHOT_KEY); }catch(e){}
+  // 재열람 가능한 주소로 정리 (새로고침 시 승인 재호출 대신 조회 경로로)
+  history.replaceState({},'',`${location.pathname}?id=${data.reportId}`);
+  await viewFlow(data.reportId);
+}
+
+// ── 라우팅
+if(orderId&&paymentKey){ confirmFlow(); }
+else if(reportId){ viewFlow(reportId); }
+else { showError('잘못된 접근이에요',{sub:'분석을 먼저 진행한 뒤 보고서를 구매할 수 있어요'}); }
+</script>
+</body>
+</html>
