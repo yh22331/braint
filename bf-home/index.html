@@ -2934,13 +2934,20 @@ async function startReportPayment(){
   }
   // b. 토스 결제창 (v2 표준 SDK, 카드 기본)
   try{
+    // /report/ 페이지가 pay-confirm에 전달할 분석 스냅샷 (보고서 API 호출 때와 동일 payload)
+    try{
+      sessionStorage.setItem('bfhc_pay_analysis',JSON.stringify({
+        analysisPayload:buildReportPayload(_lastReportYears??61),
+        survey:{...reportSurveyState,workplace:(document.getElementById('survey-workplace')?.value||'').trim()||null},
+      }));
+    }catch(e){}
     const payment=TossPayments(TOSS_CLIENT_KEY).payment({customerKey:user.id});
     await payment.requestPayment({
       method:'CARD',
       amount:{currency:'KRW',value:990},
       orderId:'report_'+crypto.randomUUID(),
       orderName:'짝꿍 재력 심층 보고서',
-      successUrl:location.origin+'/bf-home/?pay=success',
+      successUrl:location.origin+'/report/', // 토스가 paymentKey/orderId/amount를 자동으로 붙임 → /report/가 승인+표시 담당
       failUrl:location.origin+'/bf-home/?pay=fail',
     });
   }catch(e){
@@ -3015,20 +3022,14 @@ async function restorePendingPayLogin(){
   }catch(e){ console.error('[PAY] 로그인 복귀 복원 실패',e); }
 }
 
-// c. 결제 리다이렉트 복귀 처리 (승인 API 연동은 Phase B — 지금은 파라미터 확인만)
+// c. 결제 실패 리다이렉트 복귀 처리 — 성공 복귀는 /report/ 페이지가 담당 (Phase B-3)
 function handlePaymentReturn(){
   const params=new URLSearchParams(location.search);
-  const pay=params.get('pay');
-  if(!pay)return;
-  if(pay==='success'){
-    console.log('[PAY] success 복귀',{paymentKey:params.get('paymentKey'),orderId:params.get('orderId'),amount:params.get('amount')});
-    showToast('💳 결제 확인 중...');
-  }else if(pay==='fail'){
-    console.log('[PAY] fail 복귀',{code:params.get('code'),message:params.get('message')});
-    showToast('결제가 취소됐어요');
-  }
+  if(params.get('pay')!=='fail')return;
+  console.log('[PAY] fail 복귀',{code:params.get('code'),message:params.get('message')});
+  showToast('결제가 취소됐어요');
   // 결제 파라미터만 제거 (couple/share 파라미터 로직과 충돌 방지)
-  ['pay','paymentKey','orderId','amount','paymentType','code','message'].forEach(k=>params.delete(k));
+  ['pay','code','message','paymentType','paymentKey','orderId','amount'].forEach(k=>params.delete(k));
   const qs=params.toString();
   history.replaceState({},'',location.pathname+(qs?'?'+qs:''));
 }
