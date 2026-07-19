@@ -66,7 +66,12 @@ function generateReport({ profile, goal, result, events, deficit, yearlyBreakdow
       ? `투자수익률을 ${best.deltaRate}%p만 올리면 내 집 마련을 ${best.yearsSaved}년 더 앞당길 수 있어요`
       : `투자수익률을 ${plusTwo.investRate}%로 2%p만 올리면 내 집 마련을 ${plusTwo.yearsSaved}년 더 앞당길 수 있어요`,
   ] : [
-    `짝꿍은 ${deficit?.firstDeficitAge || 'XX'}세부터 적자로 전환됩니다`,
+    // 적자 구간이 없으면 XX 노출 대신 수익률 시나리오(→도달 나이) 폴백
+    deficit?.firstDeficitAge != null
+      ? `짝꿍은 ${deficit.firstDeficitAge}세부터 적자로 전환됩니다`
+      : best
+        ? `투자수익률 ${best.deltaRate}%p만 높이면 내 집 마련이 ${best.yearsSaved}년 앞당겨져요`
+        : `지금 페이스면 ${result.reachedAge}세에 내 집 마련이 보여요`,
     `이대로면 ${result.reachedAge}세에 내 집 마련 — 하지만 ${plusTwo.yearsSaved}년 앞당길 수 있어요`,
   ];
 

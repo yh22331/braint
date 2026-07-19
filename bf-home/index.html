@@ -14,6 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+<script src="https://js.tosspayments.com/v2/standard"></script>
 <style>
   :root {
     --pink: #FF6B9D;
@@ -735,7 +736,7 @@
             <div style="position:relative">
               <div id="deep-report-sections"></div>
               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
-                <button type="button" onclick="alert('결제 기능 준비 중입니다')" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-left:6px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5V7.5a3.5 3.5 0 016.8-1.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.6" fill="#fff"/></svg></button>
+                <button type="button" onclick="startReportPayment()" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-left:6px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5V7.5a3.5 3.5 0 016.8-1.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.6" fill="#fff"/></svg></button>
               </div>
             </div>
           </div>
@@ -1042,6 +1043,7 @@ const fmt=v=>{
 
 // ━━ 초기화 ━━
 (function init(){
+  handlePaymentReturn(); // 결제 리다이렉트 복귀 시 파라미터 처리 (Phase A)
   handleCoupleEntry();
   const raw=localStorage.getItem(LS_MY);
   if(raw){try{const my=JSON.parse(raw);
@@ -1053,6 +1055,7 @@ const fmt=v=>{
   updateEventAgeLabels();
   updateCarMaintenance();
   restoreFromShareUrl(); // 공유 링크로 접속 시 설정 복원
+  restorePendingPayLogin(); // 결제 전 카카오 로그인 복귀 시 분석+설문 자동 복원 (비동기)
   renderDots(); // Phase 1: 스텝 인디케이터 초기 렌더
   // Phase 4 Task 1: step-section 내 input/click을 위임으로 캐치 → 실시간 검증
   document.body.addEventListener('input', e => {
@@ -2893,6 +2896,143 @@ function renderDeepReportSections(rep){
   return true;
 }
 
+// ━━ 결제 (Phase A: 로그인 체크 → 토스 결제창 호출까지. 승인 API는 Phase B) ━━
+const TOSS_CLIENT_KEY='test_ck_eqRGgYO1r5AeavN4JZMprQnN2Eya'; // 토스 테스트 클라이언트 키
+
+// auth 브리지 확보 — 하단 모듈 스크립트(window.brAuth*)가 실행 안 됐으면 동적 import로 직접 로드
+// (메인 홈과 동일한 /js/auth.js 체인. 실패 시 console.error로 실제 원인(404/CDN 차단)이 드러남)
+async function loadAuthBridge(){
+  if(window.brAuthGetUser&&window.brAuthLoginKakao)return true;
+  try{
+    const m=await import('/js/auth.js');
+    window.brAuthGetUser=m.getCurrentUser;
+    window.brAuthLoginKakao=m.loginWithKakao;
+    return true;
+  }catch(e){ console.error('[PAY] auth 모듈 로드 실패:',e); return false; }
+}
+
+async function startReportPayment(){
+  // a. 로그인 체크 — 모듈 로드+getUser가 네트워크 의존이라 5초 타임아웃으로 방어 (요청 pending 매달림 → 무반응 방지)
+  let authOk=false,user=null;
+  try{
+    ({authOk,user}=await Promise.race([
+      (async()=>{const ok=await loadAuthBridge();return{authOk:ok,user:ok?await window.brAuthGetUser():null};})(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('AUTH_TIMEOUT(5s)')),5000)),
+    ]));
+  }catch(e){
+    console.error('[PAY] auth 상태 확인 실패:',e);
+    showToast('⚠️ 로그인 확인에 실패했어요. 페이지를 새로고침한 뒤 다시 시도해주세요');
+    return;
+  }
+  if(!user){
+    // 비로그인: 그 자리에서 카카오 OAuth 시작. 복귀 후 자동 복원용 스냅샷을 먼저 저장
+    savePayPendingState();
+    try{ localStorage.setItem('braint-next','/bf-home/'); }catch(e){} // auth/callback이 읽고 이 페이지로 복귀 (auth-modal.js:90과 동일 패턴)
+    if(authOk){ await window.brAuthLoginKakao(); return; }
+    showToast('⚠️ 로그인 모듈을 불러오지 못했어요. 새로고침 후 다시 시도해주세요');
+    return;
+  }
+  // b. 토스 결제창 (v2 표준 SDK, 카드 기본)
+  try{
+    const payment=TossPayments(TOSS_CLIENT_KEY).payment({customerKey:user.id});
+    await payment.requestPayment({
+      method:'CARD',
+      amount:{currency:'KRW',value:990},
+      orderId:'report_'+crypto.randomUUID(),
+      orderName:'짝꿍 재력 심층 보고서',
+      successUrl:location.origin+'/bf-home/?pay=success',
+      failUrl:location.origin+'/bf-home/?pay=fail',
+    });
+  }catch(e){
+    if(e?.code!=='USER_CANCEL')showToast('⚠️ 결제창을 열지 못했어요. 잠시 후 다시 시도해주세요');
+  }
+}
+
+// 로그인 리다이렉트 전 분석 입력값+설문 답변 스냅샷 저장 (Phase B 결제 복귀 복원의 선행 구현)
+function savePayPendingState(){
+  try{
+    sessionStorage.setItem('bfhc_pay_pending',JSON.stringify({
+      salary:document.getElementById('salary')?.value||'',
+      asset:document.getElementById('asset')?.value||'',
+      region:state.region,size:state.size,myAsset:state.myAsset,
+      age:document.getElementById('age')?.value||'',
+      living:monthlyLivingCost,
+      investMode:state.investMode,customRate:document.getElementById('custom-rate')?.value,
+      raise:{mode:raiseState.mode,rate:raiseState.rate,promo:raiseState.promo,maxSalary:raiseState.maxSalary},
+      evWedding:!!document.getElementById('ev-wedding')?.checked,
+      evBaby:!!document.getElementById('ev-baby')?.checked,
+      evCar:!!document.getElementById('ev-car')?.checked,
+      costWedding:document.getElementById('cost-wedding')?.value,
+      costCar:document.getElementById('cost-car')?.value,
+      loanOn:!!document.getElementById('loan-toggle')?.checked,
+      survey:{...reportSurveyState},
+      surveyWorkplace:(document.getElementById('survey-workplace')?.value||'').trim(),
+    }));
+  }catch(e){}
+}
+
+// 로그인 복귀 시 스냅샷 복원 → 자동 재분석 → 설문 재제출로 블러 본문(결제 유도)까지 재생성
+async function restorePendingPayLogin(){
+  let raw=null;
+  try{ raw=sessionStorage.getItem('bfhc_pay_pending'); sessionStorage.removeItem('bfhc_pay_pending'); }catch(e){}
+  if(!raw)return;
+  let st=null; try{ st=JSON.parse(raw); }catch(e){ return; }
+  try{
+    // 입력 복원 (restoreFromShareUrl 패턴 + 이벤트/대출/인상/수익률까지)
+    if(st.salary){const s=document.getElementById('salary');s.value=st.salary;updateSalary(s);}
+    if(st.asset!==''&&st.asset!=null){const a=document.getElementById('asset');a.value=st.asset;
+      updateRange(a,'asset-val',v=>(v>=10000?(v/10000).toFixed(1)+'억':(v===0?'없음 😅':v.toLocaleString()+'만'))+'원'.replace('없음 😅원','없음 😅'));}
+    if(st.region)restoreToggle('region-group',st.region);
+    if(st.size)restoreToggle('size-group',st.size);
+    if(st.myAsset)restoreToggle('my-group',st.myAsset);
+    if(st.age){document.getElementById('age').value=st.age;onAgeInput(document.getElementById('age'));}
+    if(st.living){monthlyLivingCost=st.living;const cl=document.getElementById('custom-living');if(cl)cl.value=st.living;updateLivingBadge();}
+    if(st.investMode){state.investMode=st.investMode;if(st.investMode==='custom'&&st.customRate!=null){const cr=document.getElementById('custom-rate');if(cr)cr.value=st.customRate;}}
+    if(st.raise)Object.assign(raiseState,st.raise);
+    const ms=document.getElementById('max-salary');if(ms&&raiseState.maxSalary)ms.value=raiseState.maxSalary;
+    [['ev-wedding',st.evWedding,'wedding'],['ev-baby',st.evBaby,'baby'],['ev-car',st.evCar,'car']].forEach(([id,on,name])=>{
+      const el=document.getElementById(id);if(el){el.checked=!!on;toggleEventDetail(name,el);}
+    });
+    const setVal=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+    setVal('cost-wedding',st.costWedding);setVal('cost-car',st.costCar);
+    const lt=document.getElementById('loan-toggle');if(lt)lt.checked=!!st.loanOn;
+    updateCarMaintenance();
+    // 자동 재분석 (공유 링크 복원과 동일 진입점) → 보고서 훅 fetch까지 내부에서 시작됨
+    await floatAnalyze();
+    // 설문 답변 복원 → 훅 렌더 완료를 기다렸다가 재제출 → 블러 본문 + 결제 버튼 상태 복원
+    if(st.survey&&REPORT_SURVEY_QS.every(q=>st.survey[q.key])){
+      Object.assign(reportSurveyState,st.survey);
+      const wp=document.getElementById('survey-workplace');if(wp&&st.surveyWorkplace)wp.value=st.surveyWorkplace;
+      await new Promise(res=>{let n=0;const t=setInterval(()=>{ // fetchDeepReport(비동기)의 훅 렌더 대기 — 이후 stage 덮어쓰기 방지
+        const b=document.getElementById('deep-report');
+        if((b&&b.style.display==='block')||++n>40){clearInterval(t);res();}
+      },250);});
+      await submitReportSurvey();
+    }
+    let user=null;
+    try{ user=window.brAuthGetUser?await window.brAuthGetUser():null; }catch(e){}
+    showToast(user?'✅ 로그인됐어요! 이어서 결제하실 수 있어요':'📊 분석 상태를 복원했어요');
+  }catch(e){ console.error('[PAY] 로그인 복귀 복원 실패',e); }
+}
+
+// c. 결제 리다이렉트 복귀 처리 (승인 API 연동은 Phase B — 지금은 파라미터 확인만)
+function handlePaymentReturn(){
+  const params=new URLSearchParams(location.search);
+  const pay=params.get('pay');
+  if(!pay)return;
+  if(pay==='success'){
+    console.log('[PAY] success 복귀',{paymentKey:params.get('paymentKey'),orderId:params.get('orderId'),amount:params.get('amount')});
+    showToast('💳 결제 확인 중...');
+  }else if(pay==='fail'){
+    console.log('[PAY] fail 복귀',{code:params.get('code'),message:params.get('message')});
+    showToast('결제가 취소됐어요');
+  }
+  // 결제 파라미터만 제거 (couple/share 파라미터 로직과 충돌 방지)
+  ['pay','paymentKey','orderId','amount','paymentType','code','message'].forEach(k=>params.delete(k));
+  const qs=params.toString();
+  history.replaceState({},'',location.pathname+(qs?'?'+qs:''));
+}
+
 // 공유 링크로 접속 시 설정 복원
 function restoreFromShareUrl(){
   const params = new URLSearchParams(location.search);
@@ -3123,10 +3263,11 @@ function goToCouple(){ location.href='/couple/'; }
 <script type="module">
   // ━━ 로그인 영역 (ESM) ━━
   import { openAuthModal } from '/js/auth-modal.js';
-  import { onAuthChange, getCurrentUser, logout } from '/js/auth.js';
+  import { onAuthChange, getCurrentUser, logout, loginWithKakao } from '/js/auth.js';
 
-  // 인라인 스크립트(saveAnalysis 등)에서 현재 유저 조회용 다리
+  // 인라인 스크립트(saveAnalysis, 결제 게이트 등)에서 쓰는 다리
   window.brAuthGetUser = getCurrentUser;
+  window.brAuthLoginKakao = loginWithKakao;
 
   const authArea = document.getElementById('bf-auth-area');
 
