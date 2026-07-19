@@ -32,16 +32,22 @@ async function supabase(path, options = {}) {
   return res.json();
 }
 
-// ── 사용자 JWT 검증 → user 객체 (유효하지 않으면 null)
+// ── 사용자 JWT 검증 → user 객체 (유효하지 않으면 null). 실패 원인은 콘솔에 남김
 async function getUserFromJWT(token) {
   try {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error('[PAY-CONFIRM] JWT 검증 실패:', res.status, await res.text());
+      return null;
+    }
     const user = await res.json();
     return user?.id ? user : null;
-  } catch (e) { return null; }
+  } catch (e) {
+    console.error('[PAY-CONFIRM] JWT 검증 요청 자체 실패 (SUPABASE_URL 미설정 가능성):', e.message);
+    return null;
+  }
 }
 
 // ── 보고서 생성 (Mock — report.js generateReport 재사용). payload 불량이어도 구매 기록은 지키도록 방어
@@ -63,6 +69,7 @@ export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   if (!TOSS_SECRET_KEY) return json({ error: 'CONFIG', message: 'TOSS_SECRET_KEY 미설정' }, 500);
+  if (!SUPABASE_URL || !SUPABASE_KEY) return json({ error: 'CONFIG', message: 'SUPABASE_URL/SUPABASE_SERVICE_KEY 미설정' }, 500); // env 부재가 401로 위장하는 것 방지
 
   try {
     const { paymentKey, orderId, amount, analysisPayload, survey } = await req.json();
