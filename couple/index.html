@@ -186,6 +186,13 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
 .report-val{font-weight:700;color:var(--text)}
 .report-val.pink{color:var(--pink)}
 
+/* ── 심층 보고서 (bf-home 이식) ── */
+.btn-cta{width:100%;padding:18px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:20px;color:#fff;font-family:var(--font);font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:-.3px;box-shadow:0 8px 24px rgba(255,107,157,.4);transition:all .25s}
+.survey-q{font-size:.82rem;font-weight:900;color:var(--text);margin:14px 0 8px;text-align:left}
+.survey-opts{display:flex;gap:6px;flex-wrap:wrap}
+.survey-opt{flex:1;min-width:88px;padding:10px 8px;background:#FFF5F9;border:1.5px solid rgba(255,107,157,.25);border-radius:12px;font-family:var(--font);font-size:.74rem;font-weight:700;color:var(--text-soft);cursor:pointer;transition:all .15s}
+.survey-opt.active{background:linear-gradient(135deg,var(--pink),#FF9EC4);border-color:var(--pink);color:#fff;box-shadow:0 4px 12px rgba(255,107,157,.3)}
+
 /* 플로팅 버튼 */
 .floating{
   position:fixed;bottom:0;left:0;right:0;z-index:50;
@@ -675,6 +682,37 @@ body::before{content:'';position:fixed;top:-100px;right:-100px;width:350px;heigh
       <div id="couple-report"></div>
     </div>
 
+    <!-- LLM 심층 보고서 (bf-home 이식: 훅 무료 → 설문 → 블러 본문 + 결제 유도) — 합산 완료 시에만 노출 -->
+    <div id="deep-report" style="display:none;background:#fff;border-radius:16px;padding:16px;border:1.5px solid rgba(255,179,204,.25);margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,.05)">
+      <div style="font-size:.92rem;font-weight:900;color:var(--pink);margin-bottom:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-right:4px" aria-hidden="true"><rect x="4.5" y="3" width="15" height="18" rx="3.5" fill="#FFE8EF" stroke="#FF6B9D" stroke-width="2" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h3.5" stroke="#FFB3CC" stroke-width="2" stroke-linecap="round"/></svg>커플 재력 심층 보고서</div>
+      <div id="deep-report-hooks" style="margin-bottom:14px"></div>
+      <!-- 1단계: 설문 유도 -->
+      <div id="deep-report-cta">
+        <button type="button" class="btn-cta" onclick="startReportSurvey()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-right:6px" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="9" y="2.5" width="6" height="4" rx="2" fill="#FFE8EF" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M9 13l2 2 4-4.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>1분 설문하고 두 분 맞춤 부동산 솔루션 받기</button>
+      </div>
+      <!-- 2단계: 설문 (문항은 JS 생성) -->
+      <div id="deep-report-survey" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:.78rem;font-weight:900;color:var(--pink)">📋 두 분 맞춤 설문</span>
+          <span id="survey-progress" style="font-size:.72rem;font-weight:700;color:var(--text-soft)">0/5</span>
+        </div>
+        <div id="survey-questions"></div>
+        <div class="survey-q">Q5. 두 분 직장(출퇴근 기준) 지역은? <span style="font-weight:400;color:var(--text-soft)">(선택)</span></div>
+        <input type="text" id="survey-workplace" placeholder="예: 강남, 판교" oninput="updateSurveyProgress()"
+          style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,107,157,.25);border-radius:12px;font-family:var(--font);font-size:.82rem;font-weight:600;color:var(--text);background:#FFF5F9;outline:none">
+        <button type="button" class="btn-cta" id="survey-submit" disabled onclick="submitReportSurvey()" style="margin-top:14px;opacity:.45">솔루션 받기</button>
+      </div>
+      <!-- 3단계: 블러 본문 + 결제 유도 (호스트/게스트 동일 노출) -->
+      <div id="deep-report-locked" style="display:none">
+        <div style="position:relative">
+          <div id="deep-report-sections"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+            <button type="button" onclick="alert('결제 기능 준비 중입니다')" style="pointer-events:auto;padding:14px 22px;background:linear-gradient(135deg,var(--pink),#FF9EC4);border:none;border-radius:16px;color:#fff;font-family:var(--font);font-size:.9rem;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,157,.4)">990원으로 전체 보기<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="vertical-align:-0.15em;margin-left:6px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="3.5" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 10.5V7.5a3.5 3.5 0 016.8-1.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.6" fill="#fff"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 공유 -->
     <div class="section-card">
       <div class="section-title">💕 결과 공유하기</div>
@@ -1108,7 +1146,7 @@ function renderMyResult(result, inputs){
   const totalMonthlyExpense = inputs.living + babyMonthlyAvg + (carMonthly||0);
 
   // 헤더 결과
-  document.getElementById('my-years-display').textContent=years<=0?'지금 바로 가능! 🎉':years?`${years}년 후 🏠`:'30년 내 어려워요 😢';
+  document.getElementById('my-years-display').textContent=years==null?'30년 내 어려워요 😢':years<=0?'지금 바로 가능! 🎉':`${years}년 후 🏠`;
   document.getElementById('my-result-label').textContent='혼자라면';
   document.getElementById('my-result-sub').textContent=`${fmt(targetPrice)} 목표${loanAmt>0?` · 대출 ${fmt(loanAmt)} 반영`:''} · 월 저축 ${monthlySave>0?monthlySave.toLocaleString()+'만원':'부족'}`;
 
@@ -1141,7 +1179,7 @@ function renderMyResult(result, inputs){
       ['📤 월 지출 합계',`약 ${totalMonthlyExpense.toLocaleString()}만원`],
     ]},
     {title:'📊 결과',rows:[
-      ['집 구매 가능',years>=31?'30년 내 어려워요':years<=0?'지금 바로! 🎉':`약 ${years}년 후`],
+      ['집 구매 가능',years==null?'30년 내 어려워요':years>=31?'30년 내 어려워요':years<=0?'지금 바로! 🎉':`약 ${years}년 후`],
       ['월 순수익',`약 ${(totalIncome-totalMonthlyExpense).toLocaleString()}만원`],
       ['저축률',`${savingRate}%`],
     ]},
@@ -1220,9 +1258,9 @@ function renderCoupleUI(result, me, partner){
         meRaisePct,mePromo,pRaisePct,pPromo}=report;
 
   // 혼자/둘이 비교카드
-  document.getElementById('cr-solo').textContent=soloYears>=31?'30년+':soloYears<=0?'즉시':soloYears;
-  document.getElementById('cr-couple').textContent=coupleYears>=31?'30년+':coupleYears<=0?'즉시':coupleYears;
-  document.getElementById('cr-saved').textContent=saved>0?`${saved}년 단축! 🎉`:saved===0?'비슷해요':'혼자가 더 빠를 수도';
+  document.getElementById('cr-solo').textContent=soloYears==null?'30년+':soloYears>=31?'30년+':soloYears<=0?'즉시':soloYears;
+  document.getElementById('cr-couple').textContent=coupleYears==null?'30년+':coupleYears>=31?'30년+':coupleYears<=0?'즉시':coupleYears;
+  document.getElementById('cr-saved').textContent=(soloYears==null||coupleYears==null)?'30년 내 비교가 어려워요':saved>0?`${saved}년 단축! 🎉`:saved===0?'비슷해요':'혼자가 더 빠를 수도';
   document.getElementById('cr-detail').textContent=`합산 연봉 ${fmt(meSalary+pSalary)} · 합산 자산 ${fmt(meAsset+pAsset)} · 목표 ${fmt(targetPrice)}${loanAmt>0?` · 대출 ${fmt(loanAmt)} 반영`:''}`;
 
   // 개인별 카드
@@ -1265,8 +1303,8 @@ function renderCoupleUI(result, me, partner){
       ['총 이벤트 비용',fmt(totalEventCost)],
     ]},
     {title:'📊 결과',rows:[
-      ['혼자라면',soloYears>=31?'30년 내 어려워요':`${soloYears}년 후`],
-      ['💑 둘이라면',coupleYears>=31?'30년 내 어려워요':coupleYears<=0?'지금 바로! 🎉':`${coupleYears}년 후`],
+      ['혼자라면',soloYears==null?'30년 내 어려워요':soloYears>=31?'30년 내 어려워요':`${soloYears}년 후`],
+      ['💑 둘이라면',coupleYears==null?'30년 내 어려워요':coupleYears>=31?'30년 내 어려워요':coupleYears<=0?'지금 바로! 🎉':`${coupleYears}년 후`],
       ['합산 월 순수익',`약 ${(totalIncome-totalExpense).toLocaleString()}만원`],
       saved>0?['⚡ 단축 기간',`${saved}년 빠름! 🎉`]:null,
     ]},
@@ -1285,6 +1323,9 @@ function renderCoupleUI(result, me, partner){
   document.getElementById('partner-tab-icon').textContent='💑';
   document.getElementById('tab-partner-sub').textContent='합산 결과 완성! 🎉';
   document.getElementById('tab-me-sub').textContent='분석 완료 ✅';
+
+  // 심층 보고서 (비동기, 실패해도 합산 결과 화면 무관)
+  fetchCoupleDeepReport(result, me, partner);
 }
 
 // ━━ 합산 차트 렌더링 ━━
@@ -1334,7 +1375,138 @@ function renderCoupleChartFromData(cData, sData, targetPrice, coupleYears, soloY
   },plugins:[markerPlugin]});
 
   const flagEl=document.getElementById('couple-chart-flag');
-  if(flagEl){flagEl.innerHTML=coupleYears<soloYears?`💑 <strong style="color:var(--pink)">${coupleYears}년 후</strong> 구매 · 혼자보다 <strong style="color:var(--pink)">${soloYears-coupleYears}년 단축!</strong>`:coupleYears===soloYears?`둘이 ${coupleYears}년 후 구매`:`혼자: ${soloYears}년 · 둘이: ${coupleYears}년`;}
+  if(flagEl){const fy=y=>y==null?'30년+':`${y}년`;flagEl.innerHTML=(coupleYears==null&&soloYears==null)?'둘이 합쳐도 30년 내 목표 도달이 어려워요 😢':(coupleYears==null||soloYears==null)?`혼자: ${fy(soloYears)} · 둘이: ${fy(coupleYears)}`:coupleYears<soloYears?`💑 <strong style="color:var(--pink)">${coupleYears}년 후</strong> 구매 · 혼자보다 <strong style="color:var(--pink)">${soloYears-coupleYears}년 단축!</strong>`:coupleYears===soloYears?`둘이 ${coupleYears}년 후 구매`:`혼자: ${soloYears}년 · 둘이: ${coupleYears}년`;}
+}
+
+// ━━ LLM 심층 보고서 (bf-home 이식: 훅 무료 → 설문 → 블러 + 결제 유도) ━━
+function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// 설문 문항 정의 (Q5 직장 지역은 마크업의 텍스트 입력, 선택사항)
+const REPORT_SURVEY_QS=[
+  {key:'region', q:'Q1. 어느 지역까지 고려해요?',        opts:['서울 필수','수도권까지 OK','어디든 좋아요']},
+  {key:'station',q:'Q2. 역세권 얼마나 중요해요?',        opts:['도보 5분 필수','10분까지 OK','상관없어요']},
+  {key:'build',  q:'Q3. 신축 vs 구축?',                 opts:['신축만','구축도 OK','재개발 기대 구축도 좋아요']},
+  {key:'invest', q:'Q4. 투자 성향은?',                  opts:['안전하게','균형있게','공격적으로']},
+];
+const reportSurveyState={region:null,station:null,build:null,invest:null};
+let _reportCtx=null;    // 설문 완료 후 재호출용 {result,me,partner}
+let _plusTwoCache=null; // {key,val} — +2%p 시나리오 캐시 (설문 재호출 시 추가 API 호출 방지)
+
+// +2%p 시나리오: 같은 합산 API를 수익률만 +2%p 올려 1회 추가 호출 (입력 동일하면 캐시 재사용)
+async function getCouplePlusTwo(me, partner, baseYears){
+  const key=JSON.stringify([me,partner]);
+  if(_plusTwoCache&&_plusTwoCache.key===key)return _plusTwoCache.val;
+  const r=await apiAnalyzeCouple({...me,investRate:me.investRate+2},{...partner,investRate:partner.investRate+2});
+  const py=r.coupleYears==null?61:r.coupleYears;
+  const val={investRate:+(((me.investRate+partner.investRate)/2)+2).toFixed(1),yearsNeeded:py,yearsSaved:Math.max(0,baseYears-py)};
+  _plusTwoCache={key,val};
+  return val;
+}
+
+function buildCoupleReportPayload(plusTwo){
+  const{result,me}=_reportCtx;
+  const{coupleYears,soloYears,saved,targetPrice,avgInvestRate,report}=result;
+  const yearsNeeded=coupleYears==null?61:coupleYears;
+  return{
+    profile:{age:me.age,grossSalary:report.meSalary+report.pSalary,netSalary:(report.meNet+report.pNet)*12,
+      monthlyTakehome:report.meNet+report.pNet,totalAsset:report.meAsset+report.pAsset,region:me.region,size:me.size},
+    goal:{targetPrice,effectiveTarget:result.effectiveTarget??targetPrice,loanAmt:result.loanAmt||0,
+      investRate:avgInvestRate,monthlyLiving:report.meLiving+report.pLiving},
+    result:{yearsNeeded,reachedAge:me.age+yearsNeeded,verdict:null},
+    couple:{soloYears,combinedYears:coupleYears,yearsSaved:saved??0},
+    scenario:{plusTwo},
+  };
+}
+
+// 1단계 진입: 합산 완료(renderCoupleUI) 시 호출 → 훅 2줄(무료) + 설문 유도
+async function fetchCoupleDeepReport(result, me, partner){
+  _reportCtx={result,me,partner};
+  const box=document.getElementById('deep-report');
+  if(box)box.style.display='none'; // 재분석 시 이전 보고서 숨기고 새로 로드
+  try{
+    const baseYears=result.coupleYears==null?61:result.coupleYears;
+    const plusTwo=await getCouplePlusTwo(me,partner,baseYears);
+    const res=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildCoupleReportPayload(plusTwo))});
+    if(!res.ok)return; // 실패 시 보고서 카드 숨김 유지 — 합산 결과 화면 영향 없음
+    renderDeepReportHooks(await res.json());
+  }catch(e){}
+}
+
+function renderDeepReportHooks(rep){
+  const box=document.getElementById('deep-report');
+  const hooksEl=document.getElementById('deep-report-hooks');
+  if(!box||!hooksEl||!Array.isArray(rep?.hooks))return;
+  const hiNum=s=>escHtml(s).replace(/(\d+(\.\d+)?(세|년))/g,'<strong style="color:var(--pink)">$1</strong>');
+  hooksEl.innerHTML=rep.hooks.map(h=>
+    `<div style="font-size:.95rem;font-weight:900;color:var(--text);line-height:1.6;padding:10px 14px;background:linear-gradient(135deg,#FFF0F5,#FFE8EF);border-radius:12px;border:1px solid rgba(255,179,204,.3);border-left:3px solid var(--pink);margin-bottom:8px">${hiNum(h)}</div>`).join('');
+  setReportStage('cta');
+  box.style.display='block';
+}
+
+function setReportStage(stage){ // 'cta' | 'survey' | 'locked'
+  ['cta','survey','locked'].forEach(s=>{
+    const el=document.getElementById('deep-report-'+s);
+    if(el)el.style.display=s===stage?'block':'none';
+  });
+}
+
+// 2단계: 설문
+function startReportSurvey(){
+  const wrap=document.getElementById('survey-questions');
+  if(wrap&&wrap.childElementCount===0){ // 문항 1회 생성
+    wrap.innerHTML=REPORT_SURVEY_QS.map(q=>
+      `<div class="survey-q">${q.q}</div><div class="survey-opts">`+
+      q.opts.map(o=>`<button type="button" class="survey-opt" onclick="selectSurveyOpt('${q.key}','${o}',this)">${o}</button>`).join('')+
+      `</div>`).join('');
+  }
+  setReportStage('survey');
+}
+function selectSurveyOpt(key,val,el){
+  reportSurveyState[key]=val;
+  [...el.parentElement.children].forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  updateSurveyProgress();
+}
+function updateSurveyProgress(){
+  const answered=REPORT_SURVEY_QS.filter(q=>reportSurveyState[q.key]).length;
+  const wp=(document.getElementById('survey-workplace')?.value||'').trim();
+  const prog=document.getElementById('survey-progress');
+  if(prog)prog.textContent=`${answered+(wp?1:0)}/5`;
+  const btn=document.getElementById('survey-submit'); // Q1~Q4 필수, Q5 선택
+  if(btn){const ok=answered===REPORT_SURVEY_QS.length;btn.disabled=!ok;btn.style.opacity=ok?'1':'.45'}
+}
+
+// 3단계: survey 포함 재호출 → 블러 본문 + 결제 유도
+async function submitReportSurvey(){
+  const btn=document.getElementById('survey-submit');
+  if(btn){btn.disabled=true;btn.textContent='분석 중...'}
+  try{
+    if(!_reportCtx)throw new Error('no ctx');
+    const{result,me,partner}=_reportCtx;
+    const baseYears=result.coupleYears==null?61:result.coupleYears;
+    const plusTwo=await getCouplePlusTwo(me,partner,baseYears); // 캐시 히트 — 추가 호출 없음
+    const payload=buildCoupleReportPayload(plusTwo);
+    payload.survey={
+      ...reportSurveyState,
+      workplace:(document.getElementById('survey-workplace')?.value||'').trim()||null,
+    };
+    const res=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error('bad response');
+    const rep=await res.json();
+    if(!renderDeepReportSections(rep))throw new Error('bad shape');
+  }catch(e){
+    showToast('⚠️ 잠시 후 다시 시도해주세요');
+  }
+  if(btn){btn.textContent='솔루션 받기';updateSurveyProgress()} // 성공/실패 모두 버튼 복원
+}
+function renderDeepReportSections(rep){
+  const secEl=document.getElementById('deep-report-sections');
+  if(!secEl||!Array.isArray(rep?.sections))return false;
+  secEl.innerHTML=rep.sections.map(s=>
+    `<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:900;color:var(--text);margin-bottom:6px">${escHtml(s.title)}</div>`+
+    `<div style="font-size:.8rem;color:var(--text-soft);font-family:var(--soft);line-height:1.7;filter:blur(6px);user-select:none;-webkit-user-select:none;pointer-events:none">${escHtml(s.body)}</div></div>`).join('');
+  setReportStage('locked');
+  return true;
 }
 
 // ━━ 공유 ━━
@@ -1350,7 +1522,9 @@ function shareCoupleResult(){
   const me=S.myResult,partner=S.partnerData;
   const coupleYears=document.getElementById('cr-couple').textContent;
   const saved=document.getElementById('cr-saved').textContent;
-  if(window.Kakao&&Kakao.isInitialized()){Kakao.Share.sendDefault({objectType:'feed',content:{title:`💑 우리 커플 ${coupleYears} 후 집 살 수 있어!`,description:`${saved} · 합산 연봉 ${fmt((me?.salary||0)+(partner?.salary||0))} · 목표 ${fmt(me?.targetPrice||0)}`,imageUrl:'https://braint.net/og-couple.png',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}},buttons:[{title:'나도 계산하기',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}}]});}
+  // cr-couple 표시값 기준 문구 분기: '30년+'/'즉시'는 "X년 후" 틀이 어색해서 별도 문구
+  const shareTitle=coupleYears==='30년+'?'💑 우리 커플 지금은 좀 멀지만... 같이 계산해볼래?':coupleYears==='즉시'?'💑 우리 커플 지금 바로 집 살 수 있어!':`💑 우리 커플 ${coupleYears}년 후 집 살 수 있어!`;
+  if(window.Kakao&&Kakao.isInitialized()){Kakao.Share.sendDefault({objectType:'feed',content:{title:shareTitle,description:`${saved} · 합산 연봉 ${fmt((me?.salary||0)+(partner?.salary||0))} · 목표 ${fmt(me?.targetPrice||0)}`,imageUrl:'https://braint.net/og-couple.png',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}},buttons:[{title:'나도 계산하기',link:{mobileWebUrl:'https://braint.net/couple/',webUrl:'https://braint.net/couple/'}}]});}
 }
 
 // ━━ 데이터 저장/복원 ━━

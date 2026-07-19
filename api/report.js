@@ -9,6 +9,7 @@ export const config = { runtime: 'nodejs' };
 //   events: { wedding, baby, car } (on/off + 비용)
 //   deficit: { firstDeficitAge } | null
 //   yearlyBreakdown: { [나이]: { income, invest, living, loan, baby, car, netSaving } }
+//   couple: { soloYears, combinedYears, yearsSaved } | 생략 — couple 서비스에서만 전달 (deficit 대신, 훅 분기용. years null = 30년+)
 //   scenario: { plusTwo: { investRate, yearsNeeded, yearsSaved } }
 //   survey: { region, station, build, invest, workplace } (선택 — 설문 완료 후 재호출 시에만 포함)
 // 응답: { hooks: string[], sections: [{ title, body }], _mock: true }
@@ -48,11 +49,16 @@ export default async function handler(req, res) {
 
 // ━━ 보고서 생성 ━━
 // ⚠️ Mock 구현. 실제 LLM 연동 시 이 함수 내부만 교체 (시그니처/응답 스키마 유지).
-function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey }) {
+function generateReport({ profile, goal, result, events, deficit, yearlyBreakdown, scenario, survey, couple }) {
   const fmtEok = man => man >= 10000 ? `${(man / 10000).toFixed(1)}억` : `${man.toLocaleString()}만원`;
   const plusTwo = scenario.plusTwo;
 
-  const hooks = [
+  // couple 서비스: deficit 대신 혼자 vs 둘이 비교 훅 (years null = 30년 내 도달 못함)
+  const fmtY = y => y == null ? '30년+' : `${y}년`;
+  const hooks = couple ? [
+    `혼자라면 ${fmtY(couple.soloYears)} 걸리지만, 두 분이 합치면 ${fmtY(couple.combinedYears)}${couple.yearsSaved > 0 ? ` — ${couple.yearsSaved}년 단축돼요` : '이에요'}`,
+    `투자수익률을 ${plusTwo.investRate}%로 2%p만 올리면 내 집 마련을 ${plusTwo.yearsSaved}년 더 앞당길 수 있어요`,
+  ] : [
     `짝꿍은 ${deficit?.firstDeficitAge || 'XX'}세부터 적자로 전환됩니다`,
     `이대로면 ${result.reachedAge}세에 내 집 마련 — 하지만 ${plusTwo.yearsSaved}년 앞당길 수 있어요`,
   ];
