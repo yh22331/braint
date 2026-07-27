@@ -1,57 +1,29 @@
 export const config = { runtime: 'nodejs' };
 
-// ━━ 회사명 → DART 기업 평균연봉 조회 ━━
+import { DART_DATA } from './_dart-data.js';
+
+// ━━ 회사명 → 기업 평균연봉 조회 ━━
 // GET /api/dart-salary?company=삼성전자
 // 응답: { corp_name, avg_salary_man, employee_count, bsns_year }
 //   avg_salary_man: 만원 단위 (bf-home 연봉 슬라이더와 동일 단위)
-//   corp_code는 하드코딩 맵(CORP_MAP)으로 직접 조회 → empSttus.json 1회 호출
+//
+// 기본: api/_dart-data.js의 사전 수집값(scripts/collect-dart.js가 생성)으로 즉답.
+// 폴백: 사전 수집값이 없는 항목(avg_salary_man null — 수집 실행 전 시드 상태)만
+//       DART empSttus.json 실시간 호출. DART_API_KEY는 폴백에서만 사용.
 
 const DART_BASE = 'https://opendart.fss.or.kr/api';
+const FALLBACK_YEAR = '2025';
 
-// 회사명(소문자) → corp_code 하드코딩 맵
-const CORP_MAP = {
-  '삼성전자': '00126380', '삼성전자(주)': '00126380',
-  'sk하이닉스': '00164779', 'sk하이닉스(주)': '00164779',
-  '현대자동차': '00164742', '현대차': '00164742',
-  '기아': '00106641', '기아자동차': '00106641',
-  'lg전자': '00401731',
-  '카카오': '00258801', '(주)카카오': '00258801',
-  '네이버': '00266961', 'naver': '00266961',
-  'lg화학': '00356361',
-  '삼성sdi': '00126362',
-  '삼성바이오로직스': '00877059',
-  '셀트리온': '00413046',
-  '포스코홀딩스': '00155319', 'posco홀딩스': '00155319', '포스코': '00155319',
-  '현대모비스': '00164788',
-  'kt': '00190321', '케이티': '00190321',
-  'sk텔레콤': '00159023',
-  'lg유플러스': '00231363',
-  '삼성생명': '00126256',
-  '한국전력': '00159193', '한국전력공사': '00159193', '한전': '00159193',
-  '크래프톤': '00760971',
-  '엔씨소프트': '00261443',
-  '하이브': '01204056',
-  '한화에어로스페이스': '00126566',
-  '한화비전': '01867758',
-  '한화오션': '00111704',
-  'cj제일제당': '00635134',
-  '한미약품': '00828497',
-  'kb금융': '00688996', 'kb금융지주': '00688996',
-  '신한지주': '00382199', '신한금융지주': '00382199',
-  '하나금융지주': '00547583',
-  '우리금융지주': '01350869',
-  '기업은행': '00149646', 'ibk기업은행': '00149646',
-  '현대건설': '00164478',
-  'gs건설': '00120030',
-  '롯데쇼핑': '00120526',
-  '신세계': '00136378',
-  '현대백화점': '00428251',
-  '카카오뱅크': '01133217',
-  'sk이노베이션': '00631518',
-  '두산에너빌리티': '00159616',
-  'lg에너지솔루션': '01515323', 'lg엔솔': '01515323',
-  '삼성물산': '00149655',
-};
+// 회사명/별칭 정규화(소문자·공백 제거) → 데이터 항목
+const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+const LOOKUP = (() => {
+  const m = new Map();
+  for (const c of DART_DATA) {
+    m.set(norm(c.name), c);
+    for (const a of (c.aliases || [])) m.set(norm(a), c);
+  }
+  return m;
+})();
 
 export default async function handler(req, res) {
   // CORS 헤더
@@ -63,20 +35,29 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (req.method !== 'GET') { res.status(405).json({ error: 'METHOD', message: 'GET only' }); return; }
 
-  const key = process.env.DART_API_KEY;
-  if (!key) { res.status(500).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return; }
-
   const company = (req.query.company || '').trim();
   if (!company) { res.status(400).json({ error: 'BAD_REQUEST', message: '회사명을 입력해주세요' }); return; }
 
-  const query = company.toLowerCase().trim();
-  const corpCode = CORP_MAP[query] || CORP_MAP[company];
-  if (!corpCode) { res.status(404).json({ error: 'NOT_FOUND', message: '검색 결과가 없어요' }); return; }
+  const entry = LOOKUP.get(norm(company));
+  if (!entry) { res.status(404).json({ error: 'NOT_FOUND', message: '검색 결과가 없어요' }); return; }
 
-  const bsnsYear = '2025';
+  // ① 사전 수집값 즉답
+  if (entry.avg_salary_man) {
+    res.status(200).json({
+      corp_name: entry.name,
+      avg_salary_man: entry.avg_salary_man,
+      employee_count: entry.employee_count || null,
+      bsns_year: entry.bsns_year,
+    });
+    return;
+  }
+
+  // ② 폴백: DART 실시간 조회 (수집 전 시드 항목용)
+  const key = process.env.DART_API_KEY;
+  if (!key) { res.status(500).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return; }
 
   try {
-    const empUrl = `${DART_BASE}/empSttus.json?crtfc_key=${key}&corp_code=${corpCode}&bsns_year=${bsnsYear}&reprt_code=11011`;
+    const empUrl = `${DART_BASE}/empSttus.json?crtfc_key=${key}&corp_code=${entry.corp_code}&bsns_year=${FALLBACK_YEAR}&reprt_code=11011`;
     const empRes = await fetch(empUrl);
     if (!empRes.ok) {
       res.status(502).json({ error: 'DART_ERROR', message: '잠시 후 다시 시도해주세요' }); return;
@@ -95,14 +76,12 @@ export default async function handler(req, res) {
     if (!avgSalaryMan) { res.status(404).json({ error: 'NO_DATA', message: '연봉 정보가 없는 기업이에요' }); return; }
 
     res.status(200).json({
-      corp_name: company,
+      corp_name: entry.name,
       avg_salary_man: avgSalaryMan,
       employee_count: employeeCount || null,
-      bsns_year: bsnsYear,
+      bsns_year: FALLBACK_YEAR,
     });
   } catch (e) {
-    console.error('[DART-DEBUG]', e.message);
-    console.error('[DART-DEBUG] stack:', e.stack);
     console.error('[DART] ERROR:', e.message, e.stack);
     res.status(502).json({ error: 'DART_ERROR', message: e.message || String(e) });
   }
@@ -111,6 +90,7 @@ export default async function handler(req, res) {
 // ━━ helpers ━━
 
 // 직원현황 list에서 남성 기준 평균연봉(만원) 산출
+// ⚠️ scripts/collect-dart.js의 calcAvgSalary와 동일 로직 — 한쪽 수정 시 양쪽 동기화 필수
 // 우선순위: ① 남성 합계행 총급여/인원 → ② jan_salary_am → ③ 남성 전체행 → ④ 기존 로직(안전망)
 function calcAvgSalary(list) {
   const SUMMARY_KW = ['합계', '소계', '전체'];
