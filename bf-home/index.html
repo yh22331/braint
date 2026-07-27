@@ -3241,7 +3241,8 @@ function filterDartDropdown(q) {
   loadDartCompanies().then(list => {
     const trimmed = q.trim();
     if (!trimmed) { dd.style.display = 'none'; return; }
-    const matched = list.filter(n => n.includes(trimmed)).slice(0, 8);
+    const query = trimmed.toLowerCase();
+    const matched = list.filter(n => n.toLowerCase().includes(query)).slice(0, 8);
     if (!matched.length) { dd.style.display = 'none'; return; }
     dd.innerHTML = '';
     matched.forEach(name => {
@@ -3295,7 +3296,7 @@ async function fetchDartSalary() {
     updateSalary(s);
     statusEl.style.background = 'rgba(67,233,123,.1)';
     statusEl.style.color = '#2A7A4A';
-    statusEl.textContent = `✅ ${data.corp_name} ${data.bsns_year}년 평균연봉 ${data.avg_salary_man.toLocaleString()}만원 반영됨`;
+    statusEl.textContent = `✅ ${data.corp_name} 평균연봉 ${data.avg_salary_man.toLocaleString()}만원 반영` + (data.bsns_year ? ` · ${data.bsns_year} 사업보고서 기준` : '');
   } catch(e) {
     statusEl.style.background = 'rgba(220,80,80,.08)';
     statusEl.style.color = '#B83A3A';
